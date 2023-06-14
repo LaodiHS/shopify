@@ -1,0 +1,18 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>
+      Product Data
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">Tab 1</ion-title>
+    </ion-toolbar>
+  </ion-header>
+<app-text-location-search #component1  (clickEvent)="handleChildClickEvent('com1', $event)"></app-text-location-search>
+<app-text-location-search #component2 (clickEvent)="handleChildClickEvent('com2',$event)"></app-text-location-search>
+
+</ion-content>

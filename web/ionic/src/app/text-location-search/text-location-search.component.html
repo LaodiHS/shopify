@@ -1,0 +1,6 @@
+<ion-searchbar [(ngModel)]="searchQuery" (ionInput)="onSearchChange($event)"></ion-searchbar>
+<ion-list *ngIf="predictions.length > 0">
+  <ion-item *ngFor="let item of predictions" (click)="selectSearchResult(item)">
+    {{ item.description }}
+  </ion-item>
+</ion-list>

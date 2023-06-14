@@ -1,0 +1,11 @@
+{"auth/app-deleted": "The Firebase project associated with the authentication instance has been deleted.",
+"auth/app-not-authorized": "The authentication instance is not authorized to access the provided Firebase project.",
+"auth/argument-error": "One or more of the provided arguments for the authentication method are invalid.",
+"auth/invalid-api-key": "The provided API key is invalid.",
+"auth/invalid-email": "The email address provided is not in a valid format.",
+"auth/user-disabled": "The user account corresponding to the provided email has been disabled.",
+"auth/user-not-found": "The user account corresponding to the provided email does not exist.",
+"auth/wrong-password": "The provided password is incorrect for the given email.",
+"auth/too-many-requests": "The user has triggered too many requests in a short period of time. This error is usually rate-limited.",
+"auth/network-request-failed": "A network error occurred during the authentication process."
+}
