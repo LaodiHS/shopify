@@ -56,10 +56,32 @@ app.get("/api/products/count", async (_req, res) => {
 });
 
 app.get("/api/products/all", async (_req, res) => {
-  const all = await shopify.api.rest.Product.all({
-    session: res.locals.shopify.session,
-  });
-  res.status(200).send(all);
+  try {
+    const all = await shopify.api.rest.Product.all({
+      session: res.locals.shopify.session,
+      limit: 150,
+      fields:
+        "id,image,title,body_html,collection_type,handle,published_scope,published_status,vendor,options,tags,variants",
+    });
+    log(all);
+
+    res.status(200).send(all);
+  } catch (error) {
+    console.log("error message--->", error.message);
+  }
+});
+
+app.get("/api/inventory-item/", async (_req, res) => {
+  // if (_req.params.id && _req.params.id !== "") {
+  //   const item = await shopify.api.rest.InventoryItem.find({
+  //     session: res.locals.shopify.session,
+  //     id: _req.params.id
+  //   });
+  //   res.status(200).send(item);
+  // }
+  // else {
+  //   res.status(400).send({ success: false, error: "No ID provided" });
+  // }
 });
 
 app.get("/api/country/all", async (_req, res) => {

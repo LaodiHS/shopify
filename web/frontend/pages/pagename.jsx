@@ -1,7 +1,7 @@
-import { Card, Page, Layout, TextContainer, Text } from "@shopify/polaris";
+import { Card, Page, Layout, TextContainer, Text , Link} from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 import { useTranslation } from "react-i18next";
-
+import { NavigationMenu } from "@shopify/app-bridge-react";
 export default function PageName() {
   const { t } = useTranslation();
   return (
@@ -27,6 +27,9 @@ export default function PageName() {
             </Text>
             <TextContainer>
               <p>{t("PageName.body")}</p>
+              <Link url="/product">
+                fulfilling orders
+              </Link>
             </TextContainer>
           </Card>
           <Card sectioned>

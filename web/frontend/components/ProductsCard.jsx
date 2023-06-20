@@ -1,8 +1,9 @@
-import React,{ useState } from "react";
+import React, { useState } from "react";
 import { Card, TextContainer, Text } from "@shopify/polaris";
 import { Toast } from "@shopify/app-bridge-react";
 import { useTranslation } from "react-i18next";
 import { useAppQuery, useAuthenticatedFetch } from "../hooks";
+import { ListComponent } from "./ListComponent";
 
 export function ProductsCard() {
   const emptyToastProps = { content: null };
@@ -26,11 +27,7 @@ export function ProductsCard() {
     },
   });
 
-
-
-
-
-
+ 
   const toastMarkup = toastProps.content && !isRefetchingCount && (
     <Toast {...toastProps} onDismiss={() => setToastProps(emptyToastProps)} />
   );
@@ -55,11 +52,11 @@ export function ProductsCard() {
     }
   };
   const dataArray = isLoadingCount ? [] : data.data;
+  const myData = { pageTitle:"products", sections: dataArray };
   return (
     <>
       {toastMarkup}
       <Card
-        title={t("ProductsCard.title")}
         sectioned
         primaryFooterAction={{
           content: t("ProductsCard.populateProductsButton", {
@@ -69,46 +66,28 @@ export function ProductsCard() {
           loading: isLoading,
         }}
       >
+        {isLoadingCount ? (
+          <p>-</p>
+        ) : dataArray.length > 0 ? (
+          <ListComponent data={myData} />
+        ) : (
+          <p>-</p>
+        )
+        }
         <table>
           <tbody>
             <tr>
-              <td>{t("ProductsCard.description")}</td>
+            
             </tr>
             <tr>
               <td>
                 <h4>{t("ProductsCard.totalProductsHeading")}</h4>
                 {isLoadingCount ? (
                   <p>-</p>
-                ) : dataArray.length > 0 ? (
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>{t("Table.column1")}</th>
-                        <th>{t("Table.column2")}</th>
-                        {/* Add more table header columns as needed */}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {dataArray.map((item, index) => (
-                        <React.Fragment key={index}>
-                          {Object.entries(item).map(([key, value]) => (
-                            <tr key={key}>
-                              <td>{key}</td>
-                              <td>
-                                {typeof value === "object"
-                                  ? JSON.stringify(value)
-                                  : value}
-                                
-                              </td>
-                            </tr>
-                          ))}
-                        </React.Fragment>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
+                ) :  (
                   <p>{t("Table.noDataMessage")}</p>
-                )}
+                )
+                }
               </td>
             </tr>
           </tbody>
