@@ -1,8 +1,8 @@
 export { ProductsCard } from "./ProductsCard";
-export { ListComponent } from './ListComponent';
- export { ListDetailSectionComponent } from './ListDetailSectionComponent';
-export {LayoutSection } from "./LayoutSection";
-export {Toggles} from "./Toggles";
+export { ListComponent } from "./ListComponent";
+export { ListDetailComponent } from "./ListDetailComponent";
+export { LayoutSection } from "./LayoutSection";
+export { Toggles } from "./ListDetail/Toggles";
 export { StoreForm } from "./StoreForm";
-export {Search } from "./Search";
+export { Search } from "./Search";
 export * from "./providers";

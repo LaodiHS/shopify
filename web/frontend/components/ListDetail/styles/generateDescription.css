@@ -1,0 +1,30 @@
+.option {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  
+  .option-label {
+    font-weight: bold;
+    margin-right: 10px;
+    font-size: 12px;
+  }
+  
+  .option-value {
+    background-color: #efefef;
+    padding: 5px 10px;
+    margin-right: 5px;
+  }
+  
+  .option-values {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  
+  .description-textarea {
+    font-size: 12px;
+    height: 100%;
+    min-height: unset;
+    margin-top: 10px;
+  }
+  

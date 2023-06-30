@@ -28,3 +28,4 @@ export const  useAppQuery =  ({ url, fetchInit = {}, reactQueryOptions }) => {
     refetchOnWindowFocus: false,
   });
 };
+

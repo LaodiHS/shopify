@@ -1,7 +1,0 @@
-{
-  "name": "GlobeHop",
-  "integrations": {
-    "capacitor": {}
-  },
-  "type": "angular"
-}
