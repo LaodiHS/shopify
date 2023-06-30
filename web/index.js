@@ -11,7 +11,7 @@ import { updateProductVariantMetafields } from "./variant-update.js";
 import GDPRWebhookHandlers from "./gdpr.js";
 import getProducts from "./product-paging.js";
 import * as util from "util";
-import {request} from "./cache-to-file.js"
+import { request } from "./cache-to-file.js";
 
 const log = (message, obj) =>
   console.log(message + ": ", util.inspect(obj, { depth: null, colors: true }));
@@ -63,7 +63,7 @@ app.get("/api/products/all", async (_req, res) => {
   try {
     const all = await shopify.api.rest.Product.all({
       session: res.locals.shopify.session,
-    
+
       fields:
         "cursor,id,image,title,body_html,collection_type,handle,published_scope,published_status,vendor,options,tags,variants",
     });
@@ -87,11 +87,6 @@ app.get("/api/inventory-item/", async (_req, res) => {
     res.status(400).send({ success: false, error: "No ID provided" });
   }
 });
-
-
-
-
-
 
 app.get("/api/country/all", async (_req, res) => {
   const all = await shopify.api.rest.Country.all({
@@ -119,26 +114,22 @@ app.post("/api/product/variant/metafields", async (_req, res) => {
   res.status(status).send({ success: status === 200, error });
 });
 
-
-
 app.post("/api/ai/options", async (req, res) => {
   let status = 200;
   let error = null;
-  console.log('options:', JSON.stringify(req.body))
+  console.log("options:", JSON.stringify(req.body));
 
   try {
-      
   } catch (e) {
     status = 500;
     error = e.message;
   }
-const {options} = req.body
+  const { options } = req.body;
   res.status(status).send({ options, success: status === 200, error });
 });
 
-app.post('/api/ai/unstructuredRequest', async (req, res) => {
 
-
+app.post("/api/ai/focused-request", async (req, res) => {
   let status = 200;
   let error = null;
   let data = null;
@@ -147,12 +138,11 @@ app.post('/api/ai/unstructuredRequest', async (req, res) => {
     let afterArg = null;
     let beforeArg = null;
     const { options } = req.body;
-data = options; 
-  
-     console.log('data', data);
+    data = options;
 
+    console.log("data-f-->", data);
 
-     data = "our paragraph is"
+    data = "our paragraph is";
   } catch (err) {
     console.log("Error-->", err);
     status = 500;
@@ -160,15 +150,30 @@ data = options;
     data = null; // Reset data to null in case of an error
   }
   res.status(status).send({ success: status === 200, data, error });
+});
 
+app.post("/api/ai/general-request", async (req, res) => {
+  let status = 200;
+  let error = null;
+  let data = null;
+  try {
+    let firstArg = 5;
+    let afterArg = null;
+    let beforeArg = null;
+    const { options } = req.body;
+    data = options;
 
+    console.log("data--g->", data);
 
-
-
-})
-
-
-
+    data = "our paragraph is";
+  } catch (err) {
+    console.log("Error-->", err);
+    status = 500;
+    error = err.message;
+    data = null; // Reset data to null in case of an error
+  }
+  res.status(status).send({ success: status === 200, data, error });
+});
 
 app.post("/api/products/paging", async (req, res) => {
   let status = 200;
@@ -184,12 +189,11 @@ app.post("/api/products/paging", async (req, res) => {
     afterArg = after || null;
     beforeArg = before || null;
 
-     data =
-      await getProducts(
+    data = await getProducts(
       res.locals.shopify.session,
       firstArg,
       afterArg,
-        beforeArg
+      beforeArg
     );
   } catch (err) {
     console.log("Error-->", err);
@@ -213,7 +217,6 @@ app.post("/api/products/update/description", async (req, res) => {
       );
     }
   } catch (e) {
-    
     status = 500;
     error = e.message;
   }

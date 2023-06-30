@@ -1,4 +1,5 @@
-import React from "react";
+import React,{useEffect, useState} from "react";
+
 import {
   IonGrid,
   IonRow,
@@ -16,7 +17,7 @@ import {
   IonBadge,
 } from "@ionic/react";
 
-import { useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAppQuery, useAuthenticatedFetch } from "../../hooks";
 
 const handleProductDescriptionUpdate = async (productId, descriptionHtml) => {
@@ -58,11 +59,33 @@ const handleProductMetafieldsUpdate = async (variantId, metaFieldsArray) => {
 };
 
 export function ProductDetails({ handleIncludeChange, data }) {
-  
-  const location = useLocation();
-  const product = data
-  // JSON.parse(location.state);
+  const [product, setProduct] = useState(data)
 
+  const navigate = useNavigate();
+ 
+  useEffect(() => {
+
+
+
+
+    console.log('data----->', product);
+    if (!product) {
+
+      navigate("/")
+    }
+
+
+
+
+
+  }, [product, navigate])
+
+  
+if(!product){
+  setProduct({})
+  navigate("/");
+return;
+}
   const {
     images,
     title,

@@ -1,4 +1,4 @@
-import React, { useState, use, useContext } from "react";
+import React, { useState, use, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   IonItem,
@@ -28,8 +28,10 @@ import { Toggles } from "./ListDetail/Toggles";
 import { useAuthenticatedFetch } from "../hooks/useAuthenticatedFetch";
 import { audienceModel } from "../utilities/language-model";
 import { Context } from "../utilities/data-context.js"
+import { History } from '../utilities/store';
 let options = {};
-
+let includeProductDetails = {}
+let optionRequirements = {};
 export function ListDetailComponent() {
   const location = useLocation();
 
@@ -113,32 +115,72 @@ export function ListDetailComponent() {
       const deleteKey = Object.keys(category).find(
         (key) => category[key] === "delete"
       );
-      delete options[deleteKey];
+      delete includeProductDetails[deleteKey];
     } else {
-      console.log('category', category);
+
       Object.entries(category).forEach(([key, value]) => {
-        options[key] = value;
+        if (value) {
+          includeProductDetails[key] = value;
+        } else {
+          delete includeProductDetails[key];
+        }
       });
     }
+
+    if (!Object.entries(includeProductDetails).length) {
+
+      delete options['included-product-details']
+   
+    } else {
+
+      options['included-product-details'] = includeProductDetails
+    }
+    console.log("options", options);
     Context.setData("AudienceOptions", { options })
   };
 
   const handleSelectChange = async (event, category) => {
-    options[category] = options[category] || {};
- 
+    optionRequirements[category] = optionRequirements[category] || {};
+
     if (!event?.detail?.value || event?.detail?.value === "none") {
-      delete options[category]
-    }else{
-    options[category] = event.detail.value;
+      delete optionRequirements[category]
+    } else {
+      optionRequirements[category] = event.detail.value;
     }
-    Context.setData("AudienceOptions", { options: options })
+
+    if (!Object.entries(optionRequirements).length) {
+
+      delete options["option-requirements"] 
+    } else {
+
+      options["option-requirements"] = optionRequirements
+    }
+  
+    Context.setData("AudienceOptions", { options })
 
   };
 
   const navigateBack = () => {
     navigate("/");
   };
+
+
+
   const data = JSON.parse(location.state);
+  useEffect(() => {
+
+    console.log('data', data);
+    if (!data) {
+
+      navigate("/")
+    }
+
+
+
+  }, [data, navigate])
+
+
+
 
 
 
