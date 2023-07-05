@@ -13,6 +13,8 @@ import "@ionic/react/css/text-alignment.css";
 import "@ionic/react/css/text-transformation.css";
 import "@ionic/react/css/flex-utils.css";
 import "@ionic/react/css/display.css";
+
+import "./themes/variables.css"
 setupIonicReact({ mode: "ios" });
 // import "../styles/globals.css";
 import { BrowserRouter } from "react-router-dom";
@@ -44,6 +46,10 @@ export default function App() {
               <QueryProvider>
                 <NavigationMenu
                   navigationLinks={[
+                    {
+                      label: t("NavigationMenu.pageName"),
+                      destination: "/pagename",
+                    },
                     {
                       label: t("NavigationMenu.pageName"),
                       destination: "/pagename",

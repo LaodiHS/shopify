@@ -91,7 +91,7 @@ export function ProductsCard() {
     };
 
     const clearLocalStorage = () => {
-       localStorage.clear();
+      //  localStorage.clear();
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);

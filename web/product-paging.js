@@ -2,7 +2,7 @@ import { GraphqlQueryError } from "@shopify/shopify-api";
 import shopify from "./shopify.js";
 
 
-const PRODUCTS_QUERY = `query Products($first: Int = 5, $after: String, $variantsFirst: Int = 1, $imagesFirst: Int = 1) {
+const PRODUCTS_QUERY = `query Products($first: Int = 5, $after: String, $variantsFirst: Int = 5, $imagesFirst: Int = 5) {
   products(first: $first, after: $after) {
     edges {
       node {

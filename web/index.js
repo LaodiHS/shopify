@@ -11,6 +11,8 @@ import { updateProductVariantMetafields } from "./variant-update.js";
 import GDPRWebhookHandlers from "./gdpr.js";
 import getProducts from "./product-paging.js";
 import * as util from "util";
+import {generateReport} from "./chat-gpt.js"
+import {body, validationResult} from "express-validator"
 import { request } from "./cache-to-file.js";
 
 const log = (message, obj) =>
@@ -152,26 +154,56 @@ app.post("/api/ai/focused-request", async (req, res) => {
   res.status(status).send({ success: status === 200, data, error });
 });
 
-app.post("/api/ai/general-request", async (req, res) => {
+app.post("/api/ai/general-request", [
+  // Add validation rules for each argument
+  body('productData').exists().withMessage('productData is required').bail().notEmpty().withMessage('productData cannot be empty'),
+  body('includedFocusPoints').exists().withMessage('includedFocusPoints is required').bail().notEmpty().withMessage('includedFocusPoints cannot be empty'),
+  body('languageAndFormattingOptions').exists().withMessage('languageAndFormattingOptions is required').bail().notEmpty().withMessage('languageAndFormattingOptions cannot be empty'),
+  body('requestType').exists().withMessage('requestType is required').bail().notEmpty().withMessage('requestType cannot be empty'),
+
+  // Check for additional arguments
+  body().custom((value, { req }) => {
+    const validKeys = ['productData', 'includedFocusPoints', 'languageAndFormattingOptions', 'requestType'];
+    const bodyKeys = Object.keys(req.body);
+
+    const additionalKeys = bodyKeys.filter(key => !validKeys.includes(key));
+    if (additionalKeys.length > 0) {
+      throw new Error(`Additional arguments found: ${additionalKeys.join(', ')}`);
+    }
+
+    return true;
+  })
+], async (req, res) => {
   let status = 200;
   let error = null;
   let data = null;
+console.log('req.body', req.body);
   try {
-    let firstArg = 5;
-    let afterArg = null;
-    let beforeArg = null;
-    const { options } = req.body;
-    data = options;
+    // Check for validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      status = 400;
+      error = {};
 
-    console.log("data--g->", data);
-
-    data = "our paragraph is";
+      errors.array().forEach(err => {
+        const { param, msg } = err;
+        if (!error[param]) {
+          error[param] = msg;
+        }
+      });
+    } else {
+      
+      // Validation successful, proceed with the request
+      const { productData, includedFocusPoints, languageAndFormattingOptions, requestType } = req.body;
+      data = await generateReport(req.body);
+    }
   } catch (err) {
-    console.log("Error-->", err);
+    console.log("Error", err);
     status = 500;
     error = err.message;
     data = null; // Reset data to null in case of an error
   }
+
   res.status(status).send({ success: status === 200, data, error });
 });
 

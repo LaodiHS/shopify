@@ -181,7 +181,7 @@ export const audienceModel = {
   pageTitle: "Audience",
   sections: [
     {
-      sectionTitle: "Target Audience",
+      sectionTitle: "Audience: ",
       IonItems: [
         {
           IonElement: "IonSelect",
@@ -213,6 +213,27 @@ export const audienceModel = {
               { value: "greek", title: "Greek" },
               { value: "polish", title: "Polish" },
               { value: "swedish", title: "Swedish" },
+            ],
+          },
+        },
+        {
+          IonElement: "IonSelect",
+          label: "Introduction: Select a Context",
+          placeholder: "Select",
+          category: "introduction",
+          default: "none",
+          multiple: false,
+          values: {
+            tag: "ion-select-option",
+            options: [
+              { value: "none", title: "General Intro" },
+              { value: "overview", title: "General Overview" },
+              { value: "problemStatement", title: "Addresses a Problem" },
+              { value: "valueProposition", title: "Unique Value" },
+              { value: "historicalContext", title: "Product History" },
+              { value: "targetAudience", title: "Audience Needs" },
+              { value: "captivatingStory", title: "Captivating Story" },
+              { value: "statistics", title: "Relevant Statistics" },
             ],
           },
         },
@@ -255,27 +276,7 @@ export const audienceModel = {
             ],
           },
         },
-        {
-          IonElement: "IonSelect",
-          label: "Introduction: Select a Context",
-          placeholder: "Select",
-          category: "introduction",
-          default: "none",
-          multiple: false,
-          values: {
-            tag: "ion-select-option",
-            options: [
-              { value: "none", title: "General Intro" },
-              { value: "overview", title: "General Overview" },
-              { value: "problemStatement", title: "Addresses a Problem" },
-              { value: "valueProposition", title: "Unique Value" },
-              { value: "historicalContext", title: "Product History" },
-              { value: "targetAudience", title: "Audience Needs" },
-              { value: "captivatingStory", title: "Captivating Story" },
-              { value: "statistics", title: "Relevant Statistics" },
-            ],
-          },
-        },
+
         {
           IonElement: "IonSelect",
           label: "Feature: Select a Focus for your Product or Idea",
@@ -567,7 +568,7 @@ export const audienceModel = {
           IonElement: "IonSelect",
           label: "Your Audience: Select your audience",
           placeholder: "Select",
-          category: "audience",
+          category: "socialMedia",
           default: "none",
           values: {
             tag: "ion-select-option",

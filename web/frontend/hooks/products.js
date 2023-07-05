@@ -24,8 +24,6 @@ export async function products(setData,first = "", before = "", after = "") {
     const response = await fetch("/api/products/paging", options);
     const data = await response.json();
 
-    console.log("----->", data);
-
     if (response.ok) {
       setData(data.data)
       return data.data;

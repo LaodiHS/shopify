@@ -9,17 +9,18 @@ import {
   IonChip,
 } from "@ionic/react";
 import "./styles/SelectionToggles.module.css";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Context } from "../../utilities/data-context";
-const checkBoxes = new Set();
-export const Toggles = ({
-  onToggleChange,
-  toggles,
-  handleAccordionSelections,
-}) => {
+
+export const Toggles = ({ onToggleChange, toggles }) => {
+  const checkBoxes = new Set();
   const [toggleState, setToggleState] = useState(toggles);
 
-  const [checkBoxSelected, setCheckBoxSelected] = useState([]);
+  const [checkBoxSelected, setCheckBoxSelected] = useState({
+    description: false,
+    post: false,
+    article: false,
+  });
 
   const handleCheckBoxSelection = (checkBoxName) => (event) => {
     if (event.target.checked) {
@@ -27,11 +28,24 @@ export const Toggles = ({
     } else {
       checkBoxes.delete(checkBoxName);
     }
-    Context.setData("AccordionOptions", {checkBoxes: [...checkBoxes], options:[] });
-    
-    setCheckBoxSelected([...checkBoxes]);
 
+    setCheckBoxSelected(
+      (previous) => ({
+        ...previous,
+        [checkBoxName]: event.target.checked,
+      })
+    );
   };
+  
+  useEffect(() => {
+  
+    Context.sendData("AccordionOptions", {
+      checkBoxes: checkBoxSelected,
+      options: [],
+    }, 'useeffects toggles');
+
+
+  }, [checkBoxSelected]);
 
   const handleToggleChange = (toggleName) => (event) => {
     const { checked } = event.target;
@@ -40,6 +54,8 @@ export const Toggles = ({
       [toggleName]: checked,
     }));
     toggles[toggleName] = checked;
+
+  
     onToggleChange(toggleName);
   };
 
@@ -47,37 +63,40 @@ export const Toggles = ({
     <IonGrid>
       <IonRow>
         <IonCol size="12">
-          <IonItem>
+          <IonItem >
+              <div> Apply To:{" "}</div>
             <IonGrid>
-              <IonRow>
+              <IonRow class="ion-justify-content-end">
                 <IonCol size="12" size-md="3">
-                  {/* <IonLabel> */}
-                  Apply Selections To:{" "}
-
+               
+               
                 </IonCol>
                 <IonCol size="12" size-md="3">
                   <IonCheckbox
                     onIonChange={handleCheckBoxSelection("description")}
                     justify="start"
+                    checked={checkBoxSelected["description"]}
                     labelPlacement="end"
                   >
                     Description
                   </IonCheckbox>
                 </IonCol>
-               <IonCol size="12" size-md="3">
-                   <IonCheckbox
+                <IonCol size="12" size-md="3">
+                  <IonCheckbox
                     onIonChange={handleCheckBoxSelection("article")}
                     justify="start"
+                    checked={checkBoxSelected["article"]}
                     labelPlacement="end"
                   >
                     Article
                   </IonCheckbox>
                 </IonCol>
-                     
-               <IonCol size="12" size-md="3">
-                   <IonCheckbox
+
+                <IonCol size="12" size-md="3">
+                  <IonCheckbox
                     onIonChange={handleCheckBoxSelection("post")}
                     justify="start"
+                    checked={checkBoxSelected["post"]}
                     labelPlacement="end"
                   >
                     Post
@@ -101,10 +120,12 @@ export const Toggles = ({
                   label={toggleName}
                   onIonChange={handleToggleChange(toggleName)}
                 >
-                  <IonChip style={{fontSize:"12px"}}>{toggleName
-                    .replace(/([A-Z])/g, " $1")
-                    .toLowerCase()
-                    .trim()}</IonChip>
+                  <IonChip style={{ fontSize: "12px" }}>
+                    {toggleName
+                      .replace(/([A-Z])/g, " $1")
+                      .toLowerCase()
+                      .trim()}
+                  </IonChip>
                 </IonToggle>
               </IonItem>
             </IonCol>

@@ -11,15 +11,33 @@ class SetData {
     this.parent[name] = func;
   }
 
-  setData(fucName, data) {
-    this.getData(fucName, data);
+  sendData(fucName, data, location) {
+    this.setData(fucName, data, location);
   }
 
-  getData(fucName, data) {
-    this.parent[fucName](data, fucName);
+  setData(fucName, data, location) {
+    this.parent[fucName](data, location);
   }
 }
 
 const appContext = new SetData();
 
 export const Context = appContext;
+
+export class Data {
+  constructor(){
+  this.serverOptions= {}
+  this.includeProductDetails= {}
+  this.optionRequirements= {}
+  }
+
+  clearSharedData() {
+    this.serverOptions = {};
+    this.includeProductDetails = {};
+    this.optionRequirements = {};
+  }
+};
+
+const TransmitData = new Data();
+
+export const SharedData= TransmitData;
