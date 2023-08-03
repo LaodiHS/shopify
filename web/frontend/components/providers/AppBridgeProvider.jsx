@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Provider } from "@shopify/app-bridge-react";
 import { Banner, Layout, Page } from "@shopify/polaris";
-
+import { ShopifyProvider } from "./";
 /**
  * A component to configure App Bridge.
  * @desc A thin wrapper around AppBridgeProvider that provides the following capabilities:
@@ -85,8 +85,10 @@ export function AppBridgeProvider({ children }) {
   }
 
   return (
+    <ShopifyProvider session={appBridgeConfig} router={routerConfig}>
     <Provider config={appBridgeConfig} router={routerConfig}>
       {children}
     </Provider>
+    </ShopifyProvider>
   );
 }

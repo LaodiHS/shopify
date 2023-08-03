@@ -1,70 +1,133 @@
-import React, { useState } from "react";
+import React from "react";
 import {
-  IonItem,
+  IonLabel,
+  IonChip,
   IonList,
+  IonItem,
+  IonRadioGroup,
   IonGrid,
   IonRow,
   IonCol,
-  IonInput,
-  IonButton,
-  IonButtons,
-  IonSelect,
-  IonSelectOption,
-  IonLabel,
-  IonToolbar,
-  IonContent,
-  IonTextarea,
-  IonAccordion,
-  IonAccordionGroup,
-  IonItemDivider,
-  IonIcon,
-  IonTitle,
-  IonBadge,
+  IonRadio,
+  IonText,
+  IonThumbnail,
 } from "@ionic/react";
-import { Context } from "../../utilities/data-context";
+import {L} from "../../components"
+const shortenText = (text, maxLength) => {
+  if (text && text.length > maxLength) {
+    return text.substring(0, maxLength) + "...";
+  }
+  return text;
+};
 
-const shortenText = (text) =>
-  text && text.length > 20 ? text.substring(0, 30) + "..." : text;
-export const SelectedOptions = ({descDisplayOptions}) => {
- 
+export function SelectedOptions({ productDescOptions, title, legend }) {
+if(legend){
 
+  legend = legend.reduce((acc,[key, value])=> {
+
+  if(key.includes('variant:')){
+   key = 'title:' + key.split(':')[1]
+
+  }
+  acc[key] = value;
+  return acc;
+},{}) 
+}else {
+  legend={};
+}
+//  console.log('legend------>', legend)
+  const renderOption = (key, option, itemIndex) => {
+    let optionValue, optionKey;
+
+
+
+    if (Array.isArray(option)) {
+
+    } else if (typeof option === "object") {
+     
   
+
+      for (const [ key, value ] of Object.entries(option)) {
+        if (key === "id" || !value) continue;
+        if(key === "title"  && value){
+        optionKey = key;
+        optionValue = value;
+        break;
+        }else{
+
+          optionKey = key;
+          optionValue = value;
+
+        }
+      }
+    } else {
+      optionKey = key;
+      optionValue = option;
+    }
+  // console.log('color', legend[optionValue])
+    return (
+      <IonCol size="12" key={itemIndex + key}>
+        
+        <IonRow>
+          <IonCol size="9">
+        <IonList key={itemIndex + key}>
+          <IonRadioGroup
+            key={itemIndex + key}
+            style={{
+              display: "flex",
+
+              justifyContent: "start",
+            }}
+          >
+            <IonRadio
+              color="success"
+              checked
+              value={{ optionKey } + shortenText(optionValue, 30)}
+              key={itemIndex}
+              justify="space-between"
+            >
+              <IonText
+                color="success"
+                stye={{ fontSize: "12px" }}
+                disabled={true}
+              >
+                {key==='images' && (<IonThumbnail > <img  src={optionValue} /></IonThumbnail>)}
+                {key!=="images" && shortenText(optionValue, 30)}
+              </IonText>
+            </IonRadio> 
+          </IonRadioGroup>
+        
+        </IonList></IonCol> <IonCol size="3"><L r="" c={legend[optionValue] || ""} /> </IonCol></IonRow>
+      </IonCol>
+    );
+  };
 
 
   return (
-    <>
-      {descDisplayOptions.map(([key, value], optionIndex) => {
-        return (
-          <div className="option" key={optionIndex}>
-            <IonLabel className="option-label"></IonLabel>
-            <div className="option-values">
-              {value.map((item, itemIndex) => {
-                if (typeof item === "object") {
-                  return (
-                    <IonBadge
-                      color="tertiary"
-                      key={itemIndex}
-                      className="option-value"
-                    >
-                      {item.key}: {shortenText(item.value)}
-                    </IonBadge>
-                  );
-                } else {
-                  return (
-                    <IonBadge
-                      color="tertiary"
-                      key={itemIndex}
-                      className="option-value"
-                    >
-                      {key}: {shortenText(item)}
-                    </IonBadge>
-                  );
-                }
-              })}
-            </div>
-          </div>
-        );
-      })}
-    </>
+    <IonGrid fixed={true}>
+      {productDescOptions.length > 0 && (
+        <IonItem>
+          <IonLabel>{title}: </IonLabel>
+        </IonItem>
+      )}
+      <IonRow className="ion-padding">
+        {productDescOptions.map(([key, item], optionIndex) => {
+          key = key.replace(/variant_/g, "");
+          key = key.replace(/option_/g, "");
+          return (
+            <React.Fragment key={optionIndex}>
+              <IonCol>
+                <IonText color="secondary">{key}</IonText>
+                <IonRow>
+                  {item.map((option, itemIndex) =>
+                    renderOption(key, option, itemIndex)
+                  )}
+                </IonRow>
+              </IonCol>
+            </React.Fragment>
+          );
+        })}
+      </IonRow>
+    </IonGrid>
   );
-};
+}

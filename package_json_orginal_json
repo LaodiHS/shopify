@@ -6,19 +6,17 @@
   "scripts": {
     "shopify": "shopify",
     "build": "shopify app build",
-    "dev1": "shopify app dev --tunnel-url=https://24e8-2600-1700-dfa0-5740-b857-17c2-301a-4ffb.ngrok-free.app:3000",
+    "dev": "shopify app dev --tunnel-url=https://6cc7-2600-1700-dfa0-5740-4ed-6310-27c1-8e0e.ngrok-free.app:3000",
     "dev": "shopify app dev",
-  
     "info": "shopify app info",
     "generate": "shopify app generate",
     "deploy": "shopify app deploy"
   },
   "dependencies": {
     "@shopify/app": "3.46.5",
-    "@shopify/cli": "3.46.5",
-    "better-queue": "^3.8.12"
+    "@shopify/cli": "3.46.5"
   },
-  "author": "hasan seirafi",
+  "author": "wujimu",
   "private": true,
   "workspaces": [
     "web",

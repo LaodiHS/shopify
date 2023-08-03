@@ -1,7 +1,34 @@
 import { createContext } from "react";
 
-const cachedData = new Set();
-const pagingHistory = [];
+const ProductsMap = new Map();
+const cachedCursorKeys = new Set();
+
+export const productViewCache = {
+  set: function (key, value) {
+    try {
+      ProductsMap.set(key, JSON.parse(JSON.stringify(value)));
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      console.log("error", error);
+    }
+  },
+  get: function (key) {
+    if (ProductsMap.has(key)) {
+      return ProductsMap.get(key);
+    }
+    const page = localStorage.getItem(key);
+    if (page) {
+      try {
+        return JSON.parse(page);
+      } catch (error) {
+        console.log("error", error);
+      }
+    }
+
+    return null;
+  },
+};
+
 export const pageIngCache = {
   setPage: function (key, pageObject) {
     if (!key) {
@@ -10,10 +37,10 @@ export const pageIngCache = {
       );
     }
 
- 
     try {
+      ProductsMap.set(key, JSON.parse(JSON.stringify(pageObject)));
       localStorage.setItem(key, JSON.stringify(pageObject));
-      cachedData.add(key);
+      cachedCursorKeys.add(key);
     } catch (error) {
       console.error("An error occurred while storing data:", error);
     }
@@ -27,6 +54,9 @@ export const pageIngCache = {
     }
 
     try {
+      if (ProductsMap.has(key)) {
+        return ProductsMap.get(key);
+      }
       const page = localStorage.getItem(key);
       if (page) {
         return JSON.parse(page);
@@ -38,15 +68,17 @@ export const pageIngCache = {
     return null;
   },
   clearAllCaches() {
-    cachedData.forEach((key) => {
+    cachedCursorKeys.forEach((key) => {
       localStorage.removeItem(key);
     });
-    cachedData.clear();
+    cachedCursorKeys.clear();
+    ProductsMap.clear();
   },
   clearKey(key) {
-    if (cachedData.has(key)) {
-      cachedData.delete(key);
+    if (cachedCursorKeys.has(key)) {
+      cachedCursorKeys.delete(key);
       localStorage.removeItem(key);
+      ProductsMap.clear();
     }
   },
 };
@@ -60,8 +92,9 @@ export const urlCache = {
     }
 
     try {
+      ProductsMap.set(key, JSON.parse(JSON.stringify(pageObject)));
       localStorage.setItem(key, JSON.stringify(pageObject));
-      cachedData.add(key);
+      cachedCursorKeys.add(key);
     } catch (error) {
       console.error("An error occurred while storing data:", error);
     }
@@ -75,6 +108,9 @@ export const urlCache = {
     }
 
     try {
+      if (ProductsMap.has(key)) {
+        return ProductsMap.get(key);
+      }
       const page = localStorage.getItem(key);
 
       if (page) {
@@ -87,22 +123,22 @@ export const urlCache = {
     return null;
   },
   clearAllCaches() {
-    cachedData.forEach((key) => {
+    cachedCursorKeys.forEach((key) => {
       localStorage.removeItem(key);
     });
     cachesData.clear();
+    ProductsMap.clear();
   },
   clearKey(key) {
-    if (cachedData.has(key)) {
-      cachedData.delete(key);
+    if (cachedCursorKeys.has(key)) {
+      cachedCursorKeys.delete(key);
       localStorage.removeItem(key);
+      ProductsMap.clear();
     }
   },
 };
 
-
-
-export class History {
+class LHistory {
   constructor(name) {
     this.name = name;
     this.index = 0;
@@ -154,7 +190,7 @@ export class History {
   }
 
   hasCurrentPage() {
-    return this.pagingState.length > 1;
+    return this.pagingState.length >= 1;
   }
 
   hasNextPage() {
@@ -176,6 +212,9 @@ export class History {
   }
 }
 
+const History = new LHistory("pagingHistory");
+export { History };
+
 export const formatProducts = (productData, key) => {
   if (
     productData.data &&
@@ -186,7 +225,6 @@ export const formatProducts = (productData, key) => {
   ) {
     const formattedProducts = productData.data.body.data.products.edges.map(
       (edge) => {
-       
         const product = edge.node;
         const formattedProduct = {
           id: product.id,
@@ -247,10 +285,15 @@ export const formatProducts = (productData, key) => {
         return formattedProduct;
       }
     );
-    formattedProducts.pageInfo = productData.data.body.data.products.pageInfo;
-    formattedProducts.extensions = productData.data.body.extensions;
+    const productsObject = {
+      productsData: formattedProducts,
+      pageInfo: JSON.parse(
+        JSON.stringify(productData.data.body.data.products.pageInfo)
+      ),
+      extensions: JSON.parse(JSON.stringify(productData.data.body.extensions)),
+    };
 
-    return formattedProducts;
+    return productsObject;
   } else {
     if (key) {
       urlCache.clearKey(key);
@@ -259,34 +302,30 @@ export const formatProducts = (productData, key) => {
   }
 };
 
+const handlePopulate = async () => {
+  setIsLoading(true);
+  const response = await fetch.get("/api/products/create");
 
-  const handlePopulate = async () => {
-    setIsLoading(true);
-    const response = await fetch.get("/api/products/create");
+  if (response.ok) {
+    await refetchProductCount();
+    setToastProps({
+      content: t("ProductsCard.productsCreatedToast", {
+        count: productsPerPage,
+      }),
+    });
+  } else {
+    setIsLoading(false);
+    setToastProps({
+      content: t("ProductsCard.errorCreatingProductsToast"),
+      error: true,
+    });
+  }
+};
 
-    if (response.ok) {
-      await refetchProductCount();
-      setToastProps({
-        content: t("ProductsCard.productsCreatedToast", {
-          count: productsPerPage,
-        }),
-      });
-    } else {
-      setIsLoading(false);
-      setToastProps({
-        content: t("ProductsCard.errorCreatingProductsToast"),
-        error: true,
-      });
-    }
-  };
-
-
-  const l = {
-    antanaclasis: "The repeated use of a word in different senses or meanings.",
-    oxymoron: "The juxtaposition of two contradictory terms or ideas.",
-    chiasmus: "The reversal of the order of words in two parallel clauses.",
-    antithesis:
-      "The juxtaposition of contrasting ideas in a balanced or parallel structure.",
-  };
-
-
+const l = {
+  antanaclasis: "The repeated use of a word in different senses or meanings.",
+  oxymoron: "The juxtaposition of two contradictory terms or ideas.",
+  chiasmus: "The reversal of the order of words in two parallel clauses.",
+  antithesis:
+    "The juxtaposition of contrasting ideas in a balanced or parallel structure.",
+};

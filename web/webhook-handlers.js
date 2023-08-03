@@ -1,5 +1,6 @@
 import { DeliveryMethod } from "@shopify/shopify-api";
-
+import productTaggingQueue from "./product-tagging-queue.js";
+const receievedWebhooks = {};
 /**
  * @type {{[key: string]: import("@shopify/shopify-api").WebhookHandler}}
  */
@@ -10,6 +11,22 @@ export default {
    *
    * https://shopify.dev/docs/apps/webhooks/configuration/mandatory-webhooks#customers-data_request
    */
+  PRODUCTS_UPDATE: {
+    deliveryMethod: DeliveryMethod.Http,
+    callbackUrl: "/api/webhooks",
+    callback: async (topic, shop, body, webhookId) => {
+      // Check we haven't already receieved this webhook
+      console.log('hit====>', webhookId)
+    if (receievedWebhooks[webhookId]) return;
+      // Add to our list of receieved webhooks
+            receievedWebhooks[webhookId] = true;
+     // Add to our queue for processing
+      const product = JSON.parse(body);
+      productTaggingQueue.push({shop, product});
+    },
+  },
+
+
   CUSTOMERS_DATA_REQUEST: {
     deliveryMethod: DeliveryMethod.Http,
     callbackUrl: "/api/webhooks",
@@ -83,4 +100,14 @@ export default {
       // }
     },
   },
+  APP_SUBSCRIPTIONS_UPDATE: {
+    deliveryMethod: DeliveryMethod.Http,
+    callbackUrl: "/api/webhooks",
+    callback: async (topic, shop, body, webhookId) => {
+      const payload = JSON.parse(body);
+      console.log(shop, "shop");
+      console.log(payload, "payload");
+    }
+  },
+
 };

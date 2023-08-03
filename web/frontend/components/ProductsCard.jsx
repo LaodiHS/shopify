@@ -1,116 +1,69 @@
 import React, { useState, useEffect } from "react";
-import { Card, TextContainer, Text, Button, Spinner } from "@shopify/polaris";
-import { Toast } from "@shopify/app-bridge-react";
-import { useTranslation } from "react-i18next";
-import { useAppQuery, useAuthenticatedFetch, products } from "../hooks";
+import { useAuthenticatedFetch } from "../hooks";
 import { ListComponent } from "./ListComponent";
+import { useProductDataContext } from "../components";
+import { useNavigate } from "react-router-dom";
 import {
-  IonButtons,
-  IonContent,
-  IonButton,
   IonSpinner,
   IonText,
+  IonButton,
+  IonButtons,
+  IonToolbar,
+  IonIcon,
+  IonTitle,
+  IonHeader,
+  IonPage,
+  IonContent,
+  IonGrid,
+  IonRow,
+  IonCol,
 } from "@ionic/react";
-import {
-  urlCache,
-  pageIngCache,
-  History,
-  formatProducts,
-} from "../utilities/store";
-
-const pagingHistory = new History("pagingHistory");
+import { chevronBack, chevronForward } from "ionicons/icons";
+import { pageIngCache, History, formatProducts } from "../utilities/store";
 
 export function ProductsCard() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [currentIndexPage, setCurrentIndexPage] = useState(pagingHistory.getCurrentIndex());
-  const [hasNextIndexPage, setNextIndexPage] = useState(false);
+  const pagingHistory = History;
   const fetch = useAuthenticatedFetch();
 
-  const productsPerPage = 5;
-  const [productData, setProductData] = useState(null);
 
-  const setReactStates = (formattedData) => {
-    setNextIndexPage(formattedData?.pageInfo?.hasNextPage);
-   
-    setProductData(formattedData);
-    setCurrentIndexPage(pagingHistory.getCurrentIndex());
-    setIsLoading(false);
-  };
 
-  const setPaging = (data) => {
-    const formattedData = formatProducts(data);
-    const { startCursor } = formattedData.pageInfo;
-    pageIngCache.setPage(startCursor, data);
-    if (!pagingHistory.includes(startCursor)) {
-       pagingHistory.push(startCursor);
-     }
-   
-    setReactStates(formattedData);
-  };
+  const productsPerPage = 20;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
 
-      if (pagingHistory.hasCurrentPage()) {
-        const cachedData = pageIngCache.getPage(pagingHistory.getCurrentPage());
-        if (cachedData) {
-        // setPaging(cachedData)
-          const formattedData = formatProducts(cachedData);
-          setReactStates(formattedData);
-          return;
-        }
-      }
+  const {
+    isProductsLoading,
+    setProductsLoading,
+    currentIndexPage,
+    defineCurrentIndexPage,
+    hasNextIndexPage,
+    defineNextIndexPage,
+    productsData,
+    defineProductsData,
+  
+    setPaging,
+  } = useProductDataContext();
 
-      try {
-        const response = await fetch("/api/products/paging", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            first: productsPerPage,
-            before: "",
-            after: "",
-          }),
-        });
+const [products, setProducts] =  useState([])
 
-        const data = await response.json();
-        setPaging(data);
-      } catch (error) {
-        console.error(error);
-      }
-    };
 
-    fetchData();
 
-    const handleBeforeUnload = (event) => {
-      event.preventDefault();
-      event.returnValue = "Are you sure you want to leave this page?";
-      window.addEventListener("unload", clearLocalStorage);
-    };
 
-    const clearLocalStorage = () => {
-      //  localStorage.clear();
-    };
 
-    window.addEventListener("beforeunload", handleBeforeUnload);
 
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
-  }, []);
+
+
+
 
   const handleNextPage = async () => {
-    setIsLoading(true);
 
-    if (productData?.pageInfo?.hasNextPage) {
-      const { endCursor } = productData.pageInfo;
-
+    setProductsLoading(true);
+    if (productsData?.pageInfo?.hasNextPage) {
+      const { endCursor } = productsData.pageInfo;
       if (pagingHistory.hasNextPage()) {
         const cached = pageIngCache.getPage(pagingHistory.getNextPage());
-        const formattedData = formatProducts(cached);
-        setReactStates(formattedData);
+        const formattedData = cached;
+        setPaging(formattedData);
+        setProductsLoading(false);
         return;
       }
 
@@ -128,64 +81,89 @@ export function ProductsCard() {
         });
 
         const data = await response.json();
-        setPaging(data);
+        const format = formatProducts(data);
+        setPaging(format);
+        setProductsLoading(false);
       } catch (error) {
+        setProductsLoading(false);
         console.error("There was an Error getting the Data:", error);
       }
     }
   };
 
   const handlePreviousPage = async () => {
-    setIsLoading(true);
+  
+
     if (
-      productData?.pageInfo?.hasPreviousPage &&
+      productsData?.pageInfo?.hasPreviousPage &&
       pagingHistory?.hasPreviousPage()
     ) {
+      setProductsLoading(true);
       const cachedData = pageIngCache.getPage(pagingHistory.getPreviousPage());
-      const formattedData = formatProducts(cachedData);
-      setReactStates(formattedData);
+      const formattedData = cachedData;
+      setPaging(formattedData); 
+      setProductsLoading(false);
     }
+  
   };
-  const dataArray = isLoading ? [] : productData;
-  // const productsList = { pageTitle: "products", sections: dataArray };
 
+  
+
+  // console.log('isProductsLoading', isProductsLoading)
+  if (isProductsLoading || !productsData || !productsData.productsData.length) {
+    return (
+      <IonPage>
+      <IonContent>
+        <IonGrid style={{ height: "100vh" }}>
+          <IonRow
+            className="ion-justify-content-center ion-align-items-center"
+            style={{ height: "100%" }}
+          >
+            <IonCol size="auto">
+              <IonSpinner
+                style={{ width: "100px", height: "100px" }}
+                color="tertiary"
+              ></IonSpinner>
+            </IonCol>
+          </IonRow>
+        </IonGrid>
+      </IonContent></IonPage>
+    );
+  }
   return (
-    <>
-      <div
-        className="ion-padding"
-        style={{ display: "flex", justifyContent: "flex-end" }}
-      >
-        <IonButton
-          fill="clear"
-          className="ion-padding-end"
-          onClick={handlePreviousPage}
-          disabled={currentIndexPage === 0}
-        >
-          Previous Page
-        </IonButton>
-        <IonButton
-          fill="clear"
-          className="ion-padding-start"
-          onClick={handleNextPage}
-          disabled={!hasNextIndexPage}
-        >
-          Next Page
-        </IonButton>
-      </div>
-      {isLoading ? (
-        <div
-          className="ion-padding"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            height: "100vh",
-          }}
-        >
-          <IonSpinner color="primary" />
-        </div>
-      ) : dataArray.length > 0 ? (
-        <ListComponent data={dataArray} />
+    <IonPage>
+      <IonHeader translucent={true}>
+        <IonToolbar>
+          <IonButtons slot="secondary">
+            <IonButton
+              fill="clear"
+              size="small"
+              className="ion-padding-end"
+              onClick={handlePreviousPage}
+              disabled={currentIndexPage === 0}
+            >
+              <IonIcon icon={chevronBack} />
+              Previous
+            </IonButton>
+          </IonButtons>
+          <IonButtons slot="primary">
+            <IonButton
+              fill="clear"
+              size="small"
+              className="ion-padding-start"
+              onClick={handleNextPage}
+              disabled={!hasNextIndexPage}
+            >
+              Next
+              <IonIcon icon={chevronForward} />
+            </IonButton>
+          </IonButtons>
+          <IonTitle>Product List</IonTitle>
+        </IonToolbar>
+      </IonHeader>
+
+      {!isProductsLoading && productsData.productsData.length > 0 ? (
+        <ListComponent />
       ) : (
         <div className="ion-padding">
           <IonText color="medium" className="ion-text-center">
@@ -193,6 +171,6 @@ export function ProductsCard() {
           </IonText>
         </div>
       )}
-    </>
+    </IonPage>
   );
 }

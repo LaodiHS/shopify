@@ -10,6 +10,7 @@ import {
   IonTitle,
   IonSearchbar,
   IonToolbar,
+  IonThumbnail,
 } from "@ionic/react";
 
 function AppTypeahead({
@@ -25,19 +26,16 @@ function AppTypeahead({
   ]);
 
   const isChecked = (value) => {
-   
     return workingSelectedValues.find((item) => item === value) !== undefined;
   };
 
   const cancelChanges = () => {
-    
     if (onSelectionCancel !== undefined) {
       onSelectionCancel();
     }
   };
 
   const confirmChanges = () => {
-    
     if (onSelectionChange !== undefined) {
       onSelectionChange(workingSelectedValues);
     }
@@ -77,15 +75,11 @@ function AppTypeahead({
 
   const checkboxChange = (ev) => {
     const { checked, value } = ev.detail;
-console.log('value', value);
-console.log('checked', checked);
-
-
     if (checked) {
       setWorkingSelectedValues([...workingSelectedValues, value]);
     } else {
       setWorkingSelectedValues(
-        workingSelectedValues.filter((item) => item!== value)
+        workingSelectedValues.filter((item) => item !== value)
       );
     }
   };
@@ -102,28 +96,33 @@ console.log('checked', checked);
             <IonButton onClick={confirmChanges}>Done</IonButton>
           </IonButtons>
         </IonToolbar>
-        <IonToolbar>
-          <IonSearchbar onIonInput={searchbarInput}></IonSearchbar>
-        </IonToolbar>
+        {/* <IonToolbar> */}
+          {/* <IonSearchbar onIonInput={searchbarInput}></IonSearchbar> */}
+        {/* </IonToolbar> */}
       </IonHeader>
 
-      <IonContent color="light" class="ion-padding">
+      <IonContent color="light" className="ion-padding">
         <IonList inset={true}>
-          {filteredItems.map((item) => {
-            // console.log('item',item)
-            
+          {filteredItems.map((item,index) => {
+           
             return (
-            <IonItem key={item.transformedSrc}>
-              <IonCheckbox
-                value={item.transformedSrc}
-                checked={isChecked(item.transformedSrc)}
-                onIonChange={checkboxChange}
-              >
-              is checked  {isChecked(item.transformedSrc)}
-                {/* {item.transformedSrc} */}
-              </IonCheckbox>
-            </IonItem>
-          )
+              <IonItem key={item.transformedSrc}>
+                <IonThumbnail style={{"--border-radius": "10px"}} slot="start">
+                  <img src={item.transformedSrc} />
+                </IonThumbnail>
+
+                <IonCheckbox
+            
+                  justification="end"
+                  labelPlacement="end"
+                  value={item.transformedSrc}
+                  checked={isChecked(item.transformedSrc)}
+                  onIonChange={checkboxChange}
+                >
+                  
+                </IonCheckbox>
+              </IonItem>
+            );
           })}
         </IonList>
       </IonContent>

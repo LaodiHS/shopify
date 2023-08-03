@@ -4,7 +4,7 @@ import { Autocomplete, Icon } from "@shopify/polaris";
 import { SearchMinor } from "@shopify/polaris-icons";
 import { useState, useCallback, useMemo } from "react";
 import { IonSearchbar, IonSelect, IonSelectOption } from "@ionic/react";
-
+import { ListDetailComponent } from "./ListDetailComponent";
 const options = [
   { value: "option1", label: "Option 1" },
   { value: "option2", label: "Option 2" },
@@ -33,8 +33,8 @@ export  function Search() {
       />
 
       <IonSelect value={selectedOption} onIonChange={handleOptionSelect}>
-        {options.map((option) => (
-          <IonSelectOption key={option.value} value={option.value}>
+        {options.map((option, index) => (
+          <IonSelectOption key={index} value={option.value}>
             {option.label}
           </IonSelectOption>
         ))}

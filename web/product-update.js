@@ -25,7 +25,7 @@ export default async function descriptionUpdate(session, productId, descriptionH
           },
         });
     } catch (error) {
-    
+
         if (error instanceof GraphqlQueryError) {
             throw new Error(
                 `${error.message}\n${JSON.stringify(error.response, null, 2)}`

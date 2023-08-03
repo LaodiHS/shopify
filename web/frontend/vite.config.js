@@ -58,6 +58,10 @@ export default defineConfig({
     proxy: {
       "^/(\\?.*)?$": proxyOptions,
       "^/api(/|(\\?.*)?$)": proxyOptions,
+      "^/sse(/|(\\?.*)?$)": proxyOptions,
+      
+       // Add the ngrok tunnel URL as an allowed origin
+       "https://contests-excess-papers-pioneer.trycloudflare.com": proxyOptions,
     },
   },
 });

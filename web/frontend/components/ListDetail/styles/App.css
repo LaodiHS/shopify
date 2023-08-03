@@ -1,0 +1,41 @@
+/* CSS file */
+.ion-page {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    will-change: transform;
+    transition: transform 0.3s ease;
+  }
+  
+  .ion-page.ion-page-enter,
+  .ion-page.ion-page-leave {
+    transform: translateX(100%);
+  }
+  
+  .ion-page.ion-page-enter-active,
+  .ion-page.ion-page-leave-active {
+    transform: translateX(0);
+  }
+  
+
+
+  /* CSS */
+.typewriter p{
+  overflow: hidden; /* Hide overflowing characters */
+  white-space: nowrap; /* Prevent line breaks */
+  animation: typewriter 2s steps(40) 1s forwards; /* Use the 'typewriter' animation */
+}
+
+@keyframes typewriter {
+  from {
+    width: 0; /* Start with a width of 0 (no characters visible) */
+  }
+  to {
+    width: 100%; /* Gradually increase the width to show all characters */
+  }
+}
+
+ion-toast.custom-toast::part(message) {
+  font-size: 15px;
+}

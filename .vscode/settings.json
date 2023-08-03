@@ -1,3 +1,16 @@
 {
-  "cSpell.words": ["metafields", "uuidv"]
+  "cSpell.words": [
+    "bullmq",
+    "metafields",
+    "uuidv"
+  ],
+  "sqltools.connections": [
+    {
+      "previewLimit": 50,
+      "driver": "SQLite",
+      "database": "${workspaceFolder:ai-craft}/web/database.sqlite",
+      "name": "sqlshipify"
+    }
+  ],
+  "sqltools.useNodeRuntime": true
 }

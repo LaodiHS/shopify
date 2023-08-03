@@ -1,0 +1,20 @@
+# fly.toml app configuration file generated for brain-ai on 2023-06-11T08:49:40-07:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = "brain-ai"
+primary_region = "lax"
+
+[env]
+  HOST = "https://brain-ai.fly.dev"
+  PORT = "8081"
+  SCOPES = "write_products, read_discounts"
+  SHOPIFY_API_KEY = "20d3dbbd853820ce35da861eed943481"
+
+[http_service]
+  internal_port = 8081
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
