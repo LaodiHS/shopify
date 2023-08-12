@@ -18,16 +18,20 @@ import { request } from "./cache-to-file.js";
 import { billingConfig, createUsageRecord } from "./billing.js";
 import { updateSubscription } from "./subscriptionManager.js";
 import productTagger from "./product-tagger.js";
+import { contentGenerator } from "./shopifyContentGenerator.js";
 import {
   handleDescriptionEndpoints,
   handleArticleEndpoints,
   handlePostEndpoints,
 } from "./description-requests.js";
+
+
+
 import * as userStore from "./userStore.js";
 const isTest = true;
 const reconciliation = {};
 const log = (message, obj) =>
-  console.log(message + ": ", util.inspect(obj, { depth: null, colors: true }));
+  console.log(message + ": ", util.inspect(obj, { depth: null, colors: true, showHidden:false, compact:true }));
 
 async function startServer() {
   try {
@@ -203,6 +207,7 @@ async function startServer() {
         }
       }
     );
+    
 
     app.post(
       "/api/store-api",
@@ -216,7 +221,7 @@ async function startServer() {
         res.status(201).json({ message: "User data written successfully." });
       })
     );
-
+contentGenerator(app)
     app.get("/api/user", async (_req, res) => {
       const userData = await shopify.api.rest.User.all({
         session: res.locals.shopify.session,
@@ -342,42 +347,42 @@ async function startServer() {
       res.status(status).send({ success: status === 200, error });
     });
 
-    app.post("/api/ai/options", async (req, res) => {
-      let status = 200;
-      let error = null;
-      console.log("options:", JSON.stringify(req.body));
+    // app.post("/api/ai/options", async (req, res) => {
+    //   let status = 200;
+    //   let error = null;
+    //   console.log("options:", JSON.stringify(req.body));
 
-      try {
-      } catch (e) {
-        status = 500;
-        error = e.message;
-      }
-      const { options } = req.body;
-      res.status(status).send({ options, success: status === 200, error });
-    });
+    //   try {
+    //   } catch (e) {
+    //     status = 500;
+    //     error = e.message;
+    //   }
+    //   const { options } = req.body;
+    //   res.status(status).send({ options, success: status === 200, error });
+    // });
 
-    app.post("/api/ai/focused-request", async (req, res) => {
-      let status = 200;
-      let error = null;
-      let data = null;
-      try {
-        let firstArg = 5;
-        let afterArg = null;
-        let beforeArg = null;
-        const { options } = req.body;
-        data = options;
+    // app.post("/api/ai/focused-request", async (req, res) => {
+    //   let status = 200;
+    //   let error = null;
+    //   let data = null;
+    //   try {
+    //     let firstArg = 5;
+    //     let afterArg = null;
+    //     let beforeArg = null;
+    //     const { options } = req.body;
+    //     data = options;
 
-        console.log("data-f-->", data);
+    //     console.log("data-f-->", data);
 
-        data = "our paragraph is";
-      } catch (err) {
-        console.log("Error-->", err);
-        status = 500;
-        error = err.message;
-        data = null; // Reset data to null in case of an error
-      }
-      res.status(status).send({ success: status === 200, data, error });
-    });
+    //     data = "our paragraph is";
+    //   } catch (err) {
+    //     console.log("Error-->", err);
+    //     status = 500;
+    //     error = err.message;
+    //     data = null; // Reset data to null in case of an error
+    //   }
+    //   res.status(status).send({ success: status === 200, data, error });
+    // });
 
     app.post("/api/products/paging", async (req, res) => {
       let status = 200;
@@ -392,7 +397,7 @@ async function startServer() {
         firstArg = first || 5;
         afterArg = after || null;
   
-        console.log("shop---->", res.locals.shopify.session);
+      
         data = await getProducts(
           res.locals.shopify.session,
           firstArg,
@@ -408,13 +413,15 @@ async function startServer() {
       res.status(status).send({ success: status === 200, data, error });
     });
 
+
     app.post("/api/products/update/description", async (req, res) => {
       let status = 200;
       let error = null;
+      let data = null
       try {
         if (req.body.productId && req.body.descriptionHtml) {
           const { productId, descriptionHtml } = req.body;
-          const response = await descriptionUpdate(
+           data = await descriptionUpdate(
             res.locals.shopify.session,
             `gid://shopify/Product/${productId}`,
             descriptionHtml
@@ -424,7 +431,7 @@ async function startServer() {
         status = 500;
         error = e.message;
       }
-      res.status(status).send({ success: status === 200, error });
+      res.status(status).send({ success: status === 200,data, error });
     });
 
     // app.get("/api/products/create", async (_req, res) => {
@@ -457,8 +464,9 @@ async function startServer() {
     app.use(serveStatic(STATIC_PATH, { index: false }));
 
     const skipEnsureInstalledOnShop = (req, res, next) => {
+      //   log("ensure installed------->", req);
       if (req.path === "/sse/stream") {
-        console.log("req---->", req.query.locals);
+     
         res.locals.shopify = req.query.locals;
 
         // Skip the shopify.ensureInstalledOnShop() middleware for /sse/stream

@@ -7,14 +7,14 @@ const Marker = ({ r, c }) => {
 
   const style = {
     backgroundColor: c || "transparent",
-    width: "15px",
-    height: "15px",
+    width: "10px",
+    height: "10px",
     display: "inline",
-    borderRadius: "50px",
-    display: "inline-block",
+    borderRadius: "10px",
+   // display: "inline-block",
   };
   const styleText = {
-    padding: "25px",
+  backgroundColor:c,
   };
   if (
     r.includes("jpg") ||
@@ -30,16 +30,32 @@ const Marker = ({ r, c }) => {
   }
 
   return (
-    <IonGrid>
-    <IonRow style={{ textAlign: "center" }}>
- 
-      <IonCol>
-       <IonText style={{ ...styleText, textAlign: "right" }} color="success">
-          *{r}
-        </IonText> <span style={style}></span>
+   <sub style={{
+    verticalAlign: "super",
+    fontSize: "75%"
+}}>
+    {/* <IonGrid>
+    <IonRow 
+    // style={{ textAlign: "center" } }
+    >
+      <IonCol size="auto"> */}
+
+
+       <IonText style={{ ...styleText, verticalAlign: "super",
+        // textAlign: "right" 
+      }
+        } color="medium">
+          {r.trim()}
+          {/* <span style={style}></span>  */}
+         </IonText> 
+      
+{/*       
       </IonCol>
     </IonRow>
-  </IonGrid>
+  </IonGrid> */}
+ 
+ 
+  </sub> 
   );
 };
 

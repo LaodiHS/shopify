@@ -567,6 +567,44 @@ function generateLanguageRequirementsList(language) {
         tokens: 23,
       },
     },
+    engagingFormats :{
+      textWithVisuals: {
+        prompt: "Create a series of brief slides with concise text to tell a story or convey a message. Enhance each slide using imagery, animations, or graphics.",
+      },
+      quotesMessages: {
+        prompt: "Share inspirational quotes, motivating messages, or thought-provoking statements. Divide them into multiple slides to emphasize and leave an impact.",
+      },
+      howToTips: {
+        prompt: "Provide quick tips, life hacks, or step-by-step instructions. Split the content across multiple slides, highlighting each tip or step.",
+      },
+      factsStatistics: {
+        prompt: "Present intriguing facts, statistics, or trivia with visual appeal. Unveil each piece of information one by one across different slides.",
+      },
+      storytelling: {
+        prompt: "Engage viewers with short, captivating stories. Use cliffhangers to encourage swiping for the next part of the story.",
+      },
+      questionAnswer: {
+        prompt: "Ask a question on one slide and offer the answer on the next. Encourage audience engagement and interaction.",
+      },
+      beforeAfter: {
+        prompt: "Showcase transformations, makeovers, or progress using a before-and-after approach. Each slide reveals a different stage of change.",
+      },
+      listsRankings: {
+        prompt: "Create lists or rankings of items, ideas, or preferences. Number the slides to guide viewers through the list.",
+      },
+      miniBlogInsights: {
+        prompt: "Share bite-sized insights, mini-blog posts, or reflections. Split the content into several slides for a series of concise thoughts.",
+      },
+      wordplayPuns: {
+        prompt: "Craft clever wordplay, puns, or jokes that unfold across multiple slides. Entertain and engage your audience with humor.",
+      },
+      fictionalStories: {
+        prompt: "Write brief fictional stories or scenarios that span across slides. Keep viewers engaged by revealing the plot gradually.",
+      },
+      educationalNuggets: {
+        prompt: "Share interesting facts, history, or cultural insights in small, digestible portions across multiple slides.",
+      }
+    },
     socialMedia: {
       none: {
         prompt:
@@ -603,11 +641,7 @@ function generateLanguageRequirementsList(language) {
           "Choose the target audience for Snapchat, focusing on users who prefer ephemeral and interactive content experiences on this platform.",
         tokens: 21,
       },
-      tiktok: {
-        prompt:
-          "Select the target audience for TikTok, focusing on users who enjoy short-form videos and participate in trends and challenges on this platform.",
-        tokens: 21,
-      },
+
       youtube: {
         prompt:
           "Choose the target audience for YouTube, focusing on users who consume and engage with video content across various topics and genres on this platform.",
@@ -787,23 +821,46 @@ export async function generateReport({
 
 const colors = generateComplementaryScheme("#A66F2E", 200);
 
+
+
+
+
 function imageId(url) {
-  const regex = /\/products\/([a-f0-9]+)\.jpg/i;
-  const match = url.match(regex);
-  return match ? match[1] : null;
+  if (!url) {
+    "report this error imageId:" + Math.random().toString();
+  }
+  let indexOfLastPeriod = url.lastIndexOf(".");
+  if (indexOfLastPeriod === -1) {
+    indexOfLastPeriod = url.length;
+  }
+  let lastBackSlash = url.lastIndexOf("/");
+  if (lastBackSlash === -1) {
+    lastBackSlash = -5 + indexOfLastPeriod;
+  }
+
+  return url.slice(-lastBackSlash + indexOfLastPeriod, indexOfLastPeriod);
 }
 
 function toSingular(word) {
-  const singularRegex = /(s|es|ies|ves|oes|ches|shes|xes)$/i;
-  return word.replace(singularRegex, "");
+  if (!word) {
+    "report this error singular:" + Math.random().toString();
+  }
+
+  return pluralize.singular(word);
 }
 
 const filterKey = (label) => {
+  if (!label) {
+    "report this error filterKey" + Math.random().toString();
+  }
   label = label.replace(/^.*?_/g, "");
   return toSingular(label);
 };
 
 const filterElement = (label) => {
+  if (!label) {
+    "report this error filterElement:" + Math.random().toString();
+  }
   label = label.replace(/([a-z])([A-Z])/g, "$1 $2").trim();
   label = label
     .replace(/inventory/g, "")
@@ -837,25 +894,25 @@ function focusRequirements(productData, details, requirements) {
   const lines = [];
 
   const addLine = (text) => lines.push(text);
-  const addLineFront = (text) => lines.unshift(text)
+  const addLineFront = (text) => lines.unshift(text);
   const addHeading = (heading) => addLine(`\n${heading}`);
+const addQuotes= (text) => text.length ? `"${text}"`: '';
 
   const addProductDescription = (exampleDetails, exampleStyles) => {
     const exampleDetailsStr = exampleDetails
-    .slice(-1)
-    .map(([key, value]) => `(${key} - ${value})`)
-    .join(" or ");
+      .slice(-1)
+      .map(([key, value]) => `(${key} - ${value})`)
+      .join(", ");
 
-  const exampleStylesStr = exampleStyles
-    .slice(-1)
-    .map(([key, value]) => `(${key} - ${value})`)
-    .join(" or ");
+    const exampleStylesStr = exampleStyles
+      .slice(-1)
+      .map(([key, value]) => `(${key} - ${value})`)
+      .join(",  ");
     const title = productData.title.replace(/\n/g, "");
     addLineFront(
-      `Compose a narrative that introduces the ${title} and creatively incorporates the following product details using the narrative stylistic requirements below. In this document are unique identifiers; they look like this ${exampleDetailsStr}. These are all requirements. Reference them in the composition as labels, where you fulfill a requirement. Example: ${exampleStylesStr} or ${exampleDetailsStr}.`
+      `Compose a narrative that introduces the ${title} and creatively incorporates the following product details using the narrative stylistic requirements below. In this document are unique identifiers; they look like this ${addQuotes(exampleDetailsStr)}. These are all requirements. Reference them in the composition as labels, where you fulfill a requirement. Examples: ${addQuotes(exampleStylesStr)}  ${addQuotes(exampleDetailsStr)}`
     );
     addLineFront(`Product Name: ${title}`);
-
   };
 
   const addSectionDetails = (section, heading) => {
@@ -876,9 +933,10 @@ function focusRequirements(productData, details, requirements) {
             } else if (key === "images") {
               legend.push([element, color]);
               exampleDetails.push([imageId(element), id]);
-              line = `\n\t${index + 1}. ${element}\n\t${imageId(
-                element
-              ).slice(-9)} : ${id}.\n`;
+              console.log("element---->", element);
+              line = `\n\t${index + 1}. ${element}\n\t${imageId(element).slice(
+                -9
+              )} : ${id}.\n`;
             } else if (key === "description") {
               exampleDetails.push(["description", id]);
               line = `\n\t${index + 1}. ${element}\n\tdescription : ${id}.`;
@@ -902,8 +960,6 @@ function focusRequirements(productData, details, requirements) {
         !["collections", "images", "description"].includes(headings[0])
     );
     other.forEach(([key, elements]) => {
-   
-
       if (key.includes("variant")) {
         let focus = `${key.replace(/[_]/g, ": ")}`;
 
@@ -933,7 +989,9 @@ function focusRequirements(productData, details, requirements) {
         let focus = `${key.replace(/[_]/g, ": ")}`;
         const { color, id } = getColor();
         legend.push([focus.slice(), color]);
-        focus = `Creatively incorporate these selectable ${pluralize(focus.replace(/(\w+)\s*:\s*(\w+)/g, "$2"))} in the composition:`;
+        focus = `Creatively incorporate these selectable ${pluralize(
+          focus.replace(/(\w+)\s*:\s*(\w+)/g, "$2")
+        )} in the composition:`;
 
         addLine(`${focus}\n`);
         elements.forEach((element, index) => {
@@ -997,8 +1055,9 @@ function focusRequirements(productData, details, requirements) {
           color,
         ]);
         addLine(
-          `\t${key === "rhetorical" ? "" : narrativeStyle.prompt}\n\t${arrayStyles.length > 1 ? i + 1 + " " : ""}(${
-            adjustedLabels(narrativeStyle.value, key, i + 1)} - ${id})\n`
+          `\t${key === "rhetorical" ? "" : narrativeStyle.prompt}\n\t${
+            arrayStyles.length > 1 ? i + 1 + " " : ""
+          }(${adjustedLabels(narrativeStyle.value, key, i + 1)} - ${id})\n`
         );
       });
     });
@@ -1016,10 +1075,9 @@ function focusRequirements(productData, details, requirements) {
       .join(" or ");
 
     addLine(
-      `\nUse a single round bracket tags for every label and id to reference the requirements in the composition. Tag examples: ${exampleDetailsStr} or ${exampleStylesStr}`
+      `\nUse a single round bracket tags for every label and id to reference the requirements in the composition. Tag examples: ${addQuotes(exampleDetailsStr)}  ${addQuotes(exampleStylesStr)}`
     );
   };
-
 
   addSectionDetails(
     "collections",

@@ -45,7 +45,10 @@ import {
   AppBridgeProvider,
   QueryProvider,
   PolarisProvider,
-  ProductDataProvider
+  ProductDataProvider,
+  NavigationDataProvider,
+  useNavigationDataContext,
+  DataProvidersProvider,
 } from "./components";
 import { useAuthenticatedFetch } from "./hooks";
 import { NavigationMenu } from "@shopify/app-bridge-react";
@@ -183,6 +186,8 @@ export default function App() {
                 ]}
               />
                {/* <Routes pages={pages} /> */}
+               <DataProvidersProvider>
+               <NavigationDataProvider>
                < ProductDataProvider>
               <DataProvider>
                 <Dashboard />
@@ -190,6 +195,8 @@ export default function App() {
                 <IonMenuNav />
               </DataProvider>
               </ProductDataProvider>
+              </NavigationDataProvider>
+              </DataProvidersProvider>
             </QueryProvider>
           </AppBridgeProvider>
         </BrowserRouter>
@@ -227,7 +234,7 @@ function NoMatch() {
 function IonMenuNav() {
   const location = useLocation();
   const navigate = useNavigate();
-
+const {aiWorkStationSetter} = useNavigationDataContext();
   const [currentRoute, setCurrentRoute] = useState("/");
   location;
   useEffect(() => {
@@ -262,11 +269,8 @@ function IonMenuNav() {
         label: "Description",
         icon: newspaperOutline,
         clickHandler: (event) => {
-          Context.sendData(
-            "DataWindowModal",
-            { category: "description" },
-            "IonMenuNavComponent"
-          );
+          aiWorkStationSetter("description")
+
           console.log("Description tab clicked");
         },
       },
@@ -274,23 +278,15 @@ function IonMenuNav() {
         label: "Article",
         icon: documentTextOutline,
         clickHandler: (event) => {
-          Context.sendData(
-            "DataWindowModal",
-            { category: "article" },
-            "IonMenuNavComponent"
-          );
-          console.log("Article tab clicked");
-        },
+          aiWorkStationSetter("article")
+       
+        }
       },
       {
         label: "Post",
         icon: chatbubbleOutline,
         clickHandler: (event) => {
-          Context.sendData(
-            "DataWindowModal",
-            { category: "post" },
-            "IonMenuNavComponent"
-          );
+          aiWorkStationSetter("post")
         },
       },
     ],

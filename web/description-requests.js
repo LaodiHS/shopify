@@ -7,7 +7,8 @@ import {
 } from "./chat-gpt.js";
 import { enqueueApiRequest } from "./bull-queue.js";
 import { hasExceededUsageLimit } from "./subscriptionManager.js";
-import natural from "natural";
+import {countTokens} from "./tokenTools.js"
+
 // Common function to handle different types of endpoints
 async function handleEndpoints(app, endpointType, queue) {
   const allowedEndpoints = [
@@ -77,7 +78,9 @@ async function handleEndpoints(app, endpointType, queue) {
             shop,
             documentType,
             queue,
+            api:"gpt-3.5-turbo",
             processFunction: "chatGptTurbo",
+            promptTokenCountEstimate: tokenCount
           });
 
           return res
@@ -104,8 +107,3 @@ export async function handlePostEndpoints(app, queue) {
   await handleEndpoints(app, "post", queue);
 }
 
-function countTokens(text) {
-  const tokenizer = new natural.WordTokenizer();
-  const tokens = tokenizer.tokenize(text);
-  return tokens.length;
-}

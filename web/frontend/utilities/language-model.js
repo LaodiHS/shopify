@@ -952,6 +952,77 @@ export const audienceModel = {
         },
         {
           IonElement: "IonSelect",
+          label: "Engaging Short Form Formats: Select Your Format",
+          placeholder: "Select",
+          category: "engagingFormats",
+          default: "none",
+          values: {
+            tag: "ion-select-option",
+            options: [
+              // Additional audience types
+              {
+                value: "none",
+                title: "general",
+                subscriptions: ["free", "basic", "crafted", "advanced"]
+              },
+              {
+                value: "textWithVisuals",
+                title: "textWithVisuals",
+                subscriptions: ["crafted", "advanced"],
+              },
+              {
+                value: "quotesMessages",
+                title: "quotes messages",
+                subscriptions: ["crafted", "advanced"],
+              },
+              {
+                value: "storytelling",
+                title: "storyTelling",
+                subscriptions: ["crafted", "advanced"],
+              },
+              {
+                value: "questionAnswer",
+                title: "questionAnswer",
+                subscriptions: ["crafted", "advanced"],
+              },
+              {
+                value: "beforeAfter",
+                title: "beforeAfter",
+                subscriptions: ["crafted", "advanced"],
+              },
+              {
+                value: "listsRankings",
+                title: "listsRankings",
+                subscriptions: ["crafted", "advanced"],
+              },
+              {
+                value: "miniBlogInsights",
+                title: "miniBlogInsights",
+                subscriptions: ["crafted", "advanced"],
+              },
+              {
+                value: "wordplayPuns",
+                title: "wordplayPuns",
+                subscriptions: ["crafted", "advanced"],
+              },
+              {
+                value: "fictionalStories",
+                title: "fictionalStories",
+                subscriptions: ["crafted", "advanced"],
+              }, 
+              {
+                value: "educationalNuggets",
+                title: "educationalNuggets",
+                subscriptions: ["crafted", "advanced"],
+              }
+              
+              
+
+            ],
+          },
+        },
+        {
+          IonElement: "IonSelect",
           label: "Your Audience: Select your audience",
           placeholder: "Select",
           category: "onlineMedia",

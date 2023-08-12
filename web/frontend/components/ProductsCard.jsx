@@ -43,14 +43,6 @@ export function ProductsCard() {
     setPaging,
   } = useProductDataContext();
 
-const [products, setProducts] =  useState([])
-
-
-
-
-
-
-
 
 
 
@@ -75,8 +67,7 @@ const [products, setProducts] =  useState([])
           },
           body: JSON.stringify({
             first: productsPerPage,
-            before: "",
-            after: endCursor,
+            after: endCursor
           }),
         });
 

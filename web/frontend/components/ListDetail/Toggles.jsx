@@ -15,7 +15,7 @@ import {
   
   SubscriptionChecker,
 } from "../../utilities/data-context.js";
-export const Toggles = ({ onToggleChange, toggles, modal , subscriptions}) => {
+export function Toggles ({ onToggleChange, toggles, modal , subscriptions}){
   const [toggleState, setToggleState] = useState(toggles);
 
   const handleToggleChange = (toggleName) => (event) => {

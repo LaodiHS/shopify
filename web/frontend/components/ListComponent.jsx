@@ -222,7 +222,7 @@ console.log('isProductsLoading', isProductsLoading)
                               expand="block"
                               size="small"
                             >
-                              Optimize
+                              Enhance Content
                             </IonButton>
                           </div>
                         </IonCol>

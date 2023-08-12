@@ -30,15 +30,16 @@ import {
   useIonPopover,
   IonProgressBar,
   IonLoading,
-
 } from "@ionic/react";
 import {
   chatbubbleOutline,
   chevronBack,
   documentTextOutline,
   newspaperOutline,
-  informationCircleOutline,exitOutline
+  informationCircleOutline,
+  exitOutline,
 } from "ionicons/icons";
+
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuthenticatedFetch } from "../hooks/useAuthenticatedFetch";
 import {
@@ -46,7 +47,12 @@ import {
   SharedData,
   SubscriptionChecker,
 } from "../utilities/data-context.js";
-import {  useProductDataContext, PaidFeature} from "../components";
+import {
+  useProductDataContext,
+  PaidFeature,
+  CamelToKebabCase,
+ 
+} from "../components";
 import { audienceModel } from "../utilities/language-model";
 import { updateObject } from "../utilities/utility-methods";
 import { Accordion } from "./ListDetail/Accordion";
@@ -64,9 +70,8 @@ const toggles = {
   narrative: false,
   rhetorical: false,
   socialMedia: false,
-
-  
-  valuePropositionFormats:false
+  engagingFormats: true,
+  valuePropositionFormats: false,
 };
 const modalStyle = {
   "--ion-modal-min-width": 900 >= 768 ? "100vw" : "auto", // Set the modal width to 100vw on desktop layouts
@@ -76,13 +81,16 @@ const modalStyle = {
 };
 
 export function ListDetailComponent({ subscriptions, currentSession }) {
-console.log('subscriptions', subscriptions, currentSession)
-   const { productData} = useProductDataContext();
-  if(!subscriptions){
-    throw new Error("no subscriptions prop on ListDetailComponent: ", subscriptions)
+  console.log("subscriptions", subscriptions, currentSession);
+  const { productData } = useProductDataContext();
+  if (!subscriptions) {
+    throw new Error(
+      "no subscriptions prop on ListDetailComponent: ",
+      subscriptions
+    );
   }
-  if(!currentSession){
-    throw new Error("no session prop on ListDetailComponent: ", currentSession)
+  if (!currentSession) {
+    throw new Error("no session prop on ListDetailComponent: ", currentSession);
   }
 
   const fetch = useAuthenticatedFetch();
@@ -90,58 +98,19 @@ console.log('subscriptions', subscriptions, currentSession)
   const navigate = useNavigate();
   // const [productData, setData] = useState(null);
   const [composeTextModalLoading, setComposeTextModalLoading] = useState(false);
-  const [composeTextModalLoadingText, setComposeTextModalLoadingText] = useState();
-
-  useEffect(() => {
-    let intervalId;
-
-    if (composeTextModalLoading) {
-      // Define the linear scale parameters
-      const startValue = 0;
-      const endValue = 100;
-      const totalTime = 35000; // Total time to reach 100% in milliseconds
-
-      // Linear function to calculate the loading percentage
-      const calculatePercentage = (timeElapsed) => {
-        const x = timeElapsed / totalTime;
-        return startValue + (endValue - startValue) * x;
-      };
-
-      // Start the interval to update the loading percentage
-      let startTime = Date.now();
-      intervalId = setInterval(() => {
-        const currentTime = Date.now();
-        const timeElapsed = currentTime - startTime;
-        const loadingPercentage = calculatePercentage(timeElapsed);
-
-        if (loadingPercentage >= endValue) {
-          clearInterval(intervalId);
-          setComposeTextModalLoadingText('100%');
-        } else {
-          setComposeTextModalLoadingText(`Narrowing your target audience ${Math.floor(loadingPercentage)}%`);
-        }
-      }, 50); // Update every 50 milliseconds (adjust as needed)
-    } else {
-      // Reset the loading text when composeTextModalLoading turns false
-      clearInterval(intervalId);
-      setComposeTextModalLoadingText(undefined);
-    }
-
-    // Clean up the interval on component unmount
-    return () => clearInterval(intervalId);
-  }, [composeTextModalLoading]);
-
+  const [composeTextModalLoadingText, setComposeTextModalLoadingText] =
+    useState();
 
   const subscriptionChecker = new SubscriptionChecker(subscriptions);
 
   useEffect(async () => {
-console.log('productData--->', productData)   
-    
+ 
+
     return () => {
+      console.log('clearing the sharedData')
       SharedData.clearSharedData();
     };
   }, [location.state, navigate, subscriptions]);
-
 
   const { sections } = audienceModel;
 
@@ -197,15 +166,9 @@ console.log('productData--->', productData)
     );
   };
 
-
-function setAccordionLoadingState(state) { 
-
-setComposeTextModalLoading(state)
-
-
-
-}
-
+  function setAccordionLoadingState(state) {
+    setComposeTextModalLoading(state);
+  }
 
   function setAccordionModalPopUp(boolValue) {
     setIsOpen(boolValue);
@@ -224,18 +187,15 @@ setComposeTextModalLoading(state)
   const router = useIonRouter();
 
   const menuRef = useRef(null);
-const contentRef= useRef(null);
+  const contentRef = useRef(null);
 
+  function scrollToBottom() {
+    // setTimeout(() => {
 
-function scrollToBottom(){
-  // setTimeout(() => {
+    contentRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
 
-  contentRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
-
-
-// },500)
-
-}
+    // },500)
+  }
   const openMenu = () => {
     if (menuRef.current) {
       menuRef.current.open();
@@ -247,8 +207,6 @@ function scrollToBottom(){
       menuRef.current.close();
     }
   };
-
-
 
   if (!productData) {
     return <ion-spinner color="success"></ion-spinner>; // or show an error message
@@ -294,7 +252,7 @@ function scrollToBottom(){
             <IonTitle key={"15"}>Product Detail</IonTitle>
           </IonToolbar>
         </IonHeader>
-        <IonContent >
+        <IonContent>
           <div key={"16"} className="ion-padding">
             {/* <PaidFeature /> */}
           </div>
@@ -343,8 +301,21 @@ function scrollToBottom(){
                   area-label="Advanced Language and Formatting Options"
                 >
                   <IonContent className="ion-padding">
-                   <IonText><p> Advanced Language and Formatting Options</p></IonText>
-                   <IonText color="secondary"> <sub> <IonIcon icon={exitOutline}></IonIcon> click outside box to close</sub></IonText>
+                    <IonText>
+                      <p>
+                        Explore Advanced Language and Formatting Choices. Choose
+                        your preferred categories from the advanced menu
+                        options, and they will be displayed below.
+                      </p>
+                    </IonText>
+                    <IonText color="secondary">
+                      {" "}
+                      <sub>
+                        {" "}
+                        <IonIcon icon={exitOutline}></IonIcon> click outside box
+                        to close
+                      </sub>
+                    </IonText>
                   </IonContent>
                 </IonPopover>
                 {/* <Toggles
@@ -386,7 +357,11 @@ function scrollToBottom(){
             <IonHeader key={"28"}>
               <IonToolbar>
                 <IonTitle>Compose Your Document</IonTitle>
-                <IonProgressBar type={composeTextModalLoading ? "indeterminate": "determinate"}></IonProgressBar>
+                <IonProgressBar
+                  type={
+                    composeTextModalLoading ? "indeterminate" : "determinate"
+                  }
+                ></IonProgressBar>
                 <IonButtons slot="end">
                   <IonButton
                     onClick={() => {
@@ -399,7 +374,7 @@ function scrollToBottom(){
               </IonToolbar>
             </IonHeader>
             <IonContent className="ion-padding">
-            <IonLoading message={composeTextModalLoadingText} isOpen={composeTextModalLoading }  duration={0} />
+              {/* <IonLoading message={composeTextModalLoadingText} isOpen={composeTextModalLoading }  duration={0} /> */}
               <Accordion
                 subscriptions={subscriptions}
                 currentSession={currentSession}
@@ -518,23 +493,20 @@ function Section({
                       } = option;
 
                       const minSub = minSubscription;
-                      if(!minSub){
-                            throw new Error("no min subscription:" + minSub);
-                          }
+                      if (!minSub) {
+                        throw new Error("no min subscription:" + minSub);
+                      }
 
                       const check =
                         subscriptionChecker.checkFeatureAccess(minSub);
-                        
+
                       const hasAccess = check.hasAccess;
                       if (!hasAccess && !subscriptionMessage[itemIndex]) {
                         setSubscriptionMessage((previous) => ({
                           ...previous,
-                          [itemIndex]:
-                          check.some()
+                          [itemIndex]: check.some(),
                         }));
                       }
-
-                      
 
                       return (
                         <IonSelectOption
@@ -542,7 +514,9 @@ function Section({
                           key={index + value + title}
                           value={value}
                         >
-                          <IonText key={title}>{title}</IonText>
+                          <IonText key={title}>
+                            {CamelToKebabCase({ text: title })}
+                          </IonText>
                         </IonSelectOption>
                       );
                     })

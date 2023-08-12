@@ -31,14 +31,21 @@ export async function getRemainingUsage(userId) {
     throw new Error("subscription not found.");
   }
   const usage_limit = monthlySubscriptionsTokens[user.subscription_name].tokens;
-console.log('usage', user.current_usage, '---', usage_limit)
+  console.log("usage", user.current_usage, "---", usage_limit);
   return usage_limit - user.current_usage;
 }
 
 // Function to check if a user has exceeded their usage limit
 export async function hasExceededUsageLimit(userId, additionalTokens) {
   const remainingUsage = await getRemainingUsage(userId);
-console.log('additionalTokens', additionalTokens, '----', remainingUsage, 'boolean ',additionalTokens > remainingUsage )
+  console.log(
+    "additionalTokens",
+    additionalTokens,
+    "----",
+    remainingUsage,
+    "boolean ",
+    additionalTokens > remainingUsage
+  );
   return additionalTokens > remainingUsage;
 }
 
@@ -60,9 +67,14 @@ export async function chargeForAdditionalTokens(userId, additionalTokens) {
 }
 
 // Function to update a user's current_usage after processing a job
-export async function updateUsageAfterJob(userId, tokensUsed) {
+export async function updateTokenUsageAfterJob(userId, tokensUsed) {
   const user = await getUserById(userId);
-  user.current_usage += tokensUsed;
+  if (user.current_usage) {
+    user.current_usage += tokensUsed;
+  } else {
+    user.current_usage = tokensUsed;
+  }
+
   writeJSONToFileAsync(userId, user);
 }
 

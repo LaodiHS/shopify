@@ -26,58 +26,63 @@ import {
   IonIcon,
   IonButtons,
 } from "@ionic/react";
-import { informationCircleOutline,exitOutline, informationCircle } from "ionicons/icons";
-import AppTypeahead from "./AppTypeahead";
+import {
+  informationCircleOutline,
+  exitOutline,
+  informationCircle,
+} from "ionicons/icons";
 import {
   Context,
   SharedData,
   SubscriptionChecker,
 } from "../../utilities/data-context.js";
 import { shortenText } from "../../utilities/utility-methods";
-import { useNavigate } from "react-router-dom";
-import { useAppQuery, useAuthenticatedFetch } from "../../hooks";
-
+import { ReactRenderingComponent } from "../providers";
+import { useAuthenticatedFetch } from "../../hooks";
+import { AppTypeahead,  extractTextFromHtml } from "../../components";
 // import { navigate } from "ionicons/icons";
 
-const handleProductDescriptionUpdate = async (productId, descriptionHtml) => {
-  const fetch = useAuthenticatedFetch();
-  const response = await fetch("/api/products/update/description", {
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      productId: productId,
-      descriptionHtml: descriptionHtml,
-    }),
-  });
+// const handleProductDescriptionUpdate = async (productId, descriptionHtml,fetch) => {
 
-  console.log("response", response);
+//   const response = await fetch("/api/products/update/description", {
+//     headers: {
+//       "Content-Type": "application/json",
+//     },
+//     body: JSON.stringify({
+//       productId: productId,
+//       descriptionHtml: descriptionHtml,
+//     }),
+//   });
 
-  if (response.ok) {
-    //  await refetchProductCount();
-  }
-};
+//   console.log("response", response);
 
-const handleProductMetafieldsUpdate = async (variantId, metaFieldsArray) => {
-  const fetch = useAuthenticatedFetch();
-  const response = await fetch("/api/products/update/description", {
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      variantId: variantId,
-      dmetafieldsArray: metafieldsArray,
-    }),
-  });
+//   if (response.ok) {
+//     //  await refetchProductCount();
+//   }
+// };
 
-  console.log("response", response.json());
+// const handleProductMetafieldsUpdate = async (variantId, metaFieldsArray, fetch) => {
 
-  if (response.ok) {
-    //  await refetchProductCount();
-  }
-};
+//   const response = await fetch("/api/products/update/description", {
+//     headers: {
+//       "Content-Type": "application/json",
+//     },
+//     body: JSON.stringify({
+//       variantId: variantId,
+//       dmetafieldsArray: metafieldsArray,
+//     }),
+//   });
+
+//   console.log("response", response.json());
+
+//   if (response.ok) {
+//     //  await refetchProductCount();
+//   }
+// };
 
 export function ProductDetails({ data, subscriptions }) {
+  //const fetch = useAuthenticatedFetch();
+
   const [selectedOptions, setSelectedOptions] = useState({});
   const [selectedCollections, setSelectedCollections] = useState({
     collections: [],
@@ -87,7 +92,6 @@ export function ProductDetails({ data, subscriptions }) {
   const [selectedImages, setSelectedImages] = useState([]);
 
   const optionChange = (propName, data) => {
-    console.log(propName, " data ", data);
     if (data.length) {
       SharedData.includeProductDetails[propName] = data;
     } else {
@@ -120,11 +124,6 @@ export function ProductDetails({ data, subscriptions }) {
         ) || [],
     }));
   }
-
- 
-
-
-
 
   const handleIncludeChange = (event, category) => {
     Object.entries(category).forEach(([key, value]) => {
@@ -232,7 +231,14 @@ export function ProductDetails({ data, subscriptions }) {
                   // triggerAction="hover"
                 >
                   <IonContent className="ion-padding">{title}</IonContent>
-                  <IonText color="secondary"> <sub> <IonIcon icon={exitOutline}></IonIcon> click outside box to close</sub></IonText>
+                  <IonText color="secondary">
+                    {" "}
+                    <sub>
+                      {" "}
+                      <IonIcon icon={exitOutline}></IonIcon> click outside box
+                      to close
+                    </sub>
+                  </IonText>
                 </IonPopover>
               </IonItem>
             </IonCol>
@@ -256,47 +262,48 @@ export function ProductDetails({ data, subscriptions }) {
 
             <IonCol style={{ padding: 0, margin: 0 }} size="12">
               <IonRow className={"ion-align-items-end"}>
-                <IonCol key="fourth" size="9">
+                <IonCol key="fourth" size="12">
                   <IonItem lines="none">
-                    <IonTextarea
-                      key={description}
-                      label="Description"
-                      label-placement="stacked"
-                      aria-label="description"
-                      value={description || "no description"}
-                      autoGrow={true}
-                      style={{ fontSize: "12px" }}
-                      readonly
+                    <ReactRenderingComponent
+                      text={description || "no description"}
                     />
                   </IonItem>
                 </IonCol>
-                <IonCol key="fifth" size="3" className="ion-text-end">
-                  <IonItem lines="none">
-                    <IonRadioGroup
-                      allowEmptySelection={true}
-                      onIonChange={(e) =>
-                        handleIncludeChange(e, {
-                          description: e?.detail?.value
-                            ? [description]
-                            : "delete",
-                        })
-                      }
-                    >
-                      <IonRadio
-                        key="descriptionInclude"
-                        style={{ fontSize: "12px" }}
-                        color="success"
-                        value="include"
-                        className="ion-padding"
+                <IonCol key="fifth" size="5" offset="7">
+                  <IonItem
+                    button="false"
+                    lines="none"
+                    color="transparent"
+                    detail="false"
+                  >
+                    <IonItem lines="none" color="transparent">
+                      <IonRadioGroup
+                        slot="start"
+                        allowEmptySelection={true}
+                        onIonChange={(e) =>
+                          handleIncludeChange(e, {
+                            description: e?.detail?.value
+                              ? [  extractTextFromHtml(description)]
+                              : "delete",
+                          })
+                        }
                       >
-                        include
-                      </IonRadio>
-                    </IonRadioGroup>{" "}
+                        <IonRadio
+                          key="descriptionInclude"
+                          style={{ fontSize: "12px" }}
+                          color="success"
+                          value="include"
+                          className="ion-padding"
+                        >
+                          include
+                        </IonRadio>
+                      </IonRadioGroup>
+                    </IonItem>
                     <IonIcon
                       size="small"
                       color="secondary"
                       slot="end"
-                      aria-label="Include existing description in composition"
+                      aria-label="Tap on include add the existing description in the composition assist"
                       id="include-description-hover-trigger"
                       icon={informationCircleOutline}
                     ></IonIcon>
@@ -310,8 +317,17 @@ export function ProductDetails({ data, subscriptions }) {
                   triggerAction="hover"
                 >
                   <IonContent className="ion-padding">
-                  <IonText><p>Include existing description in composition.</p></IonText>
-                    <IonText color="secondary"> <sub> <IonIcon icon={exitOutline}></IonIcon> click outside box to close</sub></IonText>
+                    <IonText>
+                      <p>Include existing description in composition.</p>
+                    </IonText>
+                    <IonText color="secondary">
+                      {" "}
+                      <sub>
+                        {" "}
+                        <IonIcon icon={exitOutline}></IonIcon> click outside box
+                        to close
+                      </sub>
+                    </IonText>
                   </IonContent>
                 </IonPopover>
               </IonRow>
@@ -356,7 +372,6 @@ export function ProductDetails({ data, subscriptions }) {
                   aria-label="Select A Collection"
                   style={{ fontSize: "12px" }}
                   labelPlacement="stacked"
-           
                   interface="action-sheet"
                   placeholder={"Include A Collection"}
                   multiple="true"
@@ -370,8 +385,12 @@ export function ProductDetails({ data, subscriptions }) {
                       const { title, description, value } = collection;
 
                       return (
-                        <IonSelectOption color="success" key={index + title} value={collection}>
-                        {title}
+                        <IonSelectOption
+                          color="success"
+                          key={index + title}
+                          value={collection}
+                        >
+                          {title}
                         </IonSelectOption>
                       );
                     })}
@@ -385,8 +404,20 @@ export function ProductDetails({ data, subscriptions }) {
                 triggerAction="hover"
               >
                 <IonContent className="ion-padding ion-text-capitalize">
-                 <IonText><p> select collection options to include in the composition.</p></IonText>
-                    <IonText color="secondary"> <sub> <IonIcon icon={exitOutline}></IonIcon> click outside box to close</sub></IonText>
+                  <IonText>
+                    <p>
+                      {" "}
+                      select collection options to include in the composition.
+                    </p>
+                  </IonText>
+                  <IonText color="secondary">
+                    {" "}
+                    <sub>
+                      {" "}
+                      <IonIcon icon={exitOutline}></IonIcon> click outside box
+                      to close
+                    </sub>
+                  </IonText>
                 </IonContent>
               </IonPopover>
             </IonCol>
@@ -488,8 +519,6 @@ export function ProductDetails({ data, subscriptions }) {
           className={images && images.length ? "image-selection" : "ion-hide"}
         >
           <IonItem className="ion-no-padding" lines="none">
-       
-           
             <IonLabel slot="end">
               <IonText
                 style={{ fontSize: "11px" }}
@@ -507,19 +536,22 @@ export function ProductDetails({ data, subscriptions }) {
               id="Image-options-hover-trigger"
               icon={informationCircleOutline}
             ></IonIcon>
-             <IonItem lines="none"
+            <IonItem
+              lines="none"
               slot="end"
               button={false}
-              disabled={!basic_crafted_advanced.hasAccess}
+         
               key="images"
-              onClick={() => {
-                setIsOpen((prevIsOpen) => !prevIsOpen);
-              }}
+            
               detail={false}
             >
-              <IonButton size="small" color="tertiary" fill="clear">
+              <IonButton size="small" disabled={!basic_crafted_advanced.hasAccess} onClick={() => {
+                setIsOpen((prevIsOpen) => !prevIsOpen);
+              }} color="tertiary" fill="clear">
                 Select Images
               </IonButton>
+
+              
             </IonItem>
           </IonItem>
           <IonPopover
@@ -530,8 +562,17 @@ export function ProductDetails({ data, subscriptions }) {
             triggerAction="hover"
           >
             <IonContent className="ion-padding ion-text-capitalize">
-             <IonText><p> select collection options to include in the composition.</p></IonText>
-                    <IonText color="secondary"> <sub> <IonIcon icon={exitOutline}></IonIcon> click outside box to close</sub></IonText>
+              <IonText>
+                <p>Choose the images you wish to incorporate into the document.</p>
+              </IonText>
+              <IonText color="secondary">
+                {" "}
+                <sub>
+                  {" "}
+                  <IonIcon icon={exitOutline}></IonIcon> click outside box to
+                  close
+                </sub>
+              </IonText>
             </IonContent>
           </IonPopover>
         </IonCol>
@@ -636,8 +677,16 @@ function SelectOptions({
         triggerAction="hover"
       >
         <IonContent className="ion-padding ion-text-capitalize">
-        <IonText><p>select {displayName} options to include in the composition.</p></IonText>
-                    <IonText color="secondary"> <sub> <IonIcon icon={exitOutline}></IonIcon> click outside box to close</sub></IonText>
+          <IonText>
+            <p>select {displayName} to include in the composition.</p>
+          </IonText>
+          <IonText color="secondary">
+            {" "}
+            <sub>
+              {" "}
+              <IonIcon icon={exitOutline}></IonIcon> click outside box to close
+            </sub>
+          </IonText>
         </IonContent>
       </IonPopover>
     </IonCol>

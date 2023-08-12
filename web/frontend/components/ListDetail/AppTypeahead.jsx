@@ -13,7 +13,7 @@ import {
   IonThumbnail,
 } from "@ionic/react";
 
-function AppTypeahead({
+export function AppTypeahead({
   items,
   selectedItems,
   onSelectionCancel,
@@ -129,4 +129,4 @@ function AppTypeahead({
     </>
   );
 }
-export default AppTypeahead;
+

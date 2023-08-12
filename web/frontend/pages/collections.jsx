@@ -25,7 +25,7 @@ const data = [
   "Fig",
   "Grapefruit",
 ];
-export default function HomePage() {
+export  function HomePage() {
   const { t } = useTranslation();
   return (
     <Page narrowWidth>

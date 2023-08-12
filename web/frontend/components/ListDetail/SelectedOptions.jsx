@@ -35,7 +35,7 @@ if(legend){
 }else {
   legend={};
 }
-//  console.log('legend------>', legend)
+ 
   const renderOption = (key, option, itemIndex) => {
     let optionValue, optionKey;
 
@@ -72,6 +72,7 @@ if(legend){
           <IonCol size="9">
         <IonList key={itemIndex + key}>
           <IonRadioGroup
+        
             key={itemIndex + key}
             style={{
               display: "flex",

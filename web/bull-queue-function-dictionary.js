@@ -6,7 +6,7 @@ import {
   mockGptTurboResponse,
   testNonNetWorkErrorOnChatGptTurboFailure,
 } from "./testMethods.js";
-import { updateUsageAfterJob } from "./subscriptionManager.js";
+import { updateTokenUsageAfterJob } from "./subscriptionManager.js";
 const { OPEN_AI_SECRET_KEY } = process.env;
 
 const configuration = new Configuration({
@@ -15,30 +15,34 @@ const configuration = new Configuration({
 
 const apiKey = OPEN_AI_SECRET_KEY;
 const openai = new OpenAIApi(configuration);
-
+class NetworkError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'NetworkError';
+  }
+}
 function isNetworkError(error) {
   if (typeof error === "string") {
-    // If the input is a string, check for specific error messages
     return error.toLowerCase().includes("network error");
   }
 
   if (error instanceof Error) {
-    // Check for specific error codes or messages
     if (
       error.code === "ECONNREFUSED" ||
       error.code === "ETIMEDOUT" ||
-      error.message.toLowerCase().includes("network error")
+      error.code === "ECONNABORTED" ||
+      error.message.toLowerCase().includes("network error") ||
+      error.message.includes("timeout")
     ) {
       return true;
     }
 
-    // Check for specific exception properties
     if (error.code === "NETWORK_ERROR") {
       return true;
     }
 
-    // Handle timeout errors
-    if (error.code === "ECONNABORTED" || error.message.includes("timeout")) {
+    // Check if the error object has an HTTP response
+    if (error.response && error.response.status >= 500 && error.response.status < 600) {
       return true;
     }
   }
@@ -55,14 +59,13 @@ const chatGptTurboConfig = ({ prompt }) => ({
         role: "user",
 
         content: prompt,
-      }
+      },
     ],
     max_tokens: 450,
 
     presence_penalty: 0.7,
 
     temperature: 0.7,
-
 
     n: 1, // Specify the number of completions you want here (in this example, it's set to 3).
   },
@@ -80,54 +83,42 @@ export const processFunctions = {
     url,
     config,
     documentType,
+    api,
+    promptTokenCountEstimate,
     processFunction,
   }) {
     try {
       testNonNetWorkErrorOnChatGptTurboFailure();
-      const mockData = await mockGptTurboResponse(
-        shop,
-        prompt,
-        url,
-        config,
-        documentType,
-        processFunction
-      );
-     const res = await generatorCall()
-     return {res, shop}
+
       
+      const mockData = await mockGptTurboResponse(
+      {...arguments[0]}
+      );
+
       
       if (mockData) {
-
-
-
-
         return mockData;
       }
+        const res = await generatorCall()
+       return {res, ...arguments[0]}
 
 
-
-      console.log('hitting chat-gptTurbo')
+      console.log("hitting chat-gptTurbo");
       const { data } = chatGptTurboConfig({ prompt });
 
       const completion = await openai.createChatCompletion(data);
 
-     
-        const storeData = await userStore.readJSONFromFileAsync(shop);
+      const storeData = await userStore.readJSONFromFileAsync(shop);
 
-        storeData.documentType = documentType;
+      storeData.documentType = documentType;
 
-        storeData.shop = shop;
+      storeData.shop = shop;
 
+      storeData.gptText = completion.data.choices[0].message.content;
 
-        storeData.gptText = completion.data.choices[0].message.content;
+      await userStore.writeJSONToFileAsync(shop, storeData);
 
-
-
-        await userStore.writeJSONToFileAsync(shop, storeData); 
-
-        updateUsageAfterJob(shop, completion?.data?.usage.total_tokens)
-      
-
+      await updateTokenUsageAfterJob(shop, completion?.data?.usage.total_tokens);
 
       return {
         documentType: documentType,
@@ -179,44 +170,48 @@ export const processFunctions = {
   // Add more processing functions as needed
 };
 
-
 async function* generateOpenAIMessages() {
   try {
-    const res = await openai.createChatCompletion({
-      model: "gpt-3.5-turbo",
-    messages: [
+    
+    const res = await openai.createChatCompletion(
       {
-        role: "user",
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "user",
 
-        content:'tell me a short story about Shakespeare, and use only 20 word tokens to do it',
-      }
-    ],
-      max_tokens: 20,
-      temperature: 0,
-      stream: true,
-    }, { responseType: 'stream' });
+            content:
+              "tell me a short story about rambo, and use only 10 word tokens to do it",
+          },
+        ],
+        max_tokens: 20,
+        temperature: 0,
+        stream: true,
+      },
+      { responseType: "stream" }
+    );
 
-
-console.log('tokens===>', res.data)
-
-
+    console.log("tokens===>", res.data);
 
     for await (const data of res.data) {
-      const lines = data.toString().split('\n').filter(line => line.trim() !== '');
+      const lines = data
+        .toString()
+        .split("\n")
+        .filter((line) => line.trim() !== "");
       for (const line of lines) {
-        const message = line.replace(/^data: /, '');
-        if (message === '[DONE]') {
+        const message = line.replace(/^data: /, "");
+        if (message === "[DONE]") {
           return; // Stream finished
         }
         try {
           //{ index: 0, delta: { content: ' passed' }, finish_reason: null }
           const parsed = JSON.parse(message);
-          console.log('parsed message1===>', parsed.choices[0])
-          console.log('parsed message2===>', parsed.choices[0].delta.content);
-          parsed.choices[0].index
+          console.log("parsed message1===>", parsed.choices[0]);
+          console.log("parsed message2===>", parsed.choices[0].delta.content);
+          parsed.choices[0].index;
           yield parsed.choices[0].delta;
         } catch (error) {
-          console.error('Could not JSON parse stream message', message, error);
+          console.error("Could not JSON parse stream message", message, error);
         }
       }
     }
@@ -227,65 +222,61 @@ console.log('tokens===>', res.data)
         const message = data.toString();
         try {
           const parsed = JSON.parse(message);
-          console.error('An error occurred during OpenAI request: ', parsed);
+          console.error("An error occurred during OpenAI request: ", parsed);
         } catch (error) {
-          console.error('An error occurred during OpenAI request: ', message);
+          console.error("An error occurred during OpenAI request: ", message);
         }
       }
     } else {
-      console.error('An error occurred during OpenAI request', error);
+      console.error("An error occurred during OpenAI request", error);
     }
   }
 }
 
 // Usage example:
-(async () => {
+async () => {
   const messageGenerator = generateOpenAIMessages();
   for await (const message of messageGenerator) {
     console.log(message);
   }
-})
+};
 
-
-
-async function generatorCall(){
-
+async function generatorCall(prompt) {
   try {
-    const res = await openai.createChatCompletion({
-      model: "gpt-3.5-turbo",
-    messages: [
+    const res = await openai.createChatCompletion(
       {
-        role: "user",
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "user",
 
-        content:'tell me a short story about Shakespeare, and use only 20 word tokens to do it',
-      }
-    ],
-      max_tokens: 20,
-      temperature: 0,
-      stream: true,
-    }, { responseType: 'stream' });
+            content:
+              "  Use only 20 word for the text of the story."
+          },
+        ],
+        max_tokens: 10,
+        temperature: 0,
+        stream: true,
+      },
+      { responseType: "stream" }
+    );
 
-return res;
+    return res;
   } catch (error) {
+
     if (error.response?.status) {
       console.error(error.response.status, error.message);
       for await (const data of error.response.data) {
         const message = data.toString();
         try {
           const parsed = JSON.parse(message);
-          console.error('An error occurred during OpenAI request: ', parsed);
+          console.error("An error occurred during OpenAI request: ", parsed);
         } catch (error) {
-          console.error('An error occurred during OpenAI request: ', message);
+          console.error("An error occurred during OpenAI request: ", message);
         }
       }
     } else {
-      console.error('An error occurred during OpenAI request', error);
+      console.error("An error occurred during OpenAI request", error);
     }
   }
 }
-
-
-
-
-
-

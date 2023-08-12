@@ -36,6 +36,7 @@
     "graphql": "^16.6.0",
     "http-proxy-middleware": "^2.0.6",
     "ioredis": "^5.3.2",
+    "markdown-it": "^13.0.1",
     "natural": "^6.5.0",
     "openai": "^3.3.0",
     "pluralize": "^8.0.0",
@@ -44,6 +45,8 @@
     "redis": "^4.6.7",
     "serve-static": "^1.14.1",
     "styled-components": "^6.0.5",
+    "tokenizers": "^0.13.3",
+    "tokenizr": "^1.6.10",
     "uid": "^2.0.2"
   },
   "devDependencies": {

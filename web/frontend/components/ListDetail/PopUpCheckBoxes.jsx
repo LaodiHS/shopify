@@ -12,12 +12,10 @@ import {
 } from "@ionic/react";
 import "./styles/SelectionToggles.module.css";
 import React, { useState, useEffect } from "react";
-import {PaidFeature} from "../../components"
+import { PaidFeature } from "../../components";
 import { Context } from "../../utilities/data-context";
 
-
-
-export const PopUpCheckBoxes = ({ subscriptions, modal, toggleOptionsDrawer }) => {
+export function PopUpCheckBoxes({ subscriptions, modal, toggleOptionsDrawer }) {
   const checkBoxes = new Set();
   const { openMenu, closeMenu } = toggleOptionsDrawer;
 
@@ -27,8 +25,6 @@ export const PopUpCheckBoxes = ({ subscriptions, modal, toggleOptionsDrawer }) =
     article: false,
     advanced: false,
   });
-
-
 
   const handleCheckBoxSelection = (checkBoxName) => (event) => {
     if (event.target.checked) {
@@ -42,22 +38,21 @@ export const PopUpCheckBoxes = ({ subscriptions, modal, toggleOptionsDrawer }) =
       [checkBoxName]: event.target.checked,
     }));
 
-
-    if (checkBoxName !=="advanced" && event.target.checked ) {
+    if (checkBoxName !== "advanced" && event.target.checked) {
       modal(true);
     }
 
     if (checkBoxName === "advanced") {
       if (event.target.checked) {
         openMenu();
-      } else if(!event.target.checked) {
+      } else if (!event.target.checked) {
         closeMenu();
       }
     }
   };
 
   Context.listen("CheckBoxSelection", ({ accordionSelection }, route) => {
- console.log('accordionSelection',accordionSelection)
+    console.log("accordionSelection", accordionSelection);
     checkBoxes.clear();
 
     setCheckBoxSelected({});
@@ -111,11 +106,9 @@ export const PopUpCheckBoxes = ({ subscriptions, modal, toggleOptionsDrawer }) =
                 Post
               </IonCheckbox>
             </IonItem>
-
-  
           </IonList>
         </IonCol>
       </IonRow>
     </>
   );
-};
+}

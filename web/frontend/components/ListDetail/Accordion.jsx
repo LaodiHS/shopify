@@ -22,42 +22,70 @@ import {
   IonAlert,
   useIonToast,
   IonProgressBar,
+  IonIcon,
+  IonPopover,
+  IonText,
+  useIonPopover,
 } from "@ionic/react";
-import "./styles/generateDescription.css";
+import {
+  informationCircleOutline,
+  exitOutline,
+  informationCircle,
+} from "ionicons/icons";
 import { Context } from "../../utilities/data-context";
+import { pageIngCache, History, formatProducts } from "../../utilities/store";
+import {
+  stableFetchComponent,
+  useNavigationDataContext,
+  ReactRenderingComponent,
+  addMarkup,
+} from "../providers";
+import bcrypt from "bcryptjs";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuthenticatedFetch, useAppBridge } from "@shopify/app-bridge-react";
-import { SelectedOptions } from "./SelectedOptions";
+
 import { request } from "@shopify/app-bridge/actions/AuthCode";
 import { useShopifyContext } from "../providers/ShopifyContext";
 import { getSessionToken } from "@shopify/app-bridge/utilities";
 import { SessionToken } from "@shopify/app-bridge/actions";
-import { pageIngCache, History, formatProducts } from "../../utilities/store";
+
 import {
   useProductDataContext,
   TextWithMarkers,
   cleanText,
+  AccordionInformationHeader,
+  BlogSelection,
+  SelectedOptions,
+  IonButtonInformation,
 } from "../../components";
+
 const shortenText = (text) =>
   text && text.length > 20 ? text.substring(0, 30) + "..." : text;
 
-function extractText(htmlString) {
-  const parser = new DOMParser();
-
-  // Parse the HTML string to a Document object
-  const doc = parser.parseFromString(htmlString, "text/html");
-
-  // Extract the text from the parsed document
-  const extractedText = doc.body.textContent;
-
-  return extractedText;
-}
+const generateHash = async (id) => {
+  const saltRounds = 10;
+  try {
+    // const salt = await bcrypt.genSalt(saltRounds);
+    const hash = await bcrypt.hash(id, "$2a$10$agg0ld9ZpiH/fVKYZDq/Tu");
+    return hash;
+  } catch (error) {
+    console.log("hash error", error);
+  }
+};
 export function Accordion({
   setAccordionModalPopUp,
   subscriptions,
   setAccordionLoadingState,
   currentSession,
 }) {
+  const Popover = () => (
+    <IonContent className="ion-padding">Hello World!</IonContent>
+  );
+  const [present, dismiss] = useIonPopover(Popover, {
+    onDismiss: (data, role) => dismiss(data, role),
+  });
+  const popoverRef = useRef(null);
+
   let { productData, updateProductProperty } = useProductDataContext();
 
   const accordionGroupRef = useRef(null);
@@ -69,18 +97,53 @@ export function Accordion({
   const [alertHeader, setAlertHeader] = useState();
   const [alertMessage, setAlertMessage] = useState();
   const [accordionOptions, setAccordionOptions] = useState({});
-
+  const [currentAccordion, setCurrentAccordion] = useState(null);
   const scrollRef = useRef([]);
   const [sessionToken, setSessionToken] = useState();
   const [showModal, setShowModal] = useState(false); // Modal state
   const [showConfirmModal, setShowConfirmModal] = useState(false); // Confirm state
+  const [hashedBlogName, setHashBlogName] = useState("");
+  const { aiWorkStation, aiWorkStationSetter } = useNavigationDataContext();
+
+  useEffect(() => {
+    if (aiWorkStation !== null) {
+      setAccordionModalPopUp(true);
+      setAccordionOptions({ [aiWorkStation]: true });
+      setCurrentAccordion(aiWorkStation);
+      aiWorkStationSetter(null);
+    }
+  }, [aiWorkStation]);
+  useEffect(async () => {
+    const blogName = await generateHash(currentSession.shop);
+    setHashBlogName(blogName);
+  }, []);
+
+  const blogSelectionRef = useRef(null);
+
+  const addArticleClick = () => {
+    // Access and trigger the handleChildAction function in the child component
+
+    if (blogSelectionRef.current) {
+      blogSelectionRef.current.handleAddArticle();
+    }
+  };
+
+  const addPostClick = async (id) => {
+    console.log('id: ' +id)
+
+
+    
+    const { data, error } = await stableFetchComponent.post_async(
+      { url: "/api/blog/id", body: { id } },
+      fetch
+    );
+    console.log("error", error);
+    console.log("data", data);
+  };
+
   const navigate = useNavigate();
   const app = useAppBridge();
 
-  Context.listen("DataWindowModal", ({ category }, location) => {
-    setAccordionModalPopUp(true);
-    setAccordionOptions({ [category]: true });
-  });
   const [displayDocument, setDisplayDocument] = useState({
     article: "",
     description: "",
@@ -132,9 +195,28 @@ export function Accordion({
     console.log("host: " + host);
   }
   const [words, setWords] = useState([]);
+  const [serverWords, setServerWords] = useState([]);
+  const [markupText, setMarkupText] = useState("");
+  const accordionRefs = useRef({});
+  const addToAccordionRefs = (name, el) => {
+    accordionRefs.current[name] = el;
+  };
+
+  const toggleOpenAccordion = (selectedAccordion) => {
+    const accordion = accordionRefs.current[currentAccordion];
+
+    if (!accordion) {
+      return;
+    }
+    const nativeEl = accordion;
+
+    nativeEl.value = selectedAccordion;
+  };
+
   function eventSource(requestType, callback) {
     // Check if the EventSource is already initialized and return the existing Promise if available
 
+    setServerWords([]);
     const local = { ...currentSession };
     const locals = JSON.stringify(local);
     console.log("locals----", locals);
@@ -162,6 +244,10 @@ export function Accordion({
       }, 10000); // Set the timeout to 10 seconds (adjust as needed)
 
       eventSource.onopen = () => {
+        toggleOpenAccordion("requirements");
+
+        setDocumentLoading(true);
+
         if (!isResolved) {
           isResolved = true;
           clearTimeout(timeoutId); // Clear the timeout since the connection is successful
@@ -169,26 +255,42 @@ export function Accordion({
         }
       };
 
+      const Debounce = (callback, delay) => {
+        let timerId;
+        return (...args) => {
+          clearTimeout(timerId);
+          timerId = setTimeout(() => {
+            callback(...args);
+          }, delay);
+        };
+      };
+      const scrollSmoothly = (requestType) => {
+        scrollRef.current[requestType].scrollIntoView({
+          behavior: "smooth",
+          block: "end",
+          inline: "center",
+          scrollMode: "always",
+          blockOffset: 70,
+        });
+      };
+      let str = "";
       eventSource.addEventListener("message", (event) => {
         // Handle the received SSE message
-        setDocumentLoading(true);
+
         const eventData = JSON.parse(event.data);
-        setAccordionLoadingState(true);
+
         // Handle the received SSE message
 
         if (eventData.message === "Job stream") {
-          const data = eventData.result;
-          const word = data.content;
-          const finish_reason = data.finish_reason;
-
-
-
-          setWords((prevWords) => [...prevWords, word]);
-
-
+          const delta = eventData.delta;
+          const word = delta.content;
+          const finish_reason = delta.finish_reason;
+          Debounce(scrollSmoothly(requestType), 300);
+          str += word;
+          setServerWords((prevWords) => [...prevWords, word]);
 
           if (finish_reason) {
-            setDocumentLoading(false);
+            setWords((prevWords) => [...prevWords, cleanText(str)]);
             eventSource.close();
           }
         }
@@ -247,8 +349,6 @@ export function Accordion({
           isResolved = true;
           clearTimeout(timeoutId); // Clear the timeout on error
           reject(error); // Reject the promise with the specific error
-          eventSource.close(); // Close the EventSource
-          setDocumentLoading(false);
         }
         eventSource.close();
       });
@@ -260,7 +360,8 @@ export function Accordion({
           isResolved = true;
           clearTimeout(timeoutId); // Clear the timeout on successful connection
           console.log("Connection closed");
-          resolve({ active: true, event: eventSource }); // Resolve the promise with 'true' on successful connection
+          resolve({ active: true, event: eventSource });
+          // Resolve the promise with 'true' on successful connection
         }
 
         setDocumentLoading(false);
@@ -269,6 +370,10 @@ export function Accordion({
 
     return eventSourcePromise;
   }
+
+  useEffect(() => {
+    setMarkupText(addMarkup(words.join("")));
+  }, [words]);
 
   useEffect(async () => {
     const token = await getSessionToken(app);
@@ -354,6 +459,7 @@ export function Accordion({
   const [handlerMessage, setHandlerMessage] = useState("");
   const [roleMessage, setRoleMessage] = useState("");
   const [presentToast] = useIonToast();
+
   async function setDataListener(requestType, template, language, route) {
     const listenerSet = await eventSource(requestType);
     console.log("listenerSet", listenerSet);
@@ -412,6 +518,7 @@ export function Accordion({
         });
       } else {
         setLegend(promptTextAndLegend.legend);
+        console.log("legend", promptTextAndLegend.legend);
       }
     } else {
       setDisableButtons(true);
@@ -441,7 +548,16 @@ export function Accordion({
       });
     }
   }
+  let initialOpenTab = false;
+  function onInputTextAreaChange(event, requestType) {
+    if (!initialOpenTab) {
+      toggleOpenAccordion("presentation");
+      initialOpenTab = true;
+    }
 
+    setWords([event.target.value]);
+    console.log("event: " + event.target.value);
+  }
   function handleTextBoxChange(event, requestType) {
     setDisplayDocument((previous) => ({
       ...previous,
@@ -490,24 +606,33 @@ export function Accordion({
     setDataListener(requestType, "focus-language-options", language, route);
   };
 
-  const handleUpdateClick = async (header, message, productData, text) => {
-    if (text.length) {
+  const handleUpdateClick = async (productData, type) => {
+    const descriptionHtml = markupText;
+    if (type === "description" && markupText.length) {
+      
       const productId = productData.id.split("/").pop();
-      const response = await fetch("/api/products/update/description", {
-        headers: {
-          "Content-Type": "application/json",
-        },
-        method: "POST",
-        body: JSON.stringify({
-          productId,
-          descriptionHtml: text,
-        }),
-      });
 
-      if (response.ok) {
+      const { data, error } = await stableFetchComponent.post_async(
+        {
+          url: "/api/products/update/description",
+          body: {
+            productId,
+            descriptionHtml,
+          },
+        },
+        fetch
+      );
+      console.log("data: " + data);
+      console.log("error: " + error);
+
+      if (error !== null) {
+        const handleUpdateDescription = (newDescription) => {
+          updateProductProperty("description", newDescription);
+        };
+        handleUpdateDescription(markupText);
         console.log("current Cursor", productData.currentCursor);
         pageIngCache.clearKey(productData.currentCursor);
-        console.log("updated");
+        console.log("product updated");
       }
 
       // const confirmed = await showConfirmAlert(header, message);
@@ -521,8 +646,13 @@ export function Accordion({
       //   // This code will execute when the user cancels the action
       //   console.log("Cancelled");
       // }
+    } else if (type === "article" && markupText.length) {
+      addArticleClick(descriptionHtml);
+    } else if (type === "post" && markupText.length) {
+      addPostClick(hashedBlogName);
     }
   };
+
   const showConfirmAlert = async (header, message) => {
     if (!header || !message) {
       throw new Error("Please select a header and a message");
@@ -550,12 +680,17 @@ export function Accordion({
       index: 0,
       id: "description",
       requestType: "description",
-      label: "Generate a Description",
+      label: "Description Assist",
       header: "Updating Your Description",
       message: "You Will Be Updating Your Description",
-      placeholder: "Generate a description",
+      placeholder: "Create or Modify Your Description Here",
+      helperNotesClear: "Clear the Description",
+      helperNotesAssist:
+        "Utilize the audience templates and product particulars to aid in shaping your description.",
+      helperNotesUpdate:
+        "Once you've crafted your content, incorporate it into your product details",
       buttonNames: {
-        generate: "Generate Description",
+        generate: "Description Assist",
         update: "Update Description",
         clear: "Clear Description",
       },
@@ -565,10 +700,15 @@ export function Accordion({
       index: 1,
       id: "article",
       requestType: "article",
-      label: "Generate an Article",
-      placeholder: "Generate an Article",
+      label: "Article Assist",
+      placeholder: "Create or Modify Your Article Here",
+      helperNotesClear: "Clear the Article",
+      helperNotesAssist:
+        "Utilize the audience templates and product particulars to aid in shaping your article.",
+      helperNotesUpdate:
+        "Once you've crafted your content, incorporate it into your blog as an article. Be sure to choose or create a fitting title for both your blog and the article.",
       buttonNames: {
-        generate: "Generate Article",
+        generate: "Article Assist",
         update: "Add Article",
         clear: "Clear Article",
       },
@@ -578,27 +718,31 @@ export function Accordion({
       index: 2,
       id: "post",
       requestType: "post",
-      label: "Generate a Post",
-      placeholder: "Generate a Post",
+      label: "Post Assist",
+      helperNotesClear: "Clear the content Post",
+      helperNotesAssist:
+        "Utilize the audience templates and product particulars to aid in shaping your post content.",
+      helperNotesUpdate:
+        "After creating your content, seamlessly integrate it into your social media posts, advertisements, and blend it into your other spontaneous creative pieces.( Please note this will generate a new Blog called " +
+        hashedBlogName +
+        " where we will store your content)",
+      placeholder: "Create or Modify Your Post Here",
       buttonNames: {
-        generate: "Generate Post",
+        generate: "Post Assist",
+        update: "Add your post",
         clear: "clear Post",
       },
       productData,
     },
   ];
-  const handleUpdateDescription = () => {
-    updateProductProperty(
-      "description",
-      "my description has changed for the better of line-height"
-    );
-  };
+
   const handleClearClick = (id) => {
-    handleUpdateDescription();
-
     setDisplayDocument((previous) => ({ ...previous, [id]: "" }));
+    setWords([]);
+    setServerWords([]);
   };
 
+  const accordionGroup = useRef(null);
   const renderAccordionItem = ({
     index,
     id,
@@ -611,6 +755,9 @@ export function Accordion({
     requestType,
     displayText,
     displayHTML,
+    helperNotesClear,
+    helperNotesAssist,
+    helperNotesUpdate,
   }) => {
     // if (accordionOptions[id])
     return (
@@ -620,121 +767,204 @@ export function Accordion({
         value={index}
       >
         <IonGrid>
+          <IonGrid>
+            <IonRow>
+              {id === "article" && (
+                <BlogSelection
+                  currentBox={currentAccordion}
+                  article={words.join("")}
+                  ref={blogSelectionRef}
+                />
+              )}
+            </IonRow>
+          </IonGrid>
+
           <IonRow>
             <IonCol size="12">
-            words: {words}
-            {displayDocumentType === "text" ? (
-                  <TextWithMarkers markedText={words.join(" ")} />
-                ) : displayDocumentType === "html" ? (
-                  <p
-                    className={
-                      displayDocumentType === "text" ? "typewriter" : ""
-                    }
-                    dangerouslySetInnerHTML={{
-                      __html: displayDocument[requestType],
-                    }}
+              <IonAccordionGroup
+                expand="inset"
+                ref={(el) => {
+                  addToAccordionRefs(requestType, el);
+                }}
+                multiple={true}
+              >
+                <IonAccordion value="requirements">
+                  <AccordionInformationHeader
+                    accordionName={`Requirements`} //HighlightHub
+                    boxName={currentAccordion}
+                    note={`Your requirements and selections are visually highlighted within the document.`}
                   />
-                ) : (
-                  <div></div>
-                )}
 
-
-              <IonCol className="">Document Validation Tracker:</IonCol>
-              <IonCol size="12">
-                {displayDocumentType === "text" ? (
-                  <TextWithMarkers markedText={displayDocument[requestType]} />
-                ) : displayDocumentType === "html" ? (
-                  <p
-                    className={
-                      displayDocumentType === "text" ? "typewriter" : ""
-                    }
-                    dangerouslySetInnerHTML={{
-                      __html: displayDocument[requestType],
-                    }}
+                  <div className="ion-padding" slot="content">
+                    <TextWithMarkers markedText={serverWords.join("")} />
+                  </div>
+                </IonAccordion>
+                <IonAccordion
+                  ref={(ref) => (scrollRef.current[requestType] = ref)}
+                  value="markup"
+                >
+                  <AccordionInformationHeader
+                    accordionName={`MarkUp`}
+                    boxName={currentAccordion}
+                    note={`Examine the original text content of your descriptions, websites, blogs, and articles.`}
                   />
-                ) : (
-                  <div></div>
-                )}
-              </IonCol>
+                  <div className="ion-padding" slot="content">
+                    {markupText}
+                  </div>
+                </IonAccordion>
+                <IonAccordion value="present">
+                  <AccordionInformationHeader
+                    accordionName={`Presentation`}
+                    boxName={currentAccordion}
+                    note={`Preview how the content will appear on your websites, blogs, and articles.`}
+                  />
+                  <div className="ion-padding" slot="content">
+                    <ReactRenderingComponent text={words.join("")} />
+                  </div>
+                </IonAccordion>
+              </IonAccordionGroup>
             </IonCol>
-            <IonCol></IonCol>
-
-            <IonCol size="12"></IonCol>
-
-            <IonCol size="12"></IonCol>
           </IonRow>
         </IonGrid>
-        <IonItem slot="header" color="light">
-          <IonLabel>{label}</IonLabel>
-        </IonItem>
-        <div className="ion-padding" slot="content">
-          <IonItem>
-            <IonGrid>
-              <IonRow>
-                <IonCol size="12">
-                  <IonTextarea
-                    key={id}
-                    // ref={(ref) => ref && addTextareaRef(id, ref)}
-                    aria-label={label}
-                    label={label}
-                    labelPlacement="stacked"
-                    placeholder={placeholder}
-                    value={
-                      displayDocumentType === "text"
-                        ? cleanText(displayDocument[requestType])
-                        : displayDocument[requestType]
-                    }
-                    autoGrow={true}
-                    className="description-textarea"
-                    debounce={300}
-                    onIonChange={(e) => handleTextBoxChange(e, requestType)}
-                  ></IonTextarea>
+        <IonGrid>
+          <IonRow>
+            <IonCol size="12">
+              <IonItem lines="full">
+                <IonIcon
+                  size="small"
+                  color="secondary"
+                  slot="end"
+                  aria-label="Include existing description in composition"
+                  id={`explainer-${id}-info` + currentAccordion}
+                  icon={informationCircleOutline}
+                ></IonIcon>{" "}
+              </IonItem>
+              <IonPopover
+                key={"Include existing description in composition"}
+                translucent={true}
+                animated="true"
+                trigger={`explainer-${id}-info` + currentAccordion}
+                triggerAction="hover"
+              >
+                <IonContent className="ion-padding">
+                  <IonText>
+                    <p>
+                      <sub>
+                        We Support your favorite Markdown syntax.
+                        <br /> Html :{" "}
+                        <IonText color="tertiary">
+                          {`<strong>...</strong><bold>...</bold><h1>...</h1>...`}
+                        </IonText>
+                        <br /> Markdown :{" "}
+                        <IonText color="tertiary">
+                          {`< $E=mc^2$, 
+                          # Main Title
+                          ## Subtitle
+                          ### Sub-subtitle,    
+                          - [x] Task 1
+                          - [ ] Task 2
+                          - [ ] Task 3
+                          ...`}
+                        </IonText>
+                        <br />
+                        Katex :{" "}
+                        <IonText color="tertiary">
+                          {`$$\displaystyle\sum_{i=1}^n $$`}
+                        </IonText>
+                        <br />
+                        Use your favorite syntax to preview and format your
+                        document.
+                        <a
+                          target="_top"
+                          href="https://www.markdownguide.org/cheat-sheet/"
+                        >
+                          Mark Down
+                        </a>
+                        ,{" "}
+                        <a
+                          target="_top"
+                          href="https://www.markdownguide.org/cheat-sheet/"
+                        >
+                          KATEX
+                        </a>
+                      </sub>
+                    </p>
+                  </IonText>
+                  <IonText color="secondary">
+                    <sub>
+                      <IonIcon icon={exitOutline}></IonIcon> click outside box
+                      to close
+                    </sub>
+                  </IonText>
+                </IonContent>
+              </IonPopover>{" "}
+              <IonTextarea
+                key={id}
+                // ref={(ref) => ref && addTextareaRef(id, ref)}
+                ariaLabel={"Create a document and preview it here"}
+                label={"Create a document and preview it here"}
+                labelPlacement="stacked"
+                placeholder={placeholder}
+                value={
+                  displayDocumentType === "text"
+                    ? words.join("")
+                    : displayDocument[requestType]
+                }
+                onIonInput={onInputTextAreaChange}
+                autoGrow={true}
+                className="description-textarea"
+                debounce={200}
+                // onIonChange={(e) => handleTextBoxChange(e, requestType)}
+              ></IonTextarea>
+            </IonCol>
+          </IonRow>
+          <IonRow className="ion-justify-content-between  ion-justify-content-evenly  ">
+            <IonCol size="12">
+              <IonRow className="ion-justify-content-evenly">
+                <IonCol size="4">
+                  {buttonNames?.generate && (
+                    <IonButtonInformation
+                      ButtonName={buttonNames.generate}
+                      hoverId={"box-button" + id + "-" + buttonNames.generate}
+                      PopoverContent={helperNotesAssist}
+                      disabledButton={disableButtons}
+                      clickHandler={handleAiRequest}
+                      clickArgs={[requestType, id]}
+                    />
+                  )}
+                </IonCol>
+                <IonCol size="4">
+                  {buttonNames?.update && (
+                    <IonButtonInformation
+                      ButtonName={buttonNames.update}
+                      hoverId={
+                        "box-button-update" + id + "-" + buttonNames.update
+                      }
+                      PopoverContent={helperNotesUpdate}
+                      disabledButton={disableButtons}
+                      clickHandler={handleUpdateClick}
+                      clickArgs={[productData, requestType]}
+                    />
+                  )}
+                </IonCol>
+                <IonCol size="4">
+                  {buttonNames?.clear && (
+                    <IonButtonInformation
+                      ButtonName={buttonNames.clear}
+                      hoverId={
+                        "box-button-clear" + id + "-" + buttonNames.update
+                      }
+                      PopoverContent={helperNotesClear}
+                      disabledButton={disableButtons}
+                      clickHandler={handleClearClick}
+                      clickArgs={[requestType]}
+                    />
+                  )}
                 </IonCol>
               </IonRow>
-              <IonRow>
-                <IonItemDivider>
-                  <IonButtons slot="end">
-                    {buttonNames?.generate && (
-                      <IonButton
-                        disabled={disableButtons}
-                        onClick={() => handleAiRequest(requestType, id)}
-                      >
-                        {buttonNames.generate}
-                      </IonButton>
-                    )}
-                    {buttonNames?.update && (
-                      <IonButton
-                        disabled={disableButtons}
-                        onClick={() =>
-                          handleUpdateClick(
-                            header,
-                            message,
-                            productData,
-                            displayText[requestType]
-                          )
-                        }
-                      >
-                        {buttonNames.update}
-                      </IonButton>
-                    )}
-                    {buttonNames?.clear && (
-                      <IonButton
-                        disabled={disableButtons}
-                        key={requestType}
-                        ref={(ref) => (scrollRef.current[requestType] = ref)}
-                        onClick={() => {
-                          handleClearClick(id);
-                        }}
-                      >
-                        {buttonNames.clear}
-                      </IonButton>
-                    )}
-                  </IonButtons>
-                </IonItemDivider>
-              </IonRow>
-            </IonGrid>
-          </IonItem>
-        </div>
+            </IonCol>
+          </IonRow>
+        </IonGrid>
       </div>
     );
   };

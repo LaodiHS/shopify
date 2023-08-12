@@ -153,7 +153,7 @@ export const SubscriptionComponent = ({ subscriptions }) => {
 
               return (
                 <IonCol size="12" size-md="3" key={index}>
-                  <IonCard color={current ? "success" : ""}>
+                  <IonCard color={current ? "dark" : ""}>
                     <IonCardHeader>
                       <IonCardTitle className="ion-text-capitalize">
                         {subscription.title}

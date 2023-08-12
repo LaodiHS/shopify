@@ -1,9 +1,33 @@
 import { Queue, Worker, QueueEvents } from "bullmq";
 import shopify from "./shopify.js";
-
+import  {inspect}  from 'util';
 import * as userStore from "./userStore.js";
 import { processFunctions } from "./bull-queue-function-dictionary.js";
 import { testBullMqJobProcessFailure } from "./testMethods.js";
+import {countTokens} from "./tokenTools.js"
+import { updateTokenUsageAfterJob } from "./subscriptionManager.js";
+const dataCallbacks = new Map();
+
+// Function to emit data
+function emitData(identifier, data) {
+  // Get the callback associated with the identifier
+  const callback = dataCallbacks.get(identifier);
+
+  if (callback) {
+    // Call the callback with the data
+    callback(data);
+
+    // Remove the entry from the Map
+    dataCallbacks.delete(identifier);
+  }
+}
+
+// Function to listen for data
+function listenForData(identifier, callback) {
+  // Store the identifier and callback in the Map
+  dataCallbacks.set(identifier, callback);
+}
+
 const queueName = "api-request-queue";
 
 const queueConfig = {
@@ -32,6 +56,19 @@ const queueConfig = {
   },
 };
 
+const customSerializer = (data) => {
+  // Exclude the 'socket' property from serialization
+  const dataToSerialize = { ...data };
+  delete dataToSerialize.socket;
+  try {
+    const d = JSON.stringify(dataToSerialize);
+    console.log("d", d);
+  } catch (e) {
+    console.log("error", error);
+  }
+  // Serialize the modified data using JSON.stringify
+};
+
 export async function setupBullMQServer(redisClient) {
   try {
     await userStore.createUsersFolderAsync();
@@ -43,6 +80,7 @@ export async function setupBullMQServer(redisClient) {
     const worker = new Worker(queueName, processJob, {
       connection: redisClient,
       concurrency: 2, // Set the desired concurrency level
+      serializer: customSerializer,
     });
 
     worker.on("completed", (job) => {
@@ -82,7 +120,7 @@ async function processJob(job) {
   const processingFunction = processFunctions[processFunction];
   try {
     const processingResult = await processingFunction(job.data);
-    console.log("processing result: ", processingResult);
+    // console.log("processing result: ", processingResult);
     if (processingResult.error) {
       processingResult.shop = shop;
       processingFunction.processFunction = processFunction;
@@ -98,7 +136,8 @@ async function processJob(job) {
       // );
     }
 
-    return processingResult;
+    console.log("shop---->", shop);
+    emitData(shop, processingResult);
   } catch (error) {
     console.error(`Error processing job of type '${processFunction}':`, error);
     throw error;
@@ -115,7 +154,7 @@ export async function enqueueApiRequest(promptObject) {
 
   try {
     await queue.add(shop, data, {
-      attempts: 1, // Max retries for this specific job (overrides default)
+      attempts: 3, // Max retries for this specific job (overrides default)
       timeout: 120000, // 1 minute timeout for this specific job (overrides default)
       priority: 3, // High priority for this specific job
     });
@@ -140,8 +179,14 @@ export function serverSideEvent(app, redisClient, queue) {
       res.setHeader("Access-Control-Allow-Origin", "*");
 
       const { shop } = req.query;
-      console.log("sse/sream--->", shop);
-      console.log("res locals", res.locals);
+      if(!shop){
+
+        res.end();
+      
+      //  throw new Error('no shop specified in sse')
+      }
+   
+     
       const queueEvents = new QueueEvents(queueName, {
         connection: redisClient,
       });
@@ -157,29 +202,53 @@ export function serverSideEvent(app, redisClient, queue) {
         res.write(`data: ${eventData}\n\n`);
       };
 
-      // Set up event listeners to send SSE messages to the client
-      queueEvents.on("completed", async (job) => {
-        const result = job.returnvalue;
-        if (result.shop === shop) {
-                             
-        console.log('result--->', job)
-       
-     
-          if (true) {
-          
-            for await (const delta of  generateOpenAIMessages(result.res)) {
-         
-              const stream = delta.content;
-              console.log('stream--->', stream)
-              sendSSEMessage({ message: "Job stream",    delta });
-            }
-          } else {
-            sendSSEMessage({ message: "Job completed", result });
+      if (!shop) {
+        console.log("no shop name");
+        res.write("event: close\n");
+        res.write("data: Connection closed by the server\n\n");
+        res.end();
+      }
+      listenForData(shop, async (data) => {
+        const {res:gptStream, shop, openai, api, promptTokenCountEstimate} = data;
+
+        if (gptStream &&  gptStream.data) {
+          const dataGenerator = generateOpenAIMessages(data);
+          for await (const delta of dataGenerator) {
+            // Process each delta of data as it arrives
+
+              
+
+            sendSSEMessage({ message: "Job stream", delta });
           }
         }
+        queueEvents.close();
+        res.write("event: close\n");
+        res.write("data: Connection closed by the server\n\n");
+        res.end();
+
+      });
+
+      // Set up event listeners to send SSE messages to the client
+      queueEvents.on("completed", async (job) => {
+        // console.log('completed', job);
+        // const result = job.returnvalue;
+        // if (result.shop === shop) {
+        // console.log('result--->', job)
+        // if (result.res && result.res.data) {
+        //   const dataGenerator = generateOpenAIMessages(result.res);
+        //   for await (const delta of dataGenerator) {
+        //     // Process each delta of data as it arrives
+        //     console.log('delta: ', delta);
+        //    // sendSSEMessage({ message: "Job stream", delta:delta.content });
+        //   }
+        //   } else {
+        //     //sendSSEMessage({ message: "Job completed", result });
+        //   }
+        // }
       });
 
       queueEvents.on("stalled", async (job) => {
+        console.log("stalled: ", job);
         const jobData = await queue.getJob(job.jobId);
         const jobShop = jobData.data.shop;
         const jobProcessFunction = jobData.data.processFunction;
@@ -192,6 +261,7 @@ export function serverSideEvent(app, redisClient, queue) {
       });
 
       queueEvents.on("failed", async (job, err) => {
+        console.log("failed: ", job);
         const jobData = await queue.getJob(job.jobId);
         const jobShop = jobData.data.shop;
         const jobProcessFunction = jobData.data.processFunction;
@@ -206,9 +276,11 @@ export function serverSideEvent(app, redisClient, queue) {
       // If the client disconnects, stop sending SSE messages
       req.on("close", () => {
         console.log("Closed connection socket");
-        queueEvents.off("completed");
-        queueEvents.off("stalled");
-        queueEvents.off("failed");
+   
+        // queueEvents.off("completed");
+        // queueEvents.off("stalled");
+        // queueEvents.off("failed");
+       
       });
     } catch (err) {
       next(err); // Pass any uncaught errors to the error handling middleware
@@ -219,34 +291,70 @@ export function serverSideEvent(app, redisClient, queue) {
 
 
 
+// Modified generateOpenAIMessages function to accept the res object as a parameter
+async function* generateOpenAIMessages({res, shop, documentType, openai, api, promptTokenCountEstimate}) {
 
+  let responseContentCompleteText = "";
+  try {
+    // console.log('res inspect===>', inspect(res, {depth:null, colors:true, compact:false}))
+    // Access the stream data directly from the response object
+    const stream = res.data;
 
-
-
-async function* generateOpenAIMessages(res) {
-
-try{
-  for await (const data of res.data) {
-    const lines = data.toString().split('\n').filter(line => line.trim() !== '');
-    for (const line of lines) {
-      const message = line.replace(/^data: /, '');
-      if (message === '[DONE]') {
-        return; // Stream finished
-      }
+    // Use the 'for await' loop to process the data stream
+    for await (const data of stream) {
+     
+      const lines = data.toString().split('\n').filter(line => line.trim() !== '');
+      for (const line of lines) {
+     
+        const message = line.replace(/^data: /, '');
+      
+        if (message === '[DONE]') {
+          // console.log('res inspect===>', inspect(res.headers, {depth:null, colors:true, compact:false}))
+          
+          //https://community.openai.com/t/how-to-get-total-tokens-from-a-stream-of-completioncreaterequests/110700
   
-      try {
-        //{ index: 0, delta: { content: ' passed' }, finish_reason: null }
-        const parsed = JSON.parse(message);
-        console.log('parsed message1===>', parsed.choices[0])
-        console.log('parsed message2===>', parsed.choices[0].delta.content);
-        parsed.choices[0].index
-        yield parsed.choices[0].delta;
-      } catch (error) {
-        console.error('Could not JSON parse stream message', message, error);
+          const estimateOverheadForStream = 43;
+          //console.log('token count nlp', countTokens(responseContentCompleteText))
+          const totalResponseEstimate = countTokens(responseContentCompleteText) + promptTokenCountEstimate + estimateOverheadForStream;
+       
+          await updateTokenUsageAfterJob(shop, totalResponseEstimate)
+          const storeData = await userStore.readJSONFromFileAsync(shop);
+          storeData.documentType = documentType;
+
+          storeData.shop = shop;
+          storeData.gptText = responseContentCompleteText;
+          storeData.documentType= documentType;
+          await userStore.writeJSONToFileAsync(shop, storeData);
+            // console.log('wrote user data-===>', storeData);
+          return; // Stream finished
+        }
+        try {
+
+          const parsed = JSON.parse(message);
+ 
+          // console.log('parsed message1===>', JSON.stringify(parsed));
+          // console.log('parsed choices===>', parsed.choices);
+          // console.log('parsed content===>', parsed.choices[0]);
+          // Access the usage tokens from the response data
+          if(parsed.choices[0].delta?.content){
+            responseContentCompleteText += parsed.choices[0].delta?.content;
+          }
+       
+            //countTokens(parsed.choices[0].delta.content);
+          
+
+          // Process the rest of the data as needed
+          parsed.choices[0].index;
+          yield parsed.choices[0].delta;
+        } catch (error) {
+          console.error('Could not JSON parse stream message', message, error);
+        }
       }
     }
-  }
-  }catch(error){
-   console.log('error', error)       
+  } catch (error) {
+    // Handle errors
+    console.error('An error occurred during OpenAI request', error);
   }
 }
+
+
