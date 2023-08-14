@@ -9,10 +9,10 @@ import {
 import {
   informationCircleOutline,
   exitOutline,
-  informationCircle,
+  informationCircle,lockClosed
 } from "ionicons/icons";
 
-export function AccordionInformationHeader({ accordionName, boxName, note }) {
+export function AccordionInformationHeader({ lock, accordionName, boxName, note }) {
   return (
     <IonItem slot="header" color="light">
       <IonLabel size="small" slot="">{accordionName}</IonLabel>
@@ -24,6 +24,19 @@ export function AccordionInformationHeader({ accordionName, boxName, note }) {
         id={boxName + accordionName}
         icon={informationCircleOutline}
       ></IonIcon>
+   
+      { lock === false  && (
+        <IonIcon
+        slot="end"
+        size=""
+        id={boxName + accordionName+ "lock"}
+        icon={lockClosed}
+        >   {lock}
+
+        </IonIcon>
+      )
+
+      }
       <IonPopover
         key={"Include existing description in composition"}
         translucent={true}

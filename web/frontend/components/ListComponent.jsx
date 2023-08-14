@@ -59,7 +59,11 @@ export function ListComponent({  }) {
     productsData,
     defineProductData,
   } = useProductDataContext();
+
+
+
   useIonViewWillEnter(() => {
+    
     // Your animation code here
 
     console.log("Component is about to enter the view.");

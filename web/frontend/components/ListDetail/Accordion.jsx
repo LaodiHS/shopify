@@ -57,6 +57,7 @@ import {
   BlogSelection,
   SelectedOptions,
   IonButtonInformation,
+  useDataProvidersContext
 } from "../../components";
 
 const shortenText = (text) =>
@@ -74,10 +75,13 @@ const generateHash = async (id) => {
 };
 export function Accordion({
   setAccordionModalPopUp,
-  subscriptions,
+  // subscriptions,
   setAccordionLoadingState,
-  currentSession,
+  //currentSession,
 }) {
+
+const {checkFeatureAccess,subscriptions,currentSession} = useDataProvidersContext()
+
   const Popover = () => (
     <IonContent className="ion-padding">Hello World!</IonContent>
   );
@@ -129,10 +133,8 @@ export function Accordion({
   };
 
   const addPostClick = async (id) => {
-    console.log('id: ' +id)
+    console.log("id: " + id);
 
-
-    
     const { data, error } = await stableFetchComponent.post_async(
       { url: "/api/blog/id", body: { id } },
       fetch
@@ -407,6 +409,11 @@ export function Accordion({
       setLanguageOptions([]);
     }
 
+
+
+
+
+
     if (serverOptions["included-product-details"]) {
       const includedProductDetails = [
         ...Object.entries(serverOptions["included-product-details"]),
@@ -556,7 +563,6 @@ export function Accordion({
     }
 
     setWords([event.target.value]);
-    console.log("event: " + event.target.value);
   }
   function handleTextBoxChange(event, requestType) {
     setDisplayDocument((previous) => ({
@@ -609,7 +615,6 @@ export function Accordion({
   const handleUpdateClick = async (productData, type) => {
     const descriptionHtml = markupText;
     if (type === "description" && markupText.length) {
-      
       const productId = productData.id.split("/").pop();
 
       const { data, error } = await stableFetchComponent.post_async(
@@ -625,11 +630,8 @@ export function Accordion({
       console.log("data: " + data);
       console.log("error: " + error);
 
-      if (error !== null) {
-        const handleUpdateDescription = (newDescription) => {
-          updateProductProperty("description", newDescription);
-        };
-        handleUpdateDescription(markupText);
+      if (error === null) {
+        updateProductProperty("description", markupText);
         console.log("current Cursor", productData.currentCursor);
         pageIngCache.clearKey(productData.currentCursor);
         console.log("product updated");
@@ -759,6 +761,11 @@ export function Accordion({
     helperNotesAssist,
     helperNotesUpdate,
   }) => {
+
+    const {checkFeatureAccess} = useDataProvidersContext()
+
+    const[markupViewLock, setMarkupViewLock] = useState(checkFeatureAccess(["crafted"]));
+    const [renderedViewLock, setRenderedViewLock] = useState(checkFeatureAccess(["crafted"]).hasAccess);
     // if (accordionOptions[id])
     return (
       <div
@@ -772,7 +779,7 @@ export function Accordion({
               {id === "article" && (
                 <BlogSelection
                   currentBox={currentAccordion}
-                  article={words.join("")}
+                  article={markupText}
                   ref={blogSelectionRef}
                 />
               )}
@@ -792,6 +799,7 @@ export function Accordion({
                   <AccordionInformationHeader
                     accordionName={`Requirements`} //HighlightHub
                     boxName={currentAccordion}
+                    lock={true}
                     note={`Your requirements and selections are visually highlighted within the document.`}
                   />
 
@@ -800,23 +808,29 @@ export function Accordion({
                   </div>
                 </IonAccordion>
                 <IonAccordion
+                disabled={!markupViewLock.hasAccess}
                   ref={(ref) => (scrollRef.current[requestType] = ref)}
                   value="markup"
                 >
                   <AccordionInformationHeader
-                    accordionName={`MarkUp`}
+              
+                    accordionName={markupViewLock.hasAccess ? `MarkUp`: markupViewLock.message(`MarkUp`)}
                     boxName={currentAccordion}
+                    lock={markupViewLock.hasAccess}
                     note={`Examine the original text content of your descriptions, websites, blogs, and articles.`}
                   />
                   <div className="ion-padding" slot="content">
                     {markupText}
                   </div>
                 </IonAccordion>
-                <IonAccordion value="present">
+                <IonAccordion
+                disabled={!markupViewLock.hasAccess} 
+                value="present">
                   <AccordionInformationHeader
-                    accordionName={`Presentation`}
+                    accordionName={markupViewLock.hasAccess ? `Presentation`: markupViewLock.message(`Presentation`)}
                     boxName={currentAccordion}
                     note={`Preview how the content will appear on your websites, blogs, and articles.`}
+                    lock={markupViewLock.hasAccess}
                   />
                   <div className="ion-padding" slot="content">
                     <ReactRenderingComponent text={words.join("")} />

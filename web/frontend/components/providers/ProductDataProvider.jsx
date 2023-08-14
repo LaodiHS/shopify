@@ -69,10 +69,6 @@ export function ProductDataProvider({ children }) {
 
   const fetchData = async () => {
     setProductsLoading(true);
-
-
-
-
     if (pagingHistory.hasCurrentPage()) {
       const cachedData = pageIngCache.getPage(pagingHistory.getCurrentPage());
       if (cachedData) {
@@ -82,10 +78,6 @@ export function ProductDataProvider({ children }) {
         return;
       }
     }
-
-
-
-
 
     try {
       const response = await fetch("/api/products/paging", {
@@ -100,15 +92,8 @@ export function ProductDataProvider({ children }) {
         }),
       });
 
-
-
-
       const data = await response.json();
-    
-
       const format = formatProducts(data);
-
-
       setPaging(format);
       setProductsLoading(false);
     } catch (error) {
@@ -123,19 +108,11 @@ export function ProductDataProvider({ children }) {
 
   const [productData, setProductData] = useState(null);
 
-  function getProductData() {
-    const index = productViewCache.get("cachedProductIndex");
-    if (index >= 0 && productsData && productsData.productsData[index]) {
-      setProductData(productsData.productsData[index]);
-      productViewCache.set("cashedProductIndex", index.toString());
-    } else {
-      fetchData();
-    }
-  }
-  function defineProductData(index) {
+
+  function defineProductData(currentIndex) {
 
 
-    index = parseInt(index, 10);
+   const index = parseInt(currentIndex, 10);
   
     if (!isNaN(index) && index >= 0) {
       if (!productsData.productsData) {
@@ -217,7 +194,6 @@ export function ProductDataProvider({ children }) {
     defineProductData,
     productData,
     defineProductsData,
-
     updateProductProperty,
     setPaging,
   };

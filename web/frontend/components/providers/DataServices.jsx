@@ -1,13 +1,13 @@
 import { useState, useEffect, useMemo, } from "react";
-import { useAuthenticatedFetch, useAppBridge, useDataProvidersContext } from "@shopify/app-bridge-react";
+import { useAuthenticatedFetch, useAppBridge } from "@shopify/app-bridge-react";
 import { useIonToast } from "@ionic/react";
+import { useDataProvidersContext } from "../../components";
 
-const fetchData = async ({ url, method = "GET", headers, body }, fetch) => {
-  const [presentToast] = useIonToast();
+
+export async function fetchData ({ url, method = "GET", headers, body }, fetch) {
   if (!fetch) {
     throw new Error("authenticated fetch required");
   }
-
   const response = { data: null, error: null };
   try {
     const options = {
@@ -23,8 +23,6 @@ const fetchData = async ({ url, method = "GET", headers, body }, fetch) => {
 
     const response = await fetch(url, options);
     const data = await response.json();
-    console.log("data", data);
-
     response.error = data?.error;
     response.data = data?.data;
     if (response.error) {
@@ -32,23 +30,15 @@ const fetchData = async ({ url, method = "GET", headers, body }, fetch) => {
     }
     return response;
   } catch (error) {
-    if (error.code === 500) {
-      presentToast({
-        message: "There was a network error! Please try again later.",
-        duration: 5000,
-        position: "middle", // top, bottom, middle
-        onDidDismiss: (e) => {
-          setDisableButtons(false);
-        },
-      });
-    }
+
     console.log("error", error);
     response.error = error || null;
   }
   return { data, error };
 };
 
-function DataFetchingComponent({ url, method = "GET", body }) {
+export function DataFetchingComponent({ url, method = "GET", body }, fetch) {
+  // const fetch = useAuthenticatedFetch()
 const {fetchData}= useDataProvidersContext();
 
   const [data, setData] = useState([]);
@@ -58,7 +48,7 @@ const {fetchData}= useDataProvidersContext();
   useEffect(() => {
     const fetchDataAndSetState = async () => {
       try {
-        const fetchedData = await fetchData({url, method, body}); // Call the memoized fetch function
+        const fetchedData = await fetchData({url, method, body},fetch); // Call the memoized fetch function
         setData(fetchedData); // Set the fetched data
         setLoading(false);
       } catch (error) {
@@ -69,9 +59,10 @@ const {fetchData}= useDataProvidersContext();
 
     fetchDataAndSetState();
   }, [fetchData, url, body]);
-
   return { data, loading, error };
 }
+
+
 const stableFetchComponent = {
   get: ({ url, headers, body }) =>
     DataFetchingComponent({ url, method: "GET", headers, body }),

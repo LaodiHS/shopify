@@ -781,7 +781,8 @@ export const audienceModel = {
                 title: "Anaphora",
                 definition:
                   "Repetition of the same word or phrase at the beginning of successive clauses or sentences for emphasis.",
-                subscriptions: ["advanced"],
+
+                subscriptions: ["advanced"]
               },
               {
                 value: "chiasmus",
@@ -1230,7 +1231,6 @@ export const audienceModel = {
     },
   ],
 };
-
 
 
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, forwardRef } from "react";
-import { stableFetchComponent } from "../providers";
+
 import {
   IonCol,
   IonRow,
@@ -15,14 +15,18 @@ import {
   IonIcon,
   IonPopover,
   IonContent,
-
 } from "@ionic/react";
 import { useAuthenticatedFetch, useAppBridge } from "@shopify/app-bridge-react";
-import {informationCircleOutline,
+import {
+  informationCircleOutline,
   exitOutline,
   informationCircle,
 } from "ionicons/icons";
-
+import {
+  useDataProvidersContext,
+  stableFetchComponent,
+  DataFetchingComponent,
+} from "../../components";
 
 function HumanReadableDate(ISO_8601) {
   const date = new Date(ISO_8601);
@@ -35,7 +39,6 @@ function HumanReadableDate(ISO_8601) {
     minute: "numeric",
     second: "numeric",
   };
-
 
   const humanReadableDate = date.toLocaleString("en-US", options);
   return humanReadableDate;
@@ -51,85 +54,84 @@ const BlogSelection = forwardRef(({ article, currentBox }, ref) => {
   const [toastMessage, setToastMessage] = useState("");
 
   const [presentAlert] = useIonAlert();
-  const showAlert = (selectedArticle) => {
+  const { async_fetchData } = useDataProvidersContext();
+  const showReceptModal = (selectedArticle) => {
     presentAlert({
       header: `Article Post Confirmation: `,
-      message: `Blog ID:  ${selectedArticle.blog_id},\nArticle Title: ${
-        selectedArticle.title
-      },\nArticle ID:  ${selectedArticle.id},\nCreated At: ${HumanReadableDate(
-        selectedArticle.created_at
-      )},\nPublished At: ${HumanReadableDate(
-        selectedArticle.published_at
-      )},\nUpdated At: ${HumanReadableDate(selectedArticle.updated_at)}.`,
+      message: `Blog ID:  ${selectedArticle.blog_id},
+       Blog Handle:  ${selectedArticle.handle},
+      \nArticle Title: ${ selectedArticle.title},
+      \nArticle ID:  ${selectedArticle.id},
+      \nCreated At: ${HumanReadableDate(selectedArticle.created_at)},
+      \nPublished At: ${HumanReadableDate(selectedArticle.published_at)},
+      \nUpdated At: ${HumanReadableDate(selectedArticle.updated_at)}.`,
       buttons: ["OK"],
     });
   };
   const handleAddArticle = async () => {
-    try{
-    const blog = selectedBlog || newBlogTitle;
-    if (
-      blog &&
-      article &&
-      article.length &&
-      newArticleName &&
-      newArticleName.length
-    ) {
+    try {
+      const blog = selectedBlog || newBlogTitle;
+  
+      if (!blog || !article || !article.length || !newArticleName || !newArticleName.length) {
+        return;
+      }
+  
       let blogData = selectedBlog || {};
+  
       if (newBlogTitle) {
         const { data, error } = await createBlog(newBlogTitle);
-        blogData = data;
-        if (error !== null) {
+  
+        if (error === null) {
           console.log("data blog creation", data);
           setSelectedBlog(data);
         } else {
-          presentToast({
-            message: "There was a network error! Please try again later.",
-            duration: 5000,
-            position: "middle", // top, bottom, middle
-            onDidDismiss: (e) => {
-              setDisableButtons(false);
-            },
-          });
+          handleNetworkError();
           return;
         }
+  
+        blogData = data;
       }
-      const blog_id = blogData.id;
-      const title = blogData.title;
+  
+      const { id: blog_id, title } = blogData;
       const body_html = article;
       const published = true;
       const author = "";
-      const { data, error } = await createArticle(
-        blog_id,
-        title,
-        author,
-        body_html,
-        published
-      );
+  
+      const { data, error } = await createArticle(blog_id, title, author, body_html, published);
+  
+      console.log('ceated artice',data);
+      console.log('article creation', error)
+  
       if (error === null) {
-        showAlert(data);
+        console.log("data article creation", data);
+        showReceptModal(data);
       } else {
-        presentToast({
-          message: "There was a network error! Please try again later.",
-          duration: 5000,
-          position: "middle", // top, bottom, middle
-          onDidDismiss: (e) => {
-            setDisableButtons(false);
-          },
-        });
+        handleNetworkError();
       }
+    } catch (error) {
+      console.error("Error while adding article:", error);
+      handleUnexpectedError();
     }
-  }catch(error){
-    console.error("Error while adding article:", error);
+  };
+  
+  const handleNetworkError = () => {
+    presentToast({
+      message: "There was a network error! Please try again later.",
+      duration: 5000,
+      position: "middle", // top, bottom, middle
+      onDidDismiss: () => setDisableButtons(false),
+    });
+  };
+  
+  const handleUnexpectedError = () => {
     presentToast({
       message: "An unexpected error occurred. Please try again later.",
       duration: 5000,
       position: "middle",
-      onDidDismiss: (e) => {
-        setDisableButtons(false);
-      },
+      onDidDismiss: () => setDisableButtons(false),
     });
-  }
   };
+  
 
   // Expose the handleChildAction function using the ref
   // Now the parent can call this function through the childRef
@@ -139,10 +141,10 @@ const BlogSelection = forwardRef(({ article, currentBox }, ref) => {
 
   async function createBlog(title) {
     const body = { title };
-    return await stableFetchComponent.post_async(
+    return await async_fetchData(
       {
         url: "/api/blog/create",
-
+        method: "POST",
         body,
       },
       fetch
@@ -153,25 +155,20 @@ const BlogSelection = forwardRef(({ article, currentBox }, ref) => {
     console.log("has properties ");
 
     const createArticleBody = { blog_id, title, author, body_html, published };
-    return await stableFetchComponent.post_async(
-      {
-        url: "/api/article/create",
-
-        body: createArticleBody,
-      },
-      fetch
-    );
+    return await async_fetchData({
+      url: "/api/article/create",
+      method: "POST",
+      body: createArticleBody,
+    });
   }
 
   let {
     data: blogList,
     loading,
     error,
-  } = stableFetchComponent.get({ url: "/api/blog/list" });
-console.log('data---->', blogList)
-console.log('error---->', error)
+  } = DataFetchingComponent({ url: "/api/blog/list" });
 
-blogList = blogList || [];
+  // console.log('error---->', error)
 
   const handleBlogChange = (event) => {
     const selectedBlog = event.target.value;
@@ -213,97 +210,97 @@ blogList = blogList || [];
   return (
     <IonCol size="12">
       <IonItem lines="none" color="light">
-      <IonRow>
-        {blogList.length ? (
+        <IonRow>
+          {blogList.length ? (
+            <IonCol size="6">
+              <IonSelect
+                placeholder="Select Blog"
+                value={selectedBlog}
+                interface="action-sheet"
+                labelPlacement="start"
+                interfaceOptions={customAlertOptions}
+                cancelText="Cancel Selection"
+                okText="Select Blog"
+                selectedText={selectedBlog?.handle}
+                onIonCancel={handleBlogSelectCancel}
+                onIonChange={handleBlogChange}
+              >
+                {blogList.map((blog) => (
+                  <IonSelectOption key={blog?.id} value={blog}>
+                    {blog?.handle}
+                  </IonSelectOption>
+                ))}
+              </IonSelect>
+            </IonCol>
+          ) : (
+            <IonCol size="6">
+              <IonText color="danger">You have no Blogs.</IonText>
+            </IonCol>
+          )}
           <IonCol size="6">
-        
-            <IonSelect
-              placeholder="Select Blog"
-              value={selectedBlog}
-              interface="action-sheet"
-              labelPlacement="start"
-              interfaceOptions={customAlertOptions}
-              cancelText="Cancel Selection"
-              okText="Select Blog"
-              selectedText={selectedBlog?.handle}
-              onIonCancel={handleBlogSelectCancel}
-              onIonChange={handleBlogChange}
-            >
-              {blogList.map((blog) => (
-                <IonSelectOption key={blog?.id} value={blog}>
-                  {blog?.handle}
-                </IonSelectOption>
-              ))}
-            </IonSelect>
+            {" "}
+            <IonItem color="light" lines="none">
+              <IonIcon
+                className={currentBox === "article" ? "" : "ion-hide"}
+                size="small"
+                color="secondary"
+                slot="end"
+                aria-label="Include existing description in composition"
+                id={"article-post-validation" + currentBox}
+                icon={informationCircleOutline}
+              ></IonIcon>
+              <IonPopover
+                key={"Include existing description in composition"}
+                translucent={true}
+                animated="true"
+                trigger={"article-post-validation" + currentBox}
+                triggerAction="hover"
+                ionPopoverWillPresent={(e) => console.log("i will pop")}
+              >
+                <IonContent className="ion-padding">
+                  <IonText>
+                    <p>
+                      Save your articles to a blog. Name your article, and
+                      select an existing blog or create a new one if none exist.
+                    </p>
+                  </IonText>
+                  <IonText color="secondary">
+                    <sub>
+                      <IonIcon icon={exitOutline}></IonIcon> click outside box
+                      to close
+                    </sub>
+                  </IonText>
+                </IonContent>
+              </IonPopover>{" "}
+            </IonItem>
           </IonCol>
-          
-        ) : (
           <IonCol size="6">
-            <IonText color="danger">You have no Blogs.</IonText>
+            <IonInput
+              type="text"
+              placeholder="Enter new blog title"
+              value={newBlogTitle}
+              onIonChange={handleNewBlogTitleChange}
+              disabled={selectedBlog !== null}
+            />
           </IonCol>
-        )}
-        <IonCol size="6">   <IonItem color="light" lines="none"><IonIcon
-                    className={currentBox === "article" ? "" : "ion-hide"}
-                    size="small"
-                    color="secondary"
-                    slot="end"
-                    aria-label="Include existing description in composition"
-                    id={"article-post-validation" + currentBox}
-                    icon={informationCircleOutline}
-                  ></IonIcon>
-                  <IonPopover
-                    key={"Include existing description in composition"}
-                    translucent={true}
-                    animated="true"
-                    trigger={"article-post-validation" + currentBox}
-                    triggerAction="hover"
-                    ionPopoverWillPresent={(e) => console.log("i will pop")}
-                  >
-                    <IonContent className="ion-padding">
-                      <IonText>
-                        <p>
-                          Save your articles to a blog. Name your article, and
-                          select an existing blog or create a new one if none
-                          exist.
-                        </p>
-                      </IonText>
-                      <IonText color="secondary">
-                        <sub>
-                          <IonIcon icon={exitOutline}></IonIcon> click outside
-                          box to close
-                        </sub>
-                      </IonText>
-                    </IonContent>
-                  </IonPopover>{" "}</IonItem></IonCol>
-        <IonCol size="6">
-          <IonInput
-            type="text"
-            placeholder="Enter new blog title"
-            value={newBlogTitle}
-            onIonChange={handleNewBlogTitleChange}
-            disabled={selectedBlog !== null}
-          />
-        </IonCol>
-        <IonCol size="6">
-          <IonInput
-            type="text"
-            placeholder="Enter new article name"
-            value={newArticleName}
-            onIonChange={handleNewArticleNameChange}
-          />
-        </IonCol>
-        <IonCol>
+          <IonCol size="6">
+            <IonInput
+              type="text"
+              placeholder="Enter new article name"
+              value={newArticleName}
+              onIonChange={handleNewArticleNameChange}
+            />
+          </IonCol>
+          <IonCol></IonCol>
 
-        </IonCol>
-
-        <IonToast
-          isOpen={showToast}
-          message={toastMessage}
-          onDidDismiss={() => setShowToast(false)}
-        />
-      </IonRow>
+          <IonToast
+            isOpen={showToast}
+            message={toastMessage}
+            onDidDismiss={() => setShowToast(false)}
+          />
+        </IonRow>
       </IonItem>
     </IonCol>
   );
 });
-export {BlogSelection};
+export { BlogSelection };

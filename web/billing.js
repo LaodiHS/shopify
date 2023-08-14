@@ -6,33 +6,58 @@ const USAGE_CHARGE_INCREMENT_AMOUNT = 1.0;
 
 export const monthlySubscriptionsTokens = {'basic':{tokens:469618}, 'crafted':{tokens:939236}, 'advanced':{tokens:1878472}};
 export const billingConfig = {
-  "usage": {
-    // This is an example configuration that would do a one-time charge for $5 (only USD is currently supported)
-    amount: 9.0,
-    currencyCode: "USD",
-    interval: BillingInterval.Usage,
-    usageTerms: "One dollar per button click",
-  },
+  // "usage": {
+  //   // This is an example configuration that would do a one-time charge for $5 (only USD is currently supported)
+  //   amount: 9.0,
+  //   currencyCode: "USD",
+  //   interval: BillingInterval.Usage,
+  //   usageTerms: "One dollar per button click",
+  // },
   "basic":{
-    amount: 5.0,
-  //  tokens: 469618,
+    amount: 30.0,
+    tokens: 469618,
     currencyCode: "USD",
     interval: BillingInterval.Every30Days,
-    usageTerms: "You Will be charged $5 per month.",
+    usageTerms: [
+    "preview your rendered descriptions",
+    "Generate descriptions from a selection of contextual templates",
+    "select key points from your products, variants, and collections",
+    "expand on an existing description",
+    "track key points in the composition"
+    ],
   },
   "crafted":{
-    amount: 10.0,
-   // tokens: 939236,
+    amount: 60.0,
+    tokens: 939236,
     currencyCode: "USD",
     interval: BillingInterval.Every30Days,
-    usageTerms: "You Will be charged $10 per month.",
+    usageTerms: [
+    "preview your rendered html descriptions",    
+    "Generate descriptions from a selection of advanced contextual templates",
+    "select key points from your products, variants, and collections",
+    "expand on an existing description",
+    "track key points in the composition",
+    "access to advanced markup tools, Html, Markdown, and Katex",
+    "real time markup rendering, so you can see the results of your composition in real time",
+    "markup inspection and auto fix",
+    
+  ],
   },
   "advanced":{
-    amount: 20.0,
-  //  tokens: 1878472, 
+    amount: 100.0,
+    tokens: 1878472, 
     currencyCode: "USD",
     interval: BillingInterval.Every30Days,
-    usageTerms: "You Will be charged $20 per month.",
+    usageTerms: [
+    
+    "Generate descriptions from template",
+    "Select key points from your product",
+    "Include variant selections",
+    "Image analysis",
+    "Generate articles and social posts",
+    "Advanced language options",
+    "Advanced document formats",
+    "Regional audience selection"]
   },
 
 };

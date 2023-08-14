@@ -1,5 +1,5 @@
 import shopify from "./shopify.js";
-import { Page } from '@shopify/polaris';
+import { Page } from "@shopify/polaris";
 
 // HTTP/1.1 201 Created
 
@@ -58,15 +58,17 @@ export async function createArticle({
     article.body_html = body_html;
     article.published = published;
     try {
-      await article.save({
+      const data = await article.save({
         update: true,
       });
-      console.log('Article', article);
-      return article;
+
+     return article
     } catch (error) {
+      console.log('error', error);
       throw error;
     }
   } catch (error) {
+    console.log('error',error)
     throw error;
   }
 }
@@ -101,7 +103,6 @@ export async function createBlog({ session, title }) {
     throw error; // Propagate the error to the caller
   }
 }
-
 
 // HTTP/1.1 200 OK
 // {
@@ -140,7 +141,7 @@ export async function listBlogs({ session }) {
     const response = await shopify.api.rest.Blog.all({
       session: session,
     });
-    console.log('response', response);
+    console.log("response", response);
     return response; // Optionally, return the list of blogs
   } catch (error) {
     console.error("Error listing blogs:", error);
@@ -148,47 +149,39 @@ export async function listBlogs({ session }) {
   }
 }
 
-export async function findBlog({session, id}){
-try{
-
- return  await shopify.api.rest.Blog.find({
-    session,
-     id,
-  });
-
-}catch(error){
-  console.error("Error listing blogs:", error);
-  throw error;
-
-
+export async function findBlog({ session, id }) {
+  try {
+    return await shopify.api.rest.Blog.find({
+      session,
+      id,
+    });
+  } catch (error) {
+    console.error("Error listing blogs:", error);
+    throw error;
   }
 }
 
 export function contentGenerator(app) {
-
-
-app.post('/api/blog/id', async(req, res) => {
+  app.post("/api/blog/id", async (req, res) => {
     let status = 200;
     let error = null;
     let data = null;
 
-    try{
-      const {id} = req.body
-      console.log('id:', id);
-      const {session} = res.locals.shopify
-      const response = await findBlog({session, id})
+    try {
+      const { id } = req.body;
+      console.log("id:", id);
+      const { session } = res.locals.shopify;
+      const response = await findBlog({ session, id });
       data = response.data;
-      console.log('data:', data);
-      }catch(err){
-      status = err?.response?.code  ||  500 ;
+      console.log("data:", data);
+    } catch (err) {
+      status = err?.response?.code || 500;
       error = err.response;
-       console.log('error------>:', error);
-      }    
-
-
+      console.log("error------>:", error);
+    }
 
     res.status(status).json({ success: status === 200, data, error });
-})
+  });
 
   app.get("/api/blog/list", async (req, res) => {
     let status = 200;
@@ -197,7 +190,7 @@ app.post('/api/blog/id', async(req, res) => {
 
     try {
       const response = await listBlogs(res.locals.shopify);
-      data = response.data
+      data = response.data;
     } catch (error) {
       status = 500;
       error = error.message;
@@ -206,17 +199,17 @@ app.post('/api/blog/id', async(req, res) => {
     res.status(status).json({ success: status === 200, data, error });
   });
 
-
   app.post("/api/blog/create", async (req, res) => {
     let status = 200;
     let error = null;
     let data = null;
     const { session } = res.locals.shopify;
-    const { title} = req.body;
+    const { title } = req.body;
     try {
       data = await createBlog({ session, title });
-      console.log("name: " + name);
+      console.log("name: ", title);
     } catch (error) {
+      console.log('error creating blog', error)
       error = error.message;
       status = 500;
     }
@@ -231,7 +224,6 @@ app.post('/api/blog/id', async(req, res) => {
     const { session } = res.locals.shopify;
     const { blog_id, title, author, body_html, published } = req.body;
     try {
-    
       data = await createArticle({ session, ...req.body });
     } catch (error) {
       error = error.message;

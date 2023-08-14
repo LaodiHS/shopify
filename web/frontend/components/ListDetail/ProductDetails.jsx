@@ -34,59 +34,25 @@ import {
 import {
   Context,
   SharedData,
-  SubscriptionChecker,
+  
 } from "../../utilities/data-context.js";
 import { shortenText } from "../../utilities/utility-methods";
 import { ReactRenderingComponent } from "../providers";
 import { useAuthenticatedFetch } from "../../hooks";
-import { AppTypeahead,  extractTextFromHtml } from "../../components";
+import {
+  AppTypeahead,
+  extractTextFromHtml,
+  useDataProvidersContext,
+} from "../../components";
 // import { navigate } from "ionicons/icons";
 
-// const handleProductDescriptionUpdate = async (productId, descriptionHtml,fetch) => {
-
-//   const response = await fetch("/api/products/update/description", {
-//     headers: {
-//       "Content-Type": "application/json",
-//     },
-//     body: JSON.stringify({
-//       productId: productId,
-//       descriptionHtml: descriptionHtml,
-//     }),
-//   });
-
-//   console.log("response", response);
-
-//   if (response.ok) {
-//     //  await refetchProductCount();
-//   }
-// };
-
-// const handleProductMetafieldsUpdate = async (variantId, metaFieldsArray, fetch) => {
-
-//   const response = await fetch("/api/products/update/description", {
-//     headers: {
-//       "Content-Type": "application/json",
-//     },
-//     body: JSON.stringify({
-//       variantId: variantId,
-//       dmetafieldsArray: metafieldsArray,
-//     }),
-//   });
-
-//   console.log("response", response.json());
-
-//   if (response.ok) {
-//     //  await refetchProductCount();
-//   }
-// };
-
-export function ProductDetails({ data, subscriptions }) {
+export function ProductDetails({ data }) {
   //const fetch = useAuthenticatedFetch();
-
+  const { checkFeatureAccess,includeProductImagesFeature, 
+    basic_crafted_advanced , subscriptions,  contextualOptions, setContextualOptions } = useDataProvidersContext();
   const [selectedOptions, setSelectedOptions] = useState({});
-  const [selectedCollections, setSelectedCollections] = useState({
-    collections: [],
-  });
+  const [selectedCollections, setSelectedCollections] = useState([]);
+
   const [isOpen, setIsOpen] = useState(false);
   const [selectedImageText, setSelectedImageText] = useState("0 Items");
   const [selectedImages, setSelectedImages] = useState([]);
@@ -112,18 +78,7 @@ export function ProductDetails({ data, subscriptions }) {
     Context.sendData("AudienceOptions", { serverOptions }, "optionChange");
   };
 
-  function updateCollections() {
-    setSelectedCollections((prev) => ({
-      ...prev,
-      collections:
-        selectedOptions?.collections?.map(
-          (obj) =>
-            Object.entries(obj)?.find(
-              ([key, value]) => key !== "id" && value
-            )[1]
-        ) || [],
-    }));
-  }
+
 
   const handleIncludeChange = (event, category) => {
     Object.entries(category).forEach(([key, value]) => {
@@ -177,12 +132,26 @@ export function ProductDetails({ data, subscriptions }) {
     setIsOpen(false);
   };
 
-  const checker = new SubscriptionChecker(subscriptions);
-  const basic_crafted_advanced = checker.checkFeatureAccess([
-    "basic",
-    "crafted",
-    "advanced",
-  ]);
+
+
+  function addCollection(obj) {
+    setSelectedCollections([...obj]);
+  }
+  function clearSelection() {
+    SharedData.clearSharedData();
+    console.log("selection cleared");
+    const serverOptions = SharedData.serverOptions;
+    setSelectedOptions({});
+    setSelectedCollections([]);
+    setSelectedImageText("0 Items");
+    setSelectedImages([]);
+      setContextualOptions({});
+    Context.sendData(
+      "AudienceOptions",
+      { serverOptions },
+      "handleIncludeChange"
+    );
+  }
   return (
     <IonGrid>
       <IonRow>
@@ -232,9 +201,7 @@ export function ProductDetails({ data, subscriptions }) {
                 >
                   <IonContent className="ion-padding">{title}</IonContent>
                   <IonText color="secondary">
-                    {" "}
                     <sub>
-                      {" "}
                       <IonIcon icon={exitOutline}></IonIcon> click outside box
                       to close
                     </sub>
@@ -246,6 +213,16 @@ export function ProductDetails({ data, subscriptions }) {
         </IonCol>
         <IonCol key="second" size="12" size-md="7">
           <IonRow>
+            <IonCol size="12">
+              {" "}
+              <IonButton
+                onClick={clearSelection}
+                fill="clear"
+                className="ion-float-end"
+              >
+                Clear Selections
+              </IonButton>
+            </IonCol>
             {/* <IonCol size="12" className={title ? "" : " ion-hide"} key={title}>
               <IonItem lines="none">
                 <IonInput
@@ -283,7 +260,7 @@ export function ProductDetails({ data, subscriptions }) {
                         onIonChange={(e) =>
                           handleIncludeChange(e, {
                             description: e?.detail?.value
-                              ? [  extractTextFromHtml(description)]
+                              ? [extractTextFromHtml(description)]
                               : "delete",
                           })
                         }
@@ -375,9 +352,12 @@ export function ProductDetails({ data, subscriptions }) {
                   interface="action-sheet"
                   placeholder={"Include A Collection"}
                   multiple="true"
-                  values={selectedCollections.collections}
+                  value={selectedCollections}
+                  selectedText={selectedCollections?.title}
                   onIonChange={(e) => {
                     optionChange("collections", e.detail.value);
+                    console.log("collection", e.detail.value);
+                    addCollection(e.detail.value);
                   }}
                 >
                   {collections &&
@@ -523,9 +503,9 @@ export function ProductDetails({ data, subscriptions }) {
               <IonText
                 style={{ fontSize: "11px" }}
                 className="ion-text-wrap"
-                color={basic_crafted_advanced.hasAccess ? "" : "medium"}
+                color={includeProductImagesFeature.hasAccess ? "" : "medium"}
               >
-                {basic_crafted_advanced.message("Images")}
+                {includeProductImagesFeature.message("Images")}
               </IonText>
             </IonLabel>
             <IonIcon
@@ -540,18 +520,20 @@ export function ProductDetails({ data, subscriptions }) {
               lines="none"
               slot="end"
               button={false}
-         
               key="images"
-            
               detail={false}
             >
-              <IonButton size="small" disabled={!basic_crafted_advanced.hasAccess} onClick={() => {
-                setIsOpen((prevIsOpen) => !prevIsOpen);
-              }} color="tertiary" fill="clear">
+              <IonButton
+                size="small"
+                disabled={!includeProductImagesFeature.hasAccess}
+                onClick={() => {
+                  setIsOpen((prevIsOpen) => !prevIsOpen);
+                }}
+                color="tertiary"
+                fill="clear"
+              >
                 Select Images
               </IonButton>
-
-              
             </IonItem>
           </IonItem>
           <IonPopover
@@ -563,7 +545,9 @@ export function ProductDetails({ data, subscriptions }) {
           >
             <IonContent className="ion-padding ion-text-capitalize">
               <IonText>
-                <p>Choose the images you wish to incorporate into the document.</p>
+                <p>
+                  Choose the images you wish to incorporate into the document.
+                </p>
               </IonText>
               <IonText color="secondary">
                 {" "}

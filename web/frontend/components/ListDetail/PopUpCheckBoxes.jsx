@@ -12,10 +12,10 @@ import {
 } from "@ionic/react";
 import "./styles/SelectionToggles.module.css";
 import React, { useState, useEffect } from "react";
-import { PaidFeature } from "../../components";
+import { PaidFeature, useDataProvidersContext } from "../../components";
 import { Context } from "../../utilities/data-context";
 
-export function PopUpCheckBoxes({ subscriptions, modal, toggleOptionsDrawer }) {
+export function PopUpCheckBoxes({ modal, toggleOptionsDrawer }) {
   const checkBoxes = new Set();
   const { openMenu, closeMenu } = toggleOptionsDrawer;
 

@@ -1,4 +1,4 @@
-export {stableFetchComponent} from "./DataServices";
+export {stableFetchComponent, DataFetchingComponent} from "./DataServices";
 
 
 export { AppBridgeProvider } from "./AppBridgeProvider";

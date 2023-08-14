@@ -1,5 +1,5 @@
 import { Page, Layout, Image, Text } from "@shopify/polaris";
-import { useEffect, useState, Link, createContext, useContext } from "react";
+import { useEffect, useState, Link, createContext, useContext, useRef } from "react";
 import "@ionic/react/css/core.css";
 import "@ionic/react/css/normalize.css";
 import "@ionic/react/css/structure.css";
@@ -18,7 +18,11 @@ import {
   documentTextOutline,
   chatbubbleOutline,
   homeOutline,
+  lockClosed,
+  arrowForwardOutline,
+  arrowDownOutline
 } from "ionicons/icons";
+
 import { IonReactRouter } from "@ionic/react-router";
 import {
   setupIonicReact,
@@ -34,6 +38,20 @@ import {
   IonIcon,
   IonButton,
   IonLabel,
+  IonHeader,
+  IonGrid,
+  IonRow,
+  IonCol,
+  IonSpinner,
+  IonToolbar,
+  IonTitle,
+  IonText,
+
+useIonViewDidEnter,
+
+
+
+
 } from "@ionic/react";
 setupIonicReact({ mode: "ios" });
 
@@ -49,6 +67,7 @@ import {
   NavigationDataProvider,
   useNavigationDataContext,
   DataProvidersProvider,
+  useDataProvidersContext,
 } from "./components";
 import { useAuthenticatedFetch } from "./hooks";
 import { NavigationMenu } from "@shopify/app-bridge-react";
@@ -62,87 +81,6 @@ import {
 } from "react-router-dom";
 import { Context } from "./utilities/data-context";
 // import { useUniqueKeys, UniqueKeysProvider } from "./utilities/utility-methods";
-
-const DataContext = createContext();
-function DataProvider({ children }) {
-  const [flag, setFlag] = useState(false);
-  const [subscriptions, setSubscriptions] = useState(["free"]);
-  const [currentSession, setCurrentSession] = useState({});
-  const setRouteSubscriptions = (activeSubscriptions, activeSession) => {
-    setSubscriptions(activeSubscriptions);
-    setCurrentSession(activeSession);
-  };
-
-  Context.listen("SubscriptionUpdate", ({ subscriptions, activeSession }) => {
-    setRouteSubscriptions(subscriptions, activeSession);
-  });
-
-  useEffect(() => {}, [subscriptions,currentSession]);
-
-  const setRouteFlag = (flag) => {
-    setFlag(flag);
-  };
-
-  return (
-    <DataContext.Provider
-      value={{
-        currentSession,
-        subscriptions,
-        flag,
-     
-        setRouteSubscriptions,
-        setRouteFlag,
-      }}
-    >
-      {children}
-    </DataContext.Provider>
-  );
-}
-
-let navigation;
-
-
-function Dashboard() {
-  const navigation = useNavigate();
-  const fetch = useAuthenticatedFetch();
-  const { flag, setRouteFlag, setRouteSubscriptions } = useContext(DataContext);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!flag) {
-        try {
-          const subscriptionsResponse = await fetch(
-            "/api/current/subscription/status"
-          );
-
-          // if (!subscriptionsResponse.ok) {
-          //   // If the response status is not ok (e.g., 401 Unauthorized or 403 Forbidden),
-          //   // it means the user is not authenticated or doesn't have access.
-          //   // Redirect the user to the login page or show an error message.
-          //   // navigation("/login");
-          //   return;
-          // }
-
-          const data = await subscriptionsResponse.json();
-          const { activeSubscriptions, session } = data;
-
-          setRouteFlag(true);
-          setRouteSubscriptions(activeSubscriptions, session);
-        } catch (err) {
-          // Handle network errors or other unexpected errors here.
-       
-          const retryInterval = 4000; // 4 seconds
-          setTimeout(fetchData, retryInterval);
-          console.error("Error fetching data", err);
-        }
-      }
-    };
-
-    fetchData();
-  }, [flag, fetch, navigation, setRouteFlag, setRouteSubscriptions]);
-
-  return <div></div>;
-}
 
 export default function App() {
   const pages = import.meta.globEager("./pages/**/!(*.test.[jt]sx)*.([jt]sx)");
@@ -183,20 +121,21 @@ export default function App() {
                     label: "Subscription",
                     destination: "/subscriptions",
                   },
+                  {
+                    label: "welcome",
+                    destination: "/welcome",
+                  },
                 ]}
               />
-               {/* <Routes pages={pages} /> */}
-               <DataProvidersProvider>
-               <NavigationDataProvider>
-               < ProductDataProvider>
-              <DataProvider>
-                <Dashboard />
+              {/* <Routes pages={pages} /> */}
 
-                <IonMenuNav />
-              </DataProvider>
-              </ProductDataProvider>
+              <NavigationDataProvider>
+                <ProductDataProvider>
+                  <DataProvidersProvider>
+                    <IonMenuNav />
+                  </DataProvidersProvider>
+                </ProductDataProvider>
               </NavigationDataProvider>
-              </DataProvidersProvider>
             </QueryProvider>
           </AppBridgeProvider>
         </BrowserRouter>
@@ -205,26 +144,133 @@ export default function App() {
   );
 }
 
+
+function loading(){
+
+  
+    return (
+      <IonContent>
+        <IonGrid style={{ height: "100vh" }}>
+          <IonRow
+            className="ion-justify-content-center ion-align-items-center"
+            style={{ height: "100%" }}
+          >
+            <IonCol size="auto">
+              <IonSpinner
+                style={{ width: "100px", height: "100px" }}
+                color="tertiary"
+              ></IonSpinner>
+            </IonCol>
+          </IonRow>
+        </IonGrid>
+      </IonContent>
+    );
+  
+}
+
+
+ 
+function LandingPage(){  
+    const arrowRef = useRef(null);
+    const [arrowAnimation, setArrowAnimation] = useState('animate__bounceIn');
+  
+    useIonViewDidEnter(() => {
+      arrowRef.current?.addEventListener('animationend', () => {
+        setArrowAnimation('animate__tada'); // Apply another animation after the bounce
+      });
+    });
+  
+    const handleGetStarted = () => {
+      // Handle navigation to the next page
+  
+      // Start animation when "Get Started" button is clicked
+      setArrowAnimation('animate__flip');
+
+      navigate('/')
+    };
+  const { subscriptionRetrievalLoading} = useDataProvidersContext()
+  const navigate = useNavigate();
+
+  if(subscriptionRetrievalLoading){
+   return loading()
+  }else {
+
+  
+
+    return (
+      <IonPage>
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>Welcome to VibeFenWei</IonTitle>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent className="ion-padding">
+          <IonText>
+            <h1 className="ion-text-center">VibeFenWei</h1>
+            <p className="ion-text-center">
+              Experience a seamless journey with our amazing features.
+            </p>
+          </IonText>
+          <div className="ion-text-center">
+            <IonIcon
+              ref={arrowRef}
+              icon={arrowAnimation === 'animate__flip' ? arrowDownOutline : arrowForwardOutline}
+              size="large"
+              color="primary"
+              className={`animate__animated ${arrowAnimation}`}
+            />
+          </div>
+          <div className="ion-text-center animate__animated animate__fadeInUp">
+            <IonButton expand="block" color="primary" onClick={handleGetStarted}>
+              Get Started
+            </IonButton>
+          </div>
+        </IonContent>
+      </IonPage>
+    );
+  };
+  }
+
+
+
+
+
+
+
 function Home() {
+
+ const { subscriptionRetrievalLoading} = useDataProvidersContext()
+
+ if(subscriptionRetrievalLoading){
+  return loading()
+ }
+
+
   return <ProductsCard />;
 }
 
 function ProductDetails() {
-  const { subscriptions, currentSession } = useContext(DataContext);
 
-  return (
-    <ListDetailComponent
-      subscriptions={subscriptions}
-      currentSession={currentSession}
-    />
-  );
+ const { subscriptionRetrievalLoading} = useDataProvidersContext()
+
+ if(subscriptionRetrievalLoading){
+  return loading()
+ }
+  return <ListDetailComponent />;
 }
 
 function Subscriptions() {
-  const { subscriptions } = useContext(DataContext);
 
-  return <SubscriptionComponent subscriptions={subscriptions} />;
+ const { subscriptionRetrievalLoading} = useDataProvidersContext()
+
+ if(subscriptionRetrievalLoading){
+  return loading()
+ }
+  return <SubscriptionComponent />;
 }
+
+
+
 // Other page components...
 
 function NoMatch() {
@@ -232,9 +278,10 @@ function NoMatch() {
 }
 
 function IonMenuNav() {
+  const { checkFeatureAccess, freeOptions } = useDataProvidersContext();
   const location = useLocation();
   const navigate = useNavigate();
-const {aiWorkStationSetter} = useNavigationDataContext();
+  const { aiWorkStationSetter } = useNavigationDataContext();
   const [currentRoute, setCurrentRoute] = useState("/");
   location;
   useEffect(() => {
@@ -242,53 +289,66 @@ const {aiWorkStationSetter} = useNavigationDataContext();
     setCurrentRoute(location.pathname);
   }, [location.pathname]);
 
+
+
   const tabs = {
     "/subscriptions": [
       {
+        access: checkFeatureAccess(["free"]),
+    
         label: "Home",
         icon: homeOutline,
         clickHandler: (event) => {
           navigate("/", { replace: true });
-          //  Context.sendData("DataWindowModal", {category:"article"}, "IonMenuNavComponent" )
-          console.log("Subscription Home tab clicked");
+     
         },
       },
     ],
     "/": [],
     "/product-details": [
       {
+        access: checkFeatureAccess(["free"]),
+        disabled: false,
         label: "Home",
         icon: homeOutline,
         clickHandler: (event) => {
           navigate("/", { replace: true });
-          //  Context.sendData("DataWindowModal", {category:"article"}, "IonMenuNavComponent" )
-          console.log("Subscription Home tab clicked");
+     
         },
       },
       {
+        access: checkFeatureAccess(["basic"]),
+
         label: "Description",
         icon: newspaperOutline,
-        clickHandler: (event) => {
-          aiWorkStationSetter("description")
-
-          console.log("Description tab clicked");
+        clickHandler: (event, hasAccess) => {
+          if (!hasAccess) {
+            navigate("/subscriptions");
+          } else {
+            aiWorkStationSetter("description");
+          }
         },
       },
       {
+        access: checkFeatureAccess(["crafted"]),
+     
         label: "Article",
         icon: documentTextOutline,
-        clickHandler: (event) => {
-          aiWorkStationSetter("article")
-       
-        }
-      },
-      {
-        label: "Post",
-        icon: chatbubbleOutline,
-        clickHandler: (event) => {
-          aiWorkStationSetter("post")
+        clickHandler: (event, hasAccess) => {
+          if (!hasAccess) {
+            navigate("/subscriptions");
+          } else {
+            aiWorkStationSetter("article");
+          }
         },
       },
+      // {
+      //   label: "Post",
+      //   icon: chatbubbleOutline,
+      //   clickHandler: (event) => {
+      //     aiWorkStationSetter("post");
+      //   },
+      // },
     ],
   };
 
@@ -300,18 +360,22 @@ const {aiWorkStationSetter} = useNavigationDataContext();
             <Route index path="/" element={<Home />} />
             <Route path="/product-details" element={<ProductDetails />} />
             <Route path="/subscriptions" element={<Subscriptions />} />
+            <Route path="/welcome" element={<LandingPage />} />
             <Route path="*" element={<NoMatch />} />
           </Routes>
         </IonRouterOutlet>
         <IonTabBar slot="bottom">
           {tabs[currentRoute]?.map((tab, index) => (
             <IonTabButton
+              // disabled= {tab.disabled}
               key={index}
               tab={currentRoute}
-              onClick={tab.clickHandler}
+              onClick={e=> tab.clickHandler(e, tab.access.hasAccess)}
             >
-              <IonIcon icon={tab.icon} />
-              <IonLabel>{tab.label}</IonLabel>
+              <IonIcon icon={tab.access.hasAccess ? tab.icon : lockClosed} />
+              <IonLabel color={tab.access.hasAccess ? "secondary" : "danger"}>
+                {tab.access.message(tab.label)}
+              </IonLabel>
             </IonTabButton>
           ))}
         </IonTabBar>

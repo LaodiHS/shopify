@@ -45,13 +45,12 @@ import { useAuthenticatedFetch } from "../hooks/useAuthenticatedFetch";
 import {
   Context,
   SharedData,
-  SubscriptionChecker,
 } from "../utilities/data-context.js";
 import {
   useProductDataContext,
   PaidFeature,
   CamelToKebabCase,
- 
+  useDataProvidersContext,
 } from "../components";
 import { audienceModel } from "../utilities/language-model";
 import { updateObject } from "../utilities/utility-methods";
@@ -80,10 +79,18 @@ const modalStyle = {
   "--ion-modal-max-height": "100vh",
 };
 
-export function ListDetailComponent({ subscriptions, currentSession }) {
-  console.log("subscriptions", subscriptions, currentSession);
+export function ListDetailComponent({}) {  
+  const {subscriptions,currentSession, contextualOptions, setContextualOptions } = useDataProvidersContext();
+
   const { productData } = useProductDataContext();
+  
+  
+  
+  
   if (!subscriptions) {
+  
+  return <div> no subscription found</div>
+  
     throw new Error(
       "no subscriptions prop on ListDetailComponent: ",
       subscriptions
@@ -101,13 +108,12 @@ export function ListDetailComponent({ subscriptions, currentSession }) {
   const [composeTextModalLoadingText, setComposeTextModalLoadingText] =
     useState();
 
-  const subscriptionChecker = new SubscriptionChecker(subscriptions);
+  
 
   useEffect(async () => {
- 
-
+    console.log("History", location);
     return () => {
-      console.log('clearing the sharedData')
+      console.log("clearing the sharedData");
       SharedData.clearSharedData();
     };
   }, [location.state, navigate, subscriptions]);
@@ -115,7 +121,9 @@ export function ListDetailComponent({ subscriptions, currentSession }) {
   const { sections } = audienceModel;
 
   const [hiddenElements, setHiddenElements] = useState(toggles);
-  const [selectedOptions, setSelectedOptions] = useState({});
+
+
+  console.log("setContextualOptions", setContextualOptions);
   const [isOpen, setIsOpen] = useState(false);
 
   function onToggleChange(selectElementId) {
@@ -128,10 +136,10 @@ export function ListDetailComponent({ subscriptions, currentSession }) {
   const handleSelectChange = async (event, category) => {
     console.log("SharedData.serverOptions: 1", SharedData.serverOptions);
     const newSelectedOptions = {
-      ...selectedOptions,
+      ...contextualOptions,
       [category]: event.detail.value,
     };
-    setSelectedOptions(newSelectedOptions);
+    setContextualOptions(newSelectedOptions);
 
     SharedData.optionRequirements[category] =
       SharedData.optionRequirements[category] || {};
@@ -141,13 +149,13 @@ export function ListDetailComponent({ subscriptions, currentSession }) {
       SharedData.optionRequirements = updateObject(
         SharedData.optionRequirements
       );
-      setSelectedOptions(SharedData.optionRequirements);
+      setContextualOptions(SharedData.optionRequirements);
     } else {
       SharedData.optionRequirements[category] = event.detail.value;
       SharedData.optionRequirements = updateObject(
         SharedData.optionRequirements
       );
-      setSelectedOptions(SharedData.optionRequirements);
+      setContextualOptions(SharedData.optionRequirements);
     }
 
     if (!Object.entries(SharedData.optionRequirements).length) {
@@ -237,7 +245,7 @@ export function ListDetailComponent({ subscriptions, currentSession }) {
             key={"8"}
             onToggleChange={onToggleChange}
             toggles={toggles}
-            subscriptions={subscriptions}
+        
           />
         </IonContent>
       </IonMenu>
@@ -262,7 +270,7 @@ export function ListDetailComponent({ subscriptions, currentSession }) {
               <IonCol key={"21"} size="12">
                 <ProductDetails
                   key={"22"}
-                  subscriptions={subscriptions}
+          
                   serverOptions={SharedData.serverOptions}
                   includeProductDetails={SharedData.includeProductDetails}
                   optionRequirements={SharedData.optionRequirements}
@@ -331,8 +339,8 @@ export function ListDetailComponent({ subscriptions, currentSession }) {
                   handleSelectChange={handleSelectChange}
                   section={section}
                   hiddenElements={hiddenElements}
-                  selectedOptions={selectedOptions}
-                  subscriptionChecker={subscriptionChecker}
+                  selectedOptions={contextualOptions}
+             
                 />
               ))}
 
@@ -376,8 +384,6 @@ export function ListDetailComponent({ subscriptions, currentSession }) {
             <IonContent className="ion-padding">
               {/* <IonLoading message={composeTextModalLoadingText} isOpen={composeTextModalLoading }  duration={0} /> */}
               <Accordion
-                subscriptions={subscriptions}
-                currentSession={currentSession}
                 setAccordionModalPopUp={setAccordionModalPopUp}
                 productData={productData}
                 setAccordionLoadingState={setAccordionLoadingState}
@@ -395,8 +401,9 @@ function Section({
   section,
   hiddenElements,
   selectedOptions,
-  subscriptionChecker,
+
 }) {
+  const {checkFeatureAccess } = useDataProvidersContext();
   const [subscriptionMessage, setSubscriptionMessage] = useState({});
   const [popoverState, setPopoverState] = useState({
     isOpen: false,
@@ -493,12 +500,14 @@ function Section({
                       } = option;
 
                       const minSub = minSubscription;
-                      if (!minSub) {
+                      if (!minSub.length) {
+                        console.log("title",title)
+                        console.log('object',option)
+                        console.log('minsubscription',minSub)
                         throw new Error("no min subscription:" + minSub);
                       }
 
-                      const check =
-                        subscriptionChecker.checkFeatureAccess(minSub);
+                      const check = checkFeatureAccess(minSub);
 
                       const hasAccess = check.hasAccess;
                       if (!hasAccess && !subscriptionMessage[itemIndex]) {

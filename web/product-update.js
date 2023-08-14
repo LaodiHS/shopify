@@ -15,7 +15,7 @@ const UPDATE_DESCRIPTION_MUTATION = `mutation UpdateProductDescription($productI
 export default async function descriptionUpdate(session, productId, descriptionHtml) {
      const client = new shopify.api.clients.Graphql({ session });
     try {
-        await client.query({
+       const data =  await client.query({
           data: {
             query: UPDATE_DESCRIPTION_MUTATION,
             variables: {
@@ -24,6 +24,7 @@ export default async function descriptionUpdate(session, productId, descriptionH
             },
           },
         });
+        return data?.body?.data;
     } catch (error) {
 
         if (error instanceof GraphqlQueryError) {

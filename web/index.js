@@ -94,6 +94,7 @@ async function startServer() {
         webhookHandlers,
       })
     );
+    
 
     // If you are adding routes outside of the /api path, remember to
     // also add a proxy rule for them in web/frontend/vite.config.js
@@ -113,6 +114,7 @@ async function startServer() {
         const subscriptions = await shopify.api.billing.subscriptions({
           session,
         });
+
         const shop = session.shop;
         subscriptions.activeSubscriptions.forEach((subscription) => {
           updateSubscription(shop, subscription.name);
@@ -124,19 +126,16 @@ async function startServer() {
         if (!activeSubscriptions.length) {
           activeSubscriptions.push("free");
         }
-        
-        
-        
-        
+      
         
         res
           .status(200)
-          .json({ activeSubscriptions, session: res.locals.shopify.session });
+          .json({ activeSubscriptions,plans:billingConfig, session: res.locals.shopify.session });
       } catch (error) {
         console.error(error);
         res
           .status(500)
-          .json({ error: "Failed to retrieve subscription status" });
+          .json({ plans:billingConfig, error: "Failed to retrieve subscription status" });
       }
     });
 
@@ -189,7 +188,7 @@ async function startServer() {
               isTest: true,
             });
 
-            res.status(200).send({ redirectUrl, subscriptions: [] });
+            res.status(200).send({ redirectUrl, subscriptions: ["free"] });
           } else {
             res.status(200).send({
               message: {
@@ -208,6 +207,7 @@ async function startServer() {
       }
     );
     
+
 
     app.post(
       "/api/store-api",
@@ -426,6 +426,7 @@ contentGenerator(app)
             `gid://shopify/Product/${productId}`,
             descriptionHtml
           );
+          console.log('description update:', data)
         }
       } catch (e) {
         status = 500;

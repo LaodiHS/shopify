@@ -11,11 +11,11 @@ import {
 } from "@ionic/react";
 import "./styles/SelectionToggles.module.css";
 import React, { useState } from "react";
-import {
-  
-  SubscriptionChecker,
-} from "../../utilities/data-context.js";
-export function Toggles ({ onToggleChange, toggles, modal , subscriptions}){
+
+import {useDataProvidersContext} from "../../components"
+export function Toggles ({ onToggleChange, toggles, modal }){
+  const { checkFeatureAccess,  contextualOptions, setContextualOptions } = useDataProvidersContext();
+
   const [toggleState, setToggleState] = useState(toggles);
 
   const handleToggleChange = (toggleName) => (event) => {
@@ -29,12 +29,14 @@ export function Toggles ({ onToggleChange, toggles, modal , subscriptions}){
     onToggleChange(toggleName);
   };
 
-  const checker = new SubscriptionChecker(subscriptions || []);
 
+  
   return (
     <>
       <IonRow className="ion-justify-content-end">
         {Object.entries(toggleState).map(([toggleName, toggleValue], index) => {
+          
+
           return (
             <IonCol key={toggleName} size="12">
               <IonItem lines="none">

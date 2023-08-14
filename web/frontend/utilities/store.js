@@ -141,74 +141,134 @@ export const urlCache = {
 class LHistory {
   constructor(name) {
     this.name = name;
-    this.index = 0;
-    this.pagingState = [];
-
+    this.pageState = new Map();
     const pageHistory = localStorage.getItem(name);
     if (pageHistory) {
-      const storedState = JSON.parse(pageHistory);
-      this.pagingState = storedState.pagingState;
-      this.index = storedState.index;
+      try {
+        const storedState = JSON.parse(pageHistory);
+        this.validateAndSyncState(storedState);
+      } catch (error) {
+        console.error("Error parsing stored state:", error);
+      }
     } else {
-      this.index = 0;
-      this.pagingState = [];
+      this.pageState.set("index", 0);
+      this.pageState.set("pagingState", []);
       this.saveState();
+    }
+  }
+
+  validateAndSyncState(storedState) {
+    const requiredKeys = ["index", "pagingState"];
+
+    if (requiredKeys.every((key) => key in storedState)) {
+      this.pageState = new Map(
+        Object.entries(storedState).map(([key, val]) => [key, val])
+      );
+      this.saveState();
+    } else {
+      console.warn("Stored state is invalid. Resetting to default state.");
+      this.resetToDefaultState();
+    }
+  }
+
+  resetToDefaultState() {
+    this.pageState.set("index", 0);
+    this.pageState.set("pagingState", []);
+    this.saveState();
+  }
+
+  retrieveDataFromLocalStorage() {
+    const pageHistory = localStorage.getItem(this.name);
+    if (pageHistory) {
+      try {
+        const storedState = JSON.parse(pageHistory);
+        return storedState;
+      } catch (error) {
+        console.error("Error parsing stored state from local storage:", error);
+      }
+    }
+    return null;
+  }
+  getFallbackPageState() {
+    return this.retrieveDataFromLocalStorage();
+  }
+
+  checkFallbackState() {
+    if (!this.pageState.has("index") || !this.pageState.has("pagingState")) {
+      const fallbackState = this.getFallbackPageState();
+      if (fallbackState) {
+        this.validateAndSyncState(fallbackState);
+      }
     }
   }
 
   saveState() {
-    const storedState = {
-      pagingState: this.pagingState,
-      index: this.index,
-    };
-    localStorage.setItem(this.name, JSON.stringify(storedState));
+    localStorage.setItem(
+      this.name,
+      JSON.stringify(Object.fromEntries(this.pageState))
+    );
   }
 
   push(item) {
-    // if (this.index < this.pagingState.length - 1) {
-    //   this.pagingState.splice(this.index + 1);
-    // }
-
-    this.pagingState.push(item);
-    this.index = this.pagingState.length - 1;
+    this.checkFallbackState()
+    this.pageState.get("pagingState").push(item);
+    this.pageState.set("index", this.pageState.get("pagingState").length - 1);
     this.saveState();
   }
   includes(item) {
-    return this.pagingState.includes(item);
+    this.checkFallbackState()
+    return this.pageState.get("pagingState").includes(item);
   }
 
   getPreviousPage() {
-    if (this.index >= 0) {
-      this.index--;
+   this.checkFallbackState()
+
+    const index = this.pageState.get("index");
+
+    if (index >= 0) {
+      this.pageState.set("index", index - 1);
       this.saveState();
-      return this.pagingState[this.index];
+      return this.pageState.get("pagingState")[index - 1];
     }
   }
 
   getCurrentPage() {
-    return this.pagingState[this.index];
+    this.checkFallbackState()
+
+    const pagingState = this.pageState.get("pagingState");
+    return pagingState[this.pageState.get("index")];
   }
 
   hasCurrentPage() {
-    return this.pagingState.length >= 1;
+    this.checkFallbackState()
+    const pagingState = this.pageState.get("pagingState");
+
+    return pagingState.length >= 1;
   }
 
   hasNextPage() {
-    return this.index < this.pagingState.length - 1;
+    this.checkFallbackState()
+    const index = this.pageState.get("index");
+    return index < this.pageState.get("pagingState").length - 1;
   }
   hasPreviousPage() {
-    return this.index > 0;
+    this.checkFallbackState()
+    const index = this.pageState.get("index");
+    return index > 0;
   }
   getNextPage() {
+    this.checkFallbackState()
     if (this.hasNextPage()) {
-      this.index++;
-
+      const index = this.pageState.get("index") + 1;
+      this.pageState.set("index", index);
       this.saveState();
-      return this.pagingState[this.index];
+      return this.pageState.get("pagingState")[index];
     }
   }
   getCurrentIndex() {
-    return this.index;
+    this.checkFallbackState()
+    const index = this.pageState.get("index");
+    return index;
   }
 }
 
