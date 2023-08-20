@@ -2,9 +2,12 @@ import { GraphqlQueryError, BillingInterval } from "@shopify/shopify-api";
 import shopify from "./shopify.js";
 
 const USAGE_CHARGE_INCREMENT_AMOUNT = 1.0;
-
-
-export const monthlySubscriptionsTokens = {'basic':{tokens:469618}, 'crafted':{tokens:939236}, 'advanced':{tokens:1878472}};
+export const isTest = true;
+export const monthlySubscriptionsTokens = {
+  basic: { tokens: 469618 },
+  crafted: { tokens: 939236 },
+  advanced: { tokens: 1878472 },
+};
 export const billingConfig = {
   // "usage": {
   //   // This is an example configuration that would do a one-time charge for $5 (only USD is currently supported)
@@ -13,53 +16,51 @@ export const billingConfig = {
   //   interval: BillingInterval.Usage,
   //   usageTerms: "One dollar per button click",
   // },
-  "basic":{
+  basic: {
     amount: 30.0,
     tokens: 469618,
     currencyCode: "USD",
     interval: BillingInterval.Every30Days,
     usageTerms: [
-    "preview your rendered descriptions",
-    "Generate descriptions from a selection of contextual templates",
-    "select key points from your products, variants, and collections",
-    "expand on an existing description",
-    "track key points in the composition"
+      "preview your rendered descriptions",
+      "Generate descriptions from a selection of contextual templates",
+      "select key points from your products, variants, and collections",
+      "expand on an existing description",
+      "track key points in the composition",
     ],
   },
-  "crafted":{
+  crafted: {
     amount: 60.0,
     tokens: 939236,
     currencyCode: "USD",
     interval: BillingInterval.Every30Days,
     usageTerms: [
-    "preview your rendered html descriptions",    
-    "Generate descriptions from a selection of advanced contextual templates",
-    "select key points from your products, variants, and collections",
-    "expand on an existing description",
-    "track key points in the composition",
-    "access to advanced markup tools, Html, Markdown, and Katex",
-    "real time markup rendering, so you can see the results of your composition in real time",
-    "markup inspection and auto fix",
-    
-  ],
+      "preview your rendered html descriptions",
+      "Generate descriptions from a selection of advanced contextual templates",
+      "select key points from your products, variants, and collections",
+      "expand on an existing description",
+      "track key points in the composition",
+      "access to advanced markup tools, Html, Markdown, and Katex",
+      "real time markup rendering, so you can see the results of your composition in real time",
+      "markup inspection and auto fix",
+    ],
   },
-  "advanced":{
+  advanced: {
     amount: 100.0,
-    tokens: 1878472, 
+    tokens: 1878472,
     currencyCode: "USD",
     interval: BillingInterval.Every30Days,
     usageTerms: [
-    
-    "Generate descriptions from template",
-    "Select key points from your product",
-    "Include variant selections",
-    "Image analysis",
-    "Generate articles and social posts",
-    "Advanced language options",
-    "Advanced document formats",
-    "Regional audience selection"]
+      "Generate descriptions from template",
+      "Select key points from your product",
+      "Include variant selections",
+      "Image analysis",
+      "Generate articles and social posts",
+      "Advanced language options",
+      "Advanced document formats",
+      "Regional audience selection",
+    ],
   },
-
 };
 
 export async function requestBilling(res, next) {
@@ -163,7 +164,7 @@ export async function createUsageRecord(session) {
         variables: {
           subscriptionLineItemId: subscriptionLineItem.id,
           amount: USAGE_CHARGE_INCREMENT_AMOUNT,
-          description: billingConfig[plan].usageTerms,
+          description: billingConfig[plan].usageTerms.join(",\n"),
         },
       },
     });
@@ -196,7 +197,7 @@ async function getAppSubscription(session) {
   const client = new shopify.api.clients.Graphql({ session });
   let subscriptionLineItem = {};
   const planName = Object.keys(billingConfig)[0];
-  const planDescription = billingConfig[planName].usageTerms;
+  const planDescription = billingConfig[planName].usageTerms.join(",\n");
 
   try {
     const response = await client.query({

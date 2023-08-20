@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useAuthenticatedFetch } from "../hooks";
 import { ListComponent } from "./ListComponent";
 import { useProductDataContext } from "../components";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react_router_dom";
 import {
   IonSpinner,
   IonText,

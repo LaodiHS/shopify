@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Context } from "../utilities/data-context.js";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react_router_dom";
+
 import {
   IonCard,
   IonCardContent,
@@ -61,7 +62,17 @@ export const SubscriptionComponent = (
     setShowModal(true);
   }
 
+console.log('location',Redirect)
+
+   const url =  window.location.href.slice()
+   //.href.slice().split("/")
+
+   const returnUrl =''
+     console.log('returnUrl', returnUrl)
+
   async function handleProductSelection(selection) {
+
+
     try {
       const response = await fetch("/api/subscription/selection", {
         method: "POST",
@@ -70,6 +81,7 @@ export const SubscriptionComponent = (
         },
         body: JSON.stringify({
           plan: selection.toLowerCase(),
+          returnUrl
         }),
       });
 
@@ -107,51 +119,6 @@ export const SubscriptionComponent = (
       features: body.usageTerms,
     };
   });
-  // const subscriptionsOptions = [
-  //   {
-  //     title: "free",
-  //     price: "Free",
-  //     features: ["Generate descriptions from templates"],
-  //   },
-  //   {
-  //     title: "basic",
-  //     price: "$30/month",
-  //     features: [
-  //       "You Will be charged $30 per month.",
-  //       "Generate descriptions from a selection of contextual templates",
-  //       "select key points from your products, variants, and collections",
-  //       "expand on an existing description",
-  //       "track key points in the composition"
-  //     ],
-  //   },
-  //   {
-  //     title: "crafted",
-  //     price: "$60/month",
-  //     features: [
-  //       "Generate descriptions from templates",
-  //       "Select key points from your product",
-  //       "Include variant selections",
-  //       "Image placement",
-  //       "Generate articles",
-  //       "html and markup support for crafted descriptions and articles",
-  //       "Advanced language options",
-  //     ],
-  //   },
-  //   {
-  //     title: "advanced",
-  //     price: "$100/month",
-  //     features: [
-  //       "Generate descriptions from template",
-  //       "Select key points from your product",
-  //       "Include variant selections",
-  //       "Image analysis",
-  //       "Generate articles and social posts",
-  //       "Advanced language options",
-  //       "Advanced document formats",
-  //       "Regional audience selection",
-  //     ],
-  //   },
-  // ];
 
   return (
     <IonPage>
@@ -162,7 +129,9 @@ export const SubscriptionComponent = (
               const current = subscriptions.includes(subscription.title);
 
               return (
-                <IonCol size="12" size-md="3" key={index}>
+
+                <IonCol size="12" size-md="4" key={index}>
+                
                   <IonCard color={current ? "dark" : ""}>
                     <IonCardHeader>
                       <IonCardTitle className="ion-text-capitalize">
@@ -195,7 +164,7 @@ export const SubscriptionComponent = (
                             </IonRadio>
                           </div>
                         ))}
-                      </IonRadioGroup>{" "}
+                      </IonRadioGroup>
                       <div
                         style={{
                           display: "flex",

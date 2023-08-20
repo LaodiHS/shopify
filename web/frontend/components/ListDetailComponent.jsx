@@ -40,7 +40,7 @@ import {
   exitOutline,
 } from "ionicons/icons";
 
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react_router_dom";
 import { useAuthenticatedFetch } from "../hooks/useAuthenticatedFetch";
 import {
   Context,
@@ -51,6 +51,7 @@ import {
   PaidFeature,
   CamelToKebabCase,
   useDataProvidersContext,
+  TokenUsageComponent,
 } from "../components";
 import { audienceModel } from "../utilities/language-model";
 import { updateObject } from "../utilities/utility-methods";
@@ -80,7 +81,7 @@ const modalStyle = {
 };
 
 export function ListDetailComponent({}) {  
-  const {subscriptions,currentSession, contextualOptions, setContextualOptions } = useDataProvidersContext();
+  const {subscriptions,currentSession,user, contextualOptions, setContextualOptions } = useDataProvidersContext();
 
   const { productData } = useProductDataContext();
   
@@ -220,6 +221,7 @@ export function ListDetailComponent({}) {
     return <ion-spinner color="success"></ion-spinner>; // or show an error message
   }
 
+
   return (
     <>
       <IonMenu
@@ -258,6 +260,9 @@ export function ListDetailComponent({}) {
               </IonButton>
             </IonButtons>
             <IonTitle key={"15"}>Product Detail</IonTitle>
+            <IonButtons slot="end">
+            <TokenUsageComponent tokenUsage={user} />
+            </IonButtons>
           </IonToolbar>
         </IonHeader>
         <IonContent>

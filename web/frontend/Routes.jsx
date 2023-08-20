@@ -1,4 +1,4 @@
-import { Routes as ReactRouterRoutes, Route } from "react-router-dom";
+import { Routes as ReactRouterRoutes, Route } from "react_router_dom";
 
 /**
  * File-based routing.
@@ -46,7 +46,7 @@ function useRoutes(pages) {
          */
         .replace(/\b[A-Z]/, (firstLetter) => firstLetter.toLowerCase())
         /**
-         * Convert /[handle].jsx and /[...handle].jsx to /:handle.jsx for react-router-dom
+         * Convert /[handle].jsx and /[...handle].jsx to /:handle.jsx for react_router_dom
          */
         .replace(/\[(?:[.]{3})?(\w+?)\]/g, (_match, param) => `:${param}`);
 

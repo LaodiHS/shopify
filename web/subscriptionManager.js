@@ -78,8 +78,8 @@ export async function updateTokenUsageAfterJob(userId, tokensUsed) {
   writeJSONToFileAsync(userId, user);
 }
 
-export async function updateSubscription(userId, subscription) {
-  if (Object.keys(monthlySubscriptionsTokens).includes(subscription)) {
+export async function updateSubscription(userId, subscription_name) {
+  if (Object.keys(monthlySubscriptionsTokens).includes(subscription_name)) {
     const user = await getUserById(userId);
     user.shop = userId;
     const currentDate = new Date();
@@ -101,9 +101,9 @@ export async function updateSubscription(userId, subscription) {
       }
     }
 
-    user.subscription_name = subscription;
-
+    user.subscription_name = subscription_name;
     await writeJSONToFileAsync(userId, user);
+    return user;
   }
 }
 

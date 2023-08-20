@@ -43,7 +43,7 @@ export function PaidFeature() {
    */
   const handleNavigateToSubscriptionPage = () => {
     navigate("/settings/billing/subscriptions", {
-      replace: true,
+    
       target: "host",
     });
   };

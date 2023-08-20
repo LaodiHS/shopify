@@ -41,7 +41,7 @@ import {
   addMarkup,
 } from "../providers";
 import bcrypt from "bcryptjs";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react_router_dom";
 import { useAuthenticatedFetch, useAppBridge } from "@shopify/app-bridge-react";
 
 import { request } from "@shopify/app-bridge/actions/AuthCode";

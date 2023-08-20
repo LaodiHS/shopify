@@ -136,6 +136,8 @@ async function loadIntlPluralRulesLocaleData(locale) {
  * @see https://www.i18next.com/overview/configuration-options
  * @returns Promise of initialized i18next instance
  */
+
+
 async function initI18next() {
   return await i18next
     .use(initReactI18next)

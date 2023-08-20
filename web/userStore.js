@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import Ajv from "ajv";
+import { isValid, parseISO } from "date-fns";
 import { mkdtemp } from "fs/promises";
 
 const currentFilePath = new URL(import.meta.url).pathname;
@@ -26,14 +27,21 @@ const userSchema = {
   properties: {
     // Define your JSON schema here
     // Example:
+    capped_usage: { type:"number"},
     shop: { type: "string" },
-
     gptText: { type: "string" },
     documentType: { type: "string" },
     subscription_name: { type: "string" },
     usage_limit: { type: "number" },
     current_usage: { type: "number" },
     last_payment_date: { type: "string" },
+    created_at: { type: "string" },
+    updated_at: { type: "string" },
+    currency: { type: "string" },
+    capped_amount: { type: "number" },
+    status: { type: "string" },
+    seen: { type: "boolean" },
+
     // Add more properties as needed
   },
   required: ["shop"], // Specify the required properties
@@ -68,9 +76,26 @@ async function readJSONFromFileAsync(storeName) {
     }
 
     // Convert the last_payment_date string to a Date object
-    if (jsonData.last_payment_date) {
-      jsonData.last_payment_date = new Date(jsonData.last_payment_date);
+    const jsonMap = Object.entries(jsonData);
+
+    for (const [key, isValid] of jsonMap) {
+      const valid = checkDateString(isValid) === "valid date";
+      if (valid === "valid date") {
+        jsonData[key] = new Date(isValid);
+      }
+      if (valid === "bad date") {
+        jsonData = {};
+        return;
+      }
+
+      if (isValid === null) {
+        jsonData[key] = 0;
+      }
     }
+
+    // if (jsonData.last_payment_date) {
+    //   jsonData.last_payment_date = new Date(jsonData.last_payment_date);
+    // }
 
     return jsonData;
   } catch (err) {
@@ -133,3 +158,24 @@ process.on("SIGINT", handleGracefulShutdown);
 process.on("SIGTERM", handleGracefulShutdown);
 
 export { createUsersFolderAsync, readJSONFromFileAsync, writeJSONToFileAsync };
+
+function checkDateString(input) {
+  if (typeof input !== "string") {
+    return "not string";
+  }
+
+  const date = new Date(input);
+
+  if (isNaN(date.getTime())) {
+    return "not date";
+  } else if (isValid(parseISO(input))) {
+    // return "Valid date string with valid date";
+    return "valid date";
+  } else {
+    //return "Valid date string with invalid date";
+    return "bad date";
+  }
+}
+
+
+// 

@@ -3,7 +3,7 @@ import { dirname } from "path";
 import { fileURLToPath } from "url";
 import https from "https";
 import react from "@vitejs/plugin-react";
-
+import 'dotenv/config'
 if (
   process.env.npm_lifecycle_event === "build" &&
   !process.env.CI &&
@@ -13,6 +13,7 @@ if (
     "\nBuilding the frontend app without an API key. The frontend build will not run without an API key. Set the SHOPIFY_API_KEY environment variable when running the build command.\n"
   );
 }
+
 
 const proxyOptions = {
   target: `http://127.0.0.1:${process.env.BACKEND_PORT}`,
@@ -42,14 +43,24 @@ if (host === "localhost") {
   };
 }
 
+const dir_name = dirname(fileURLToPath(import.meta.url))
+
 export default defineConfig({
-  root: dirname(fileURLToPath(import.meta.url)),
+  root: dir_name,
   plugins: [react()],
+
+  optimizeDeps: {
+    exclude: []
+  },
   define: {
+  
     "process.env.SHOPIFY_API_KEY": JSON.stringify(process.env.SHOPIFY_API_KEY),
   },
   resolve: {
     preserveSymlinks: true,
+    alias:{
+      
+    }
   },
   server: {
     host: "localhost",
@@ -59,9 +70,10 @@ export default defineConfig({
       "^/(\\?.*)?$": proxyOptions,
       "^/api(/|(\\?.*)?$)": proxyOptions,
       "^/sse(/|(\\?.*)?$)": proxyOptions,
-      
+      "^/dist(/|(\\?.*)?$)": proxyOptions,
+      "^/dist/assets(/|(\\?.*)?$)": proxyOptions,
        // Add the ngrok tunnel URL as an allowed origin
-       "https://contests-excess-papers-pioneer.trycloudflare.com": proxyOptions,
+     // "https://bit-enrolled-load-sections.trycloudflare.com": proxyOptions,
     },
   },
 });

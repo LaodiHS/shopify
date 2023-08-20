@@ -1,9 +1,9 @@
 // @ts-check
+import { env } from "./envVars.js";
 import { join } from "path";
 import { readFileSync } from "fs";
 import express from "express";
 import serveStatic from "serve-static";
-import { createProxyMiddleware } from "http-proxy-middleware";
 import shopify from "./shopify.js";
 import productCreator from "./product-creator.js";
 import descriptionUpdate from "./product-update.js";
@@ -15,8 +15,8 @@ import { connectToRedis } from "./redis.js";
 import { setupBullMQServer, serverSideEvent } from "./bull-queue.js";
 import { body, validationResult } from "express-validator";
 import { request } from "./cache-to-file.js";
-import { billingConfig, createUsageRecord } from "./billing.js";
-import { updateSubscription } from "./subscriptionManager.js";
+import { billingConfig, createUsageRecord, isTest } from "./billing.js";
+import { updateSubscription, getUserById } from "./subscriptionManager.js";
 import productTagger from "./product-tagger.js";
 import { contentGenerator } from "./shopifyContentGenerator.js";
 import {
@@ -24,19 +24,34 @@ import {
   handleArticleEndpoints,
   handlePostEndpoints,
 } from "./description-requests.js";
-
-
+import {
+  authentication,
+  subscriptionMiddleWearCheck,
+  redirectOutOfAPP,
+} from "./authentication.js";
 
 import * as userStore from "./userStore.js";
-const isTest = true;
+
+const { writeJSONToFileAsync } = userStore;
+const { NODE_ENV, REDIS_API_PASSWORD, SHOPIFY_API_KEY, SHOPIFY_API_SECRET } = process.env;
+//  console.log("NODE_ENV:----->", NODE_ENV, "REDIS_API_PASSWORD--->", REDIS_API_PASSWORD, "SHOPIFY_API_KEY=====>", SHOPIFY_API_KEY, "SHOPIFY_API_SECRET_KEY=====>", SHOPIFY_API_SECRET);
+
 const reconciliation = {};
 const log = (message, obj) =>
-  console.log(message + ": ", util.inspect(obj, { depth: null, colors: true, showHidden:false, compact:true }));
+  console.log(
+    message + ": ",
+    util.inspect(obj, {
+      depth: null,
+      colors: true,
+      showHidden: false,
+      compact: true,
+    })
+  );
 
 async function startServer() {
   try {
     const redisClient = await connectToRedis();
-
+    await userStore.createUsersFolderAsync();
     const { queue, worker } = await setupBullMQServer(redisClient);
 
     // Middleware to handle async function errors
@@ -48,6 +63,8 @@ async function startServer() {
       process.env.BACKEND_PORT || process.env.PORT || "3000",
       10
     );
+    console.log("NODE_ENV--->", process.env.NODE_ENV);
+    process.env.NODE_ENV = "production";
 
     const STATIC_PATH =
       process.env.NODE_ENV === "production"
@@ -55,38 +72,10 @@ async function startServer() {
         : `${process.cwd()}/frontend`;
 
     const app = express();
-
+    // console.log("shopify.config.auth.path", shopify.config.auth.path);
     // Set up Shopify authentication and webhook handling
     app.get(shopify.config.auth.path, shopify.auth.begin());
 
-    app.get(
-      shopify.config.auth.callbackPath,
-      shopify.auth.callback(),
-      // Request payment if required
-      async (req, res, next) => {
-        const plans = Object.keys(billingConfig);
-        const session = res.locals.shopify.session;
-        const hasPayment = await shopify.api.billing.check({
-          session,
-          plans: plans,
-          isTest: isTest, // need to change to false when ready for production
-        });
-
-        if (hasPayment) {
-          next();
-        } else {
-          res.redirect(
-            await shopify.api.billing.request({
-              session,
-              plan: plans[0],
-              isTest: isTest,
-            })
-          );
-        }
-      },
-      // Load the app otherwise
-      shopify.redirectToShopifyOrAppRoot()
-    );
     //order matters for webhooks it needs to be placed before app.use(express.json())
     app.post(
       shopify.config.webhooks.path,
@@ -94,7 +83,6 @@ async function startServer() {
         webhookHandlers,
       })
     );
-    
 
     // If you are adding routes outside of the /api path, remember to
     // also add a proxy rule for them in web/frontend/vite.config.js
@@ -103,7 +91,7 @@ async function startServer() {
     app.use("/api/*", shopify.validateAuthenticatedSession());
 
     app.use(express.json());
-
+    authentication(app);
     handleDescriptionEndpoints(app, queue);
     handleArticleEndpoints(app, queue);
     handlePostEndpoints(app, queue);
@@ -115,27 +103,50 @@ async function startServer() {
           session,
         });
 
+        console.log("subscriptions", subscriptions);
+        // const shopi = shopify.api.utils.sanitizeShop(req.query.shop, true);
+        // console.log('shopi', shopi)
+        // const host = shopify.api.utils.sanitizeHost(req.query.host, true);
+        // console.log('hots',host)
+        console.log("has plan", shopify.config.auth.path);
+        const plans = Object.keys(billingConfig);
+
         const shop = session.shop;
-        subscriptions.activeSubscriptions.forEach((subscription) => {
-          updateSubscription(shop, subscription.name);
-        });
+        let user = null;
+        for (const subscription of subscriptions.activeSubscriptions) {
+          user = await updateSubscription(shop, subscription.name);
+        }
 
         const activeSubscriptions = subscriptions.activeSubscriptions.map(
           (sub) => sub.name
         );
-        if (!activeSubscriptions.length) {
+
+        let redirectUri = null;
+
+        if (activeSubscriptions.length) {
+        } else {
+          redirectUri = await shopify.api.billing.request({
+            session,
+            plan: plans[0],
+            isTest: isTest,
+          });
+
           activeSubscriptions.push("free");
         }
-      
-        
-        res
-          .status(200)
-          .json({ activeSubscriptions,plans:billingConfig, session: res.locals.shopify.session });
+
+        res.status(200).json({
+          user,
+          activeSubscriptions,
+          plans: billingConfig,
+          session: res.locals.shopify.session,
+          redirectUri,
+        });
       } catch (error) {
         console.error(error);
-        res
-          .status(500)
-          .json({ plans:billingConfig, error: "Failed to retrieve subscription status" });
+        res.status(500).json({
+          plans: billingConfig,
+          error: "Failed to retrieve subscription status",
+        });
       }
     });
 
@@ -146,14 +157,66 @@ async function startServer() {
         body("plan").trim().escape(),
       ],
       async (req, res, next) => {
+        console.log("req", req.url);
         try {
           const errors = validationResult(req);
           if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
           }
 
+          // {
+          //   "application_charges": [
+          //     {
+          //       "id": 556467234,
+          //       "name": "Green theme",
+          //       "api_client_id": 755357713,
+          //       "price": "120.00",
+          //       "status": "accepted",
+          //       "return_url": "http://google.com",
+          //       "test": null,
+          //       "external_id": null,
+          //       "created_at": "2023-07-11T17:47:36-04:00",
+          //       "updated_at": "2023-07-11T17:47:36-04:00",
+          //       "currency": "USD",
+          //       "charge_type": "theme",
+          //       "decorated_return_url": "http://google.com?charge_id=556467234"
+          //     },
+          //     {
+          //       "id": 675931192,
+          //       "name": "iPod Cleaning",
+          //       "api_client_id": 755357713,
+          //       "price": "5.00",
+          //       "status": "accepted",
+          //       "return_url": "http://google.com",
+          //       "test": null,
+          //       "created_at": "2023-07-11T17:47:36-04:00",
+          //       "updated_at": "2023-07-11T17:47:36-04:00",
+          //       "currency": "USD",
+          //       "charge_type": null,
+          //       "decorated_return_url": "http://google.com?charge_id=675931192"
+          //     },
+          //     {
+          //       "id": 1017262346,
+          //       "name": "Create me a logo",
+          //       "api_client_id": 755357713,
+          //       "price": "123.00",
+          //       "status": "accepted",
+          //       "return_url": "http://google.com",
+          //       "test": null,
+          //       "created_at": "2023-07-11T17:47:36-04:00",
+          //       "updated_at": "2023-07-11T17:47:36-04:00",
+          //       "currency": "USD",
+          //       "charge_type": "brokered_service",
+          //       "decorated_return_url": "http://google.com?charge_id=1017262346"
+          //     }
+          //   ]
+          // }
+          // await shopify.rest.ApplicationCharge.all({
+          //   session: session,
+          // });
           const { plan } = req.body;
-          const session = res.locals.shopify.session;
+          const { session } = res.locals.shopify;
+          const { shop } = session;
 
           const plans = Object.keys(billingConfig);
 
@@ -171,10 +234,10 @@ async function startServer() {
             const { activeSubscriptions } = subscriptions;
             for (const { id, name, test } of activeSubscriptions) {
               try {
-                await shopify.api.billing.cancel({
-                  session,
-                  subscriptionId: id,
-                });
+                // await shopify.api.billing.cancel({
+                //   session,
+                //   subscriptionId: id,
+                // });
               } catch (err) {
                 console.error("Error cancelling subscription:", err);
               }
@@ -188,6 +251,7 @@ async function startServer() {
               isTest: true,
             });
 
+            console.log("returnUrl", redirectUrl);
             res.status(200).send({ redirectUrl, subscriptions: ["free"] });
           } else {
             res.status(200).send({
@@ -206,22 +270,38 @@ async function startServer() {
         }
       }
     );
-    
 
+    app.post("/api/welcome/subscriber", async (req, res) => {
+      let status = 200;
+      let error = null;
+      let data = null;
+      const { shop } = res.locals.shopify.session;
 
+      try {
+        const user = await getUserById(shop);
+        user.seen = true;
+        await writeJSONToFileAsync(shop, user);
+
+        data = user;
+      } catch (err) {
+        status = 500;
+        error = err;
+      }
+      res.status(status).send({ success: status === 200, data, error });
+    });
     app.post(
       "/api/store-api",
       asyncErrorHandler(async (req, res) => {
         const storeName = req.body.storeName;
         const userData = req.body.userData;
         console.log("---/api/store-api--");
-        await userStore.createUsersFolderAsync();
+
         await userStore.writeJSONToFileAsync(storeName, userData);
 
         res.status(201).json({ message: "User data written successfully." });
       })
     );
-contentGenerator(app)
+    contentGenerator(app);
     app.get("/api/user", async (_req, res) => {
       const userData = await shopify.api.rest.User.all({
         session: res.locals.shopify.session,
@@ -263,23 +343,6 @@ contentGenerator(app)
         console.log(`Failed to reconcile products: ${e.message}`);
         status = 500;
         error = e.message;
-      }
-    });
-
-    app.get("/api/products/all", async (_req, res) => {
-      try {
-        const all = await shopify.api.rest.Product.all({
-          session: res.locals.shopify.session,
-
-          fields:
-            "cursor,id,image,title,body_html,collection_type,handle,published_scope,published_status,vendor,options,tags,variants",
-        });
-
-        // log(all);
-
-        res.status(200).send(all);
-      } catch (error) {
-        console.log("error message--->", error.message);
       }
     });
 
@@ -347,92 +410,93 @@ contentGenerator(app)
       res.status(status).send({ success: status === 200, error });
     });
 
-    // app.post("/api/ai/options", async (req, res) => {
-    //   let status = 200;
-    //   let error = null;
-    //   console.log("options:", JSON.stringify(req.body));
+    app.get("/api/products/all", async (_req, res) => {
+      try {
+        const all = await shopify.api.rest.Product.all({
+          session: res.locals.shopify.session,
 
-    //   try {
-    //   } catch (e) {
-    //     status = 500;
-    //     error = e.message;
-    //   }
-    //   const { options } = req.body;
-    //   res.status(status).send({ options, success: status === 200, error });
-    // });
+          fields:
+            "cursor,id,image,title,body_html,collection_type,handle,published_scope,published_status,vendor,options,tags,variants",
+        });
 
-    // app.post("/api/ai/focused-request", async (req, res) => {
-    //   let status = 200;
-    //   let error = null;
-    //   let data = null;
-    //   try {
-    //     let firstArg = 5;
-    //     let afterArg = null;
-    //     let beforeArg = null;
-    //     const { options } = req.body;
-    //     data = options;
+        // log(all);
 
-    //     console.log("data-f-->", data);
-
-    //     data = "our paragraph is";
-    //   } catch (err) {
-    //     console.log("Error-->", err);
-    //     status = 500;
-    //     error = err.message;
-    //     data = null; // Reset data to null in case of an error
-    //   }
-    //   res.status(status).send({ success: status === 200, data, error });
-    // });
+        res.status(200).send(all);
+      } catch (error) {
+        console.log("error message--->", error.message);
+      }
+    });
 
     app.post("/api/products/paging", async (req, res) => {
+      // X-Shopify-Shop-Api-Call-Limit: 40/40
+      // Retry-After: 2.0
+
+      // Past the limit, the API will return a 429 Too Many Requests error.
+
+      // All REST API responses include the X-Shopify-Shop-Api-Call-Limit header, which shows how many requests the client has made, and the total number allowed per minute.
+
+      // A 429 response will also include a Retry-After header with the number of seconds to wait until retrying your query.
+      //     let pageInfo;
+
+      //     const response = await shopify.api.rest.Product.all({
+      //       ...pageInfo?.nextPage?.query,
+      //       session,
+      //       limit: 10,
+      //     });
+
+      //     const pageProducts = response.data;
+      //     // ... use pageProducts
+
+      //  console.log('product Data--->  ', pageProducts)
+      //     pageInfo = response.pageInfo;
+      //   console.log('pageInfo-->', pageInfo)
+
       let status = 200;
       let error = null;
       let data = null;
       try {
         let firstArg = 5;
         let afterArg = null;
-    
+
         const { first, after } = req.body;
 
         firstArg = first || 5;
         afterArg = after || null;
-  
-      
+
         data = await getProducts(
           res.locals.shopify.session,
           firstArg,
-          afterArg,
-        
+          afterArg
         );
       } catch (err) {
-        console.log("Error-->", err);
+        // console.log("Error-->", err);
         status = 500;
         error = err.message;
         data = null; // Reset data to null in case of an error
       }
+      // console.log("paging Data====>:", data);
       res.status(status).send({ success: status === 200, data, error });
     });
-
 
     app.post("/api/products/update/description", async (req, res) => {
       let status = 200;
       let error = null;
-      let data = null
+      let data = null;
       try {
         if (req.body.productId && req.body.descriptionHtml) {
           const { productId, descriptionHtml } = req.body;
-           data = await descriptionUpdate(
+          data = await descriptionUpdate(
             res.locals.shopify.session,
             `gid://shopify/Product/${productId}`,
             descriptionHtml
           );
-          console.log('description update:', data)
+          console.log("description update:", data);
         }
       } catch (e) {
         status = 500;
         error = e.message;
       }
-      res.status(status).send({ success: status === 200,data, error });
+      res.status(status).send({ success: status === 200, data, error });
     });
 
     // app.get("/api/products/create", async (_req, res) => {
@@ -451,23 +515,12 @@ contentGenerator(app)
 
     app.use(shopify.cspHeaders());
 
-    // Proxy specific routes to the Ionic development server
-    // const proxyOptions = {
-    //   target: "http://localhost:8100", // Replace with your Ionic development server URL
-    //   changeOrigin: true,
-    // };
-
-    // const proxy = createProxyMiddleware(["/your-proxy-path"], proxyOptions);
-    // app.use(proxy);
-
-    // Serve static files for other routes
     serverSideEvent(app, redisClient, queue);
+    // seting the index to true will fail, because it is checked by shopify bullshit.
     app.use(serveStatic(STATIC_PATH, { index: false }));
 
     const skipEnsureInstalledOnShop = (req, res, next) => {
-      //   log("ensure installed------->", req);
       if (req.path === "/sse/stream") {
-     
         res.locals.shopify = req.query.locals;
 
         // Skip the shopify.ensureInstalledOnShop() middleware for /sse/stream

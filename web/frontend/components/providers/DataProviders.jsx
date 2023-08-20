@@ -8,11 +8,12 @@ import React, {
 import { useIonToast } from "@ionic/react";
 
 import { useAuthenticatedFetch, useAppBridge } from "@shopify/app-bridge-react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react_router_dom";
 import { request } from "@shopify/app-bridge/actions/AuthCode";
 import { useShopifyContext } from "../providers/ShopifyContext";
 import { getSessionToken } from "@shopify/app-bridge/utilities";
-import { SessionToken } from "@shopify/app-bridge/actions";
+import { Redirect } from "@shopify/app-bridge/actions";
+import { SessionToken, TitleBar } from "@shopify/app-bridge/actions";
 const DataProvidersContext = createContext(null);
 
 export function useDataProvidersContext() {
@@ -29,25 +30,23 @@ function modifyState(setter, updateOptions) {
   });
 }
 
-
-
 export function DataProvidersProvider({ children }) {
   const fetch = useAuthenticatedFetch(); // Make sure you have this hook defined somewhere
   const navigate = useNavigate();
-  const [plans, setPlans] = useState({})
-
+  const [plans, setPlans] = useState({});
   const app = useAppBridge();
-  
+  const context = useShopifyContext();
   useEffect(async () => {
+    console.log("context", context);
     const token = await getSessionToken(app);
-    // console.log('token', token);
 
     let session = await app.getState();
-    // console.log('current', session.sessionToken)
+    //   console.log('app---->',app)
+    // console.log('session---->', session)
     return () => {};
   }, []);
 
-  const [flag, setFlag] = useState(false);
+  const [user, setUser] = useState({});
   const [subscriptions, setSubscriptions] = useState(["free"]);
   const [currentSession, setCurrentSession] = useState({});
   const [subscriptionRetrievalLoading, setSubscriptionRetrievalLoading] =
@@ -61,41 +60,48 @@ export function DataProvidersProvider({ children }) {
     modifyState(setSubscriptions, activeSubscriptions);
   }
 
+  function assignUser(user) {
+    modifyState(setUser, user);
+  }
   useEffect(() => {
     const fetchDataSession = async () => {
-      if (!flag) {
-        try {
-          setSubscriptionRetrievalLoading(true);
-          const subscriptionsResponse = await fetch(
-            "/api/current/subscription/status"
-          );
+      try {
+        setSubscriptionRetrievalLoading(true);
+        const subscriptionsResponse = await fetch(
+          "/api/current/subscription/status"
+        );
 
-          // if (!subscriptionsResponse.ok) {
-          //   // If the response status is not ok (e.g., 401 Unauthorized or 403 Forbidden),
-          //   // it means the user is not authenticated or doesn't have access.
-          //   // Redirect the user to the login page or show an error message.
-          //   // navigation("/login");
-          //   return;
-          // }
+        // if (!subscriptionsResponse.ok) {
+        //   // If the response status is not ok (e.g., 401 Unauthorized or 403 Forbidden),
+        //   // it means the user is not authenticated or doesn't have access.
+        //   // Redirect the user to the login page or show an error message.
+        //   // navigation("/login");
+        //   return;
+        // }
 
-          const data = await subscriptionsResponse.json();
-          const { activeSubscriptions, session } = data;
-            setPlans(data.plans)
-          setFlag(true);
-          setRouteSubscriptions(activeSubscriptions, session);
-        } catch (err) {
-          // Handle network errors or other unexpected errors here.
-          setPlans(err.plans)
-          const retryInterval = 4000; // 4 seconds
-          setTimeout(fetchDataSession, retryInterval);
-          console.error("Error fetching data", err);
+        const data = await subscriptionsResponse.json();
+        const { activeSubscriptions, session, user, redirectUri } = data;
+        const redirect = Redirect.create(app);
+        redirect.dispatch(Redirect.Action.REMOTE, { url: redirectUri });
+        setPlans(data.plans);
+        assignUser(user);
+        setRouteSubscriptions(activeSubscriptions, session);
+
+        if (user && user.seen === false) {
+          navigate("/welcome");
         }
-        setSubscriptionRetrievalLoading(false);
+      } catch (err) {
+        // Handle network errors or other unexpected errors here.
+        setPlans(err.plans);
+        const retryInterval = 4000; // 4 seconds
+        setTimeout(fetchDataSession, retryInterval);
+        console.error("Error fetching data", err);
       }
+      setSubscriptionRetrievalLoading(false);
     };
 
     fetchDataSession();
-  }, [flag, fetch, navigate, setFlag, setRouteSubscriptions]);
+  }, []);
 
   const freeOptions = ["free", "basic", "crafted", "advanced", "premiere"];
 
@@ -156,8 +162,10 @@ export function DataProvidersProvider({ children }) {
     currentSession,
     checkFeatureAccess,
     setSubscriptions: assignSubscriptions,
+    setUser: assignUser,
     freeOptions,
     plans,
+    user,
     subscriptionRetrievalLoading,
   };
 
@@ -182,10 +190,9 @@ export function DataProvidersProvider({ children }) {
 
   const [presentToast] = useIonToast();
 
-
   function useMap(initialEntries = []) {
     const [mapState, setMapState] = useState(new Map(initialEntries));
-  
+
     const mapActions = {
       get: (key) => mapState.get(key),
       set: (key, value) => {
@@ -214,24 +221,22 @@ export function DataProvidersProvider({ children }) {
       values: () => mapState.values(),
       get size() {
         return mapState.size;
-      }
+      },
     };
-  
+
     return [mapState, mapActions];
   }
 
-
   const [mapState, mapActions] = useMap();
 
-
-  async function fetchData({ url, method, body }) {
+  async function fetchDataWithCache({ url, method, body }) {
     const key = url + JSON.stringify(method) + JSON.stringify(body);
 
     if (mapState.has(key)) {
-      console.log('data from fetch cach', mapState.get(key));
+      console.log("data from fetch cach", mapState.get(key));
       return mapState.get(key);
     }
-console.log('api request for blogs')
+    console.log("api request for blogs");
     let retryCount = 3;
     let success = false;
     let fetchedData = null;
@@ -250,7 +255,6 @@ console.log('api request for blogs')
         console.log("json stringify error", error);
       }
     }
-
 
     while (!success && retryCount > 0) {
       try {
@@ -284,13 +288,12 @@ console.log('api request for blogs')
     }
   }
 
-
-  const async_fetchData = async ({ url, method = "GET", body }) => {
+  const uncachedFetchData = async ({ url, method = "GET", body }) => {
     if (!fetch) {
       throw new Error("authenticated fetch required");
     }
 
-    const response = { data: null, error: null };
+    const boxed = { data: null, error: null };
     try {
       const options = {
         method,
@@ -306,15 +309,13 @@ console.log('api request for blogs')
       const response_data = await fetch(url, options);
       const data = await response_data.json();
 
-    
-      response.data = data?.data;
+      boxed.data = data?.data;
       if (response_data.error) {
-        response.error = response_data.error;
+        boxed.error = response_data.error;
       }
-      if(data?.error){
-        response.error = data.error;
+      if (data?.error) {
+        boxed.error = data.error;
       }
-     
     } catch (error) {
       if (error.code === 500) {
         presentToast({
@@ -327,14 +328,16 @@ console.log('api request for blogs')
         });
       }
       console.log("error", error);
-      response.error = error || null;
+      boxed.error = error || null;
     }
-    return response;
+    return boxed;
   };
 
   const value = {
-    fetchData,
-    async_fetchData,
+    fetchData: fetchDataWithCache,
+    async_fetchData: uncachedFetchData,
+    fetchDataWithCache,
+    uncachedFetchData,
     contextualOptions,
     setContextualOptions: assignContextualOptions,
   };

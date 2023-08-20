@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react_router_dom";
 import { Page, Layout, Image, Text } from "@shopify/polaris";
 import { ListDetailComponent } from "./ListDetailComponent";
 import { Context } from "../utilities/data-context";

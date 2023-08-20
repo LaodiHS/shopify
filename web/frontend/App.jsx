@@ -1,5 +1,12 @@
 import { Page, Layout, Image, Text } from "@shopify/polaris";
-import { useEffect, useState, Link, createContext, useContext, useRef } from "react";
+import {
+  useEffect,
+  useState,
+  Link,
+  createContext,
+  useContext,
+  useRef,
+} from "react";
 import "@ionic/react/css/core.css";
 import "@ionic/react/css/normalize.css";
 import "@ionic/react/css/structure.css";
@@ -13,6 +20,9 @@ import "@ionic/react/css/display.css";
 import "./themes/variables.css";
 import "typeface-lato";
 import "./components/ListDetail/styles/App.css";
+
+import "animate.css";
+
 import {
   newspaperOutline,
   documentTextOutline,
@@ -20,10 +30,11 @@ import {
   homeOutline,
   lockClosed,
   arrowForwardOutline,
-  arrowDownOutline
+  arrowDownOutline,
 } from "ionicons/icons";
 
 import { IonReactRouter } from "@ionic/react-router";
+
 import {
   setupIonicReact,
   IonApp,
@@ -46,12 +57,7 @@ import {
   IonToolbar,
   IonTitle,
   IonText,
-
-useIonViewDidEnter,
-
-
-
-
+  useIonViewDidEnter,
 } from "@ionic/react";
 setupIonicReact({ mode: "ios" });
 
@@ -78,7 +84,7 @@ import {
   Outlet,
   useNavigate,
   useLocation,
-} from "react-router-dom";
+} from "react_router_dom";
 import { Context } from "./utilities/data-context";
 // import { useUniqueKeys, UniqueKeysProvider } from "./utilities/utility-methods";
 
@@ -144,59 +150,73 @@ export default function App() {
   );
 }
 
-
-function loading(){
-
-  
-    return (
-      <IonContent>
-        <IonGrid style={{ height: "100vh" }}>
-          <IonRow
-            className="ion-justify-content-center ion-align-items-center"
-            style={{ height: "100%" }}
-          >
-            <IonCol size="auto">
-              <IonSpinner
-                style={{ width: "100px", height: "100px" }}
-                color="tertiary"
-              ></IonSpinner>
-            </IonCol>
-          </IonRow>
-        </IonGrid>
-      </IonContent>
-    );
-  
+function loading() {
+  return (
+    <IonContent>
+      <IonGrid style={{ height: "100vh" }}>
+        <IonRow
+          className="ion-justify-content-center ion-align-items-center"
+          style={{ height: "100%" }}
+        >
+          <IonCol size="auto">
+            <IonSpinner
+              style={{ width: "100px", height: "100px" }}
+              color="tertiary"
+            ></IonSpinner>
+          </IonCol>
+        </IonRow>
+      </IonGrid>
+    </IonContent>
+  );
 }
 
-
- 
-function LandingPage(){  
-    const arrowRef = useRef(null);
-    const [arrowAnimation, setArrowAnimation] = useState('animate__bounceIn');
-  
-    useIonViewDidEnter(() => {
-      arrowRef.current?.addEventListener('animationend', () => {
-        setArrowAnimation('animate__tada'); // Apply another animation after the bounce
-      });
+function LandingPage() {
+  const arrowRef = useRef(null);
+  const [arrowAnimation, setArrowAnimation] = useState("animate__bounceIn");
+  const {
+    subscriptions,
+    subscriptionRetrievalLoading,
+    setUser,
+    uncachedFetchData,
+  } = useDataProvidersContext();
+  useIonViewDidEnter(() => {
+    arrowRef.current?.addEventListener("animationend", () => {
+      setArrowAnimation("animate__tada"); // Apply another animation after the bounce
     });
-  
-    const handleGetStarted = () => {
-      // Handle navigation to the next page
-  
-      // Start animation when "Get Started" button is clicked
-      setArrowAnimation('animate__flip');
+  });
 
-      navigate('/')
-    };
-  const { subscriptionRetrievalLoading} = useDataProvidersContext()
+  const handleGetStarted = async () => {
+    // Handle navigation to the next page
+    uncachedFetchData({ url: "/api/" });
+    // Start animation when "Get Started" button is clicked
+    setArrowAnimation("animate__flip");
+    const textElement = document.querySelector(".vibrating-text");
+    const particleElement = document.querySelector(".particle");
+
+    // Wait for a short duration before removing the text and particles
+
+    const { data, error } = await uncachedFetchData({
+      url: "/api/welcome/subscriber",
+      method: "POST",
+    });
+
+    if (error === null) {
+      setUser(data);
+    } else {
+      navigate("/");
+    }
+
+    setTimeout(async () => {
+      navigate("/");
+    }, 2000); // Set the duration as needed
+  };
+
+  console.log("subscriptions", subscriptions);
   const navigate = useNavigate();
 
-  if(subscriptionRetrievalLoading){
-   return loading()
-  }else {
-
-  
-
+  if (subscriptionRetrievalLoading) {
+    return loading();
+  } else {
     return (
       <IonPage>
         <IonHeader>
@@ -205,71 +225,74 @@ function LandingPage(){
           </IonToolbar>
         </IonHeader>
         <IonContent className="ion-padding">
-          <IonText>
+          <IonText class="">
             <h1 className="ion-text-center">VibeFenWei</h1>
+
             <p className="ion-text-center">
               Experience a seamless journey with our amazing features.
             </p>
+
+            <h2 className="ion-text-center ion-text-capitalize">
+              {subscriptions.join(" ")}
+            </h2>
+            <p className="ion-text-center">Subscriber</p>
           </IonText>
           <div className="ion-text-center">
             <IonIcon
               ref={arrowRef}
-              icon={arrowAnimation === 'animate__flip' ? arrowDownOutline : arrowForwardOutline}
+              icon={
+                arrowAnimation === "animate__flip"
+                  ? arrowDownOutline
+                  : arrowForwardOutline
+              }
               size="large"
               color="primary"
               className={`animate__animated ${arrowAnimation}`}
             />
           </div>
           <div className="ion-text-center animate__animated animate__fadeInUp">
-            <IonButton expand="block" color="primary" onClick={handleGetStarted}>
+            <IonButton
+              fill="clear"
+              expand="block"
+              color="primary"
+              onClick={handleGetStarted}
+            >
               Get Started
             </IonButton>
           </div>
         </IonContent>
       </IonPage>
     );
-  };
   }
-
-
-
-
-
-
+}
 
 function Home() {
+  const { subscriptionRetrievalLoading } = useDataProvidersContext();
 
- const { subscriptionRetrievalLoading} = useDataProvidersContext()
-
- if(subscriptionRetrievalLoading){
-  return loading()
- }
-
+  if (subscriptionRetrievalLoading) {
+    return loading();
+  }
 
   return <ProductsCard />;
 }
 
 function ProductDetails() {
+  const { subscriptionRetrievalLoading } = useDataProvidersContext();
 
- const { subscriptionRetrievalLoading} = useDataProvidersContext()
-
- if(subscriptionRetrievalLoading){
-  return loading()
- }
+  if (subscriptionRetrievalLoading) {
+    return loading();
+  }
   return <ListDetailComponent />;
 }
 
 function Subscriptions() {
+  const { subscriptionRetrievalLoading } = useDataProvidersContext();
 
- const { subscriptionRetrievalLoading} = useDataProvidersContext()
-
- if(subscriptionRetrievalLoading){
-  return loading()
- }
+  if (subscriptionRetrievalLoading) {
+    return loading();
+  }
   return <SubscriptionComponent />;
 }
-
-
 
 // Other page components...
 
@@ -289,18 +312,15 @@ function IonMenuNav() {
     setCurrentRoute(location.pathname);
   }, [location.pathname]);
 
-
-
   const tabs = {
     "/subscriptions": [
       {
         access: checkFeatureAccess(["free"]),
-    
+
         label: "Home",
         icon: homeOutline,
         clickHandler: (event) => {
-          navigate("/", { replace: true });
-     
+          navigate("/", { target: "host" });
         },
       },
     ],
@@ -312,8 +332,7 @@ function IonMenuNav() {
         label: "Home",
         icon: homeOutline,
         clickHandler: (event) => {
-          navigate("/", { replace: true });
-     
+          navigate("/", { target: "host" });
         },
       },
       {
@@ -331,7 +350,7 @@ function IonMenuNav() {
       },
       {
         access: checkFeatureAccess(["crafted"]),
-     
+
         label: "Article",
         icon: documentTextOutline,
         clickHandler: (event, hasAccess) => {
@@ -370,7 +389,7 @@ function IonMenuNav() {
               // disabled= {tab.disabled}
               key={index}
               tab={currentRoute}
-              onClick={e=> tab.clickHandler(e, tab.access.hasAccess)}
+              onClick={(e) => tab.clickHandler(e, tab.access.hasAccess)}
             >
               <IonIcon icon={tab.access.hasAccess ? tab.icon : lockClosed} />
               <IonLabel color={tab.access.hasAccess ? "secondary" : "danger"}>

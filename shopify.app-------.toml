@@ -1,0 +1,28 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+name = "ai-craft"
+client_id = "0879e00a657caedb1638677a3e1e267d"
+application_url = "https://nice-milton-restaurant-lasting.trycloudflare.com"
+embedded = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products,read_content,write_content"
+use_legacy_install_flow = true
+
+[auth]
+redirect_urls = [
+  "https://nice-milton-restaurant-lasting.trycloudflare.com/auth/callback",
+  "https://nice-milton-restaurant-lasting.trycloudflare.com/auth/shopify/callback",
+  "https://nice-milton-restaurant-lasting.trycloudflare.com/api/auth/callback"
+]
+
+[webhooks]
+api_version = "2023-07"
+
+[pos]
+embedded = false
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "quickstart-b80cd149.myshopify.com"

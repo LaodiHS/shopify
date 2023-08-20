@@ -8,7 +8,7 @@ export { ProductDetails } from "./ListDetail/ProductDetails";
 export { Accordion } from "./ListDetail/Accordion";
 export { AccordionInformationHeader } from "./ListDetail/AccordionInformationHeader";
 export { AdditionalProductOptions } from "./ListDetail/AdditionalProductOptions";
-
+export {TokenUsageComponent} from "./ListDetail/UsageHeaderComponent"
 export { BlogSelection } from "./ListDetail/BlogSelection";
 export { PopUpCheckBoxes } from "./ListDetail/PopUpCheckBoxes";
 export { Toggles } from "./ListDetail/Toggles";

@@ -1,5 +1,5 @@
 import shopify from "./shopify.js";
-import { Page } from "@shopify/polaris";
+
 
 // HTTP/1.1 201 Created
 
@@ -99,7 +99,7 @@ export async function createBlog({ session, title }) {
     });
     return blog; // Optionally, return the created blog data
   } catch (error) {
-    console.error("Error creating blog:", error.message);
+    // console.error("Error creating blog:", error.message);
     throw error; // Propagate the error to the caller
   }
 }
@@ -141,10 +141,10 @@ export async function listBlogs({ session }) {
     const response = await shopify.api.rest.Blog.all({
       session: session,
     });
-    console.log("response", response);
+    // console.log("response", response);
     return response; // Optionally, return the list of blogs
   } catch (error) {
-    console.error("Error listing blogs:", error);
+//    console.error("Error listing blogs:", error);
     throw error; // Propagate the error to the caller
   }
 }
@@ -156,7 +156,7 @@ export async function findBlog({ session, id }) {
       id,
     });
   } catch (error) {
-    console.error("Error listing blogs:", error);
+  //  console.error("Error listing blogs:", error);
     throw error;
   }
 }
@@ -169,15 +169,14 @@ export function contentGenerator(app) {
 
     try {
       const { id } = req.body;
-      console.log("id:", id);
       const { session } = res.locals.shopify;
       const response = await findBlog({ session, id });
       data = response.data;
-      console.log("data:", data);
+      // console.log("find blog datadata:", data);
     } catch (err) {
       status = err?.response?.code || 500;
-      error = err.response;
-      console.log("error------>:", error);
+      error = err
+      // console.log("blog error------>:", error);
     }
 
     res.status(status).json({ success: status === 200, data, error });
@@ -193,7 +192,7 @@ export function contentGenerator(app) {
       data = response.data;
     } catch (error) {
       status = 500;
-      error = error.message;
+      error = error
     }
 
     res.status(status).json({ success: status === 200, data, error });
@@ -207,10 +206,10 @@ export function contentGenerator(app) {
     const { title } = req.body;
     try {
       data = await createBlog({ session, title });
-      console.log("name: ", title);
+      // console.log("name: ", title);
     } catch (error) {
-      console.log('error creating blog', error)
-      error = error.message;
+      // console.log('error creating blog', error)
+      error = error;
       status = 500;
     }
 
@@ -226,7 +225,7 @@ export function contentGenerator(app) {
     try {
       data = await createArticle({ session, ...req.body });
     } catch (error) {
-      error = error.message;
+      error = error
       status = 500;
     }
 

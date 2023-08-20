@@ -24,6 +24,7 @@ export default async function productTagger(client, product) {
   // Update the tags if they've changed
   if (tags.length !== data.product.tags.length) {
     console.log("Updating tags for", product.id);
+    
     const products = await client.put({
       path: `products/${product.id}.json`,
       data,
