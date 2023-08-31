@@ -1,5 +1,5 @@
 import { GraphqlQueryError } from "@shopify/shopify-api";
-import shopify from "./shopify.js";
+import {shopify} from "./shopify.js";
 
 
 
@@ -141,7 +141,7 @@ export default async function getProducts(session, first = 5, after = null, befo
         },
       },
     });
-      console.log('response message->',response.message)
+      console.log('product-paging-response message->',response.message)
      return response;
   } catch (error) {
     console.log('error---->', error)

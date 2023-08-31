@@ -30,6 +30,7 @@ import {
   useIonPopover,
   IonProgressBar,
   IonLoading,
+  IonNav,
 } from "@ionic/react";
 import {
   chatbubbleOutline,
@@ -42,10 +43,7 @@ import {
 
 import { useLocation, useNavigate } from "react_router_dom";
 import { useAuthenticatedFetch } from "../hooks/useAuthenticatedFetch";
-import {
-  Context,
-  SharedData,
-} from "../utilities/data-context.js";
+import { Context, SharedData } from "../utilities/data-context.js";
 import {
   useProductDataContext,
   PaidFeature,
@@ -80,18 +78,21 @@ const modalStyle = {
   "--ion-modal-max-height": "100vh",
 };
 
-export function ListDetailComponent({}) {  
-  const {subscriptions,currentSession,user, contextualOptions, setContextualOptions } = useDataProvidersContext();
+export function ListDetailComponent({}) {
+  const {
+    subscriptions,
+    currentSession,
+    user,
+    contextualOptions,
+    handleSelectChange,
+    setContextualOptions,
+  } = useDataProvidersContext();
 
   const { productData } = useProductDataContext();
-  
-  
-  
-  
+
   if (!subscriptions) {
-  
-  return <div> no subscription found</div>
-  
+    return <div> no subscription found</div>;
+
     throw new Error(
       "no subscriptions prop on ListDetailComponent: ",
       subscriptions
@@ -102,29 +103,15 @@ export function ListDetailComponent({}) {
   }
 
   const fetch = useAuthenticatedFetch();
-  const location = useLocation();
+
   const navigate = useNavigate();
   // const [productData, setData] = useState(null);
   const [composeTextModalLoading, setComposeTextModalLoading] = useState(false);
-  const [composeTextModalLoadingText, setComposeTextModalLoadingText] =
-    useState();
-
-  
-
-  useEffect(async () => {
-    console.log("History", location);
-    return () => {
-      console.log("clearing the sharedData");
-      SharedData.clearSharedData();
-    };
-  }, [location.state, navigate, subscriptions]);
 
   const { sections } = audienceModel;
 
   const [hiddenElements, setHiddenElements] = useState(toggles);
 
-
-  console.log("setContextualOptions", setContextualOptions);
   const [isOpen, setIsOpen] = useState(false);
 
   function onToggleChange(selectElementId) {
@@ -133,47 +120,6 @@ export function ListDetailComponent({}) {
       [selectElementId]: toggles[selectElementId],
     }));
   }
-
-  const handleSelectChange = async (event, category) => {
-    console.log("SharedData.serverOptions: 1", SharedData.serverOptions);
-    const newSelectedOptions = {
-      ...contextualOptions,
-      [category]: event.detail.value,
-    };
-    setContextualOptions(newSelectedOptions);
-
-    SharedData.optionRequirements[category] =
-      SharedData.optionRequirements[category] || {};
-
-    if (!event?.detail?.value || event?.detail?.value === "none") {
-      delete SharedData.optionRequirements[category];
-      SharedData.optionRequirements = updateObject(
-        SharedData.optionRequirements
-      );
-      setContextualOptions(SharedData.optionRequirements);
-    } else {
-      SharedData.optionRequirements[category] = event.detail.value;
-      SharedData.optionRequirements = updateObject(
-        SharedData.optionRequirements
-      );
-      setContextualOptions(SharedData.optionRequirements);
-    }
-
-    if (!Object.entries(SharedData.optionRequirements).length) {
-      delete SharedData.serverOptions["option-requirements"];
-    } else {
-      SharedData.serverOptions["option-requirements"] =
-        SharedData.optionRequirements;
-    }
-    const serverOptions = SharedData.serverOptions;
-    Context.sendData(
-      "AudienceOptions",
-      {
-        serverOptions,
-      },
-      "handleSelectChange"
-    );
-  };
 
   function setAccordionLoadingState(state) {
     setComposeTextModalLoading(state);
@@ -221,7 +167,6 @@ export function ListDetailComponent({}) {
     return <ion-spinner color="success"></ion-spinner>; // or show an error message
   }
 
-
   return (
     <>
       <IonMenu
@@ -247,7 +192,6 @@ export function ListDetailComponent({}) {
             key={"8"}
             onToggleChange={onToggleChange}
             toggles={toggles}
-        
           />
         </IonContent>
       </IonMenu>
@@ -260,9 +204,7 @@ export function ListDetailComponent({}) {
               </IonButton>
             </IonButtons>
             <IonTitle key={"15"}>Product Detail</IonTitle>
-            <IonButtons slot="end">
-            <TokenUsageComponent tokenUsage={user} />
-            </IonButtons>
+            <IonButtons slot="end"></IonButtons>
           </IonToolbar>
         </IonHeader>
         <IonContent>
@@ -275,7 +217,6 @@ export function ListDetailComponent({}) {
               <IonCol key={"21"} size="12">
                 <ProductDetails
                   key={"22"}
-          
                   serverOptions={SharedData.serverOptions}
                   includeProductDetails={SharedData.includeProductDetails}
                   optionRequirements={SharedData.optionRequirements}
@@ -345,7 +286,6 @@ export function ListDetailComponent({}) {
                   section={section}
                   hiddenElements={hiddenElements}
                   selectedOptions={contextualOptions}
-             
                 />
               ))}
 
@@ -388,42 +328,26 @@ export function ListDetailComponent({}) {
             </IonHeader>
             <IonContent className="ion-padding">
               {/* <IonLoading message={composeTextModalLoadingText} isOpen={composeTextModalLoading }  duration={0} /> */}
-              <Accordion
+              <TokenUsageComponent tokenUsage={user} />
+              {/* <Accordion
                 setAccordionModalPopUp={setAccordionModalPopUp}
-                productData={productData}
+          
                 setAccordionLoadingState={setAccordionLoadingState}
-              />
+              /> */}
             </IonContent>
           </IonModal>
         </IonContent>
+        
       </IonPage>
     </>
   );
 }
 
-function Section({
-  handleSelectChange,
-  section,
-  hiddenElements,
-  selectedOptions,
-
-}) {
-  const {checkFeatureAccess } = useDataProvidersContext();
+function Section({ section, hiddenElements, selectedOptions }) {
+  const { checkFeatureAccess, handleSelectChange } = useDataProvidersContext();
   const [subscriptionMessage, setSubscriptionMessage] = useState({});
-  const [popoverState, setPopoverState] = useState({
-    isOpen: false,
-    title: "",
-  });
 
-  const handlePopoverOpen = (event, definition) => {
-    console.log("hit popover");
-    event.persist();
-    setPopoverState({ isOpen: true, definition });
-  };
 
-  const handlePopoverClose = () => {
-    setPopoverState({ isOpen: false, definition: "" });
-  };
 
   return (
     <>
@@ -441,38 +365,6 @@ function Section({
             } = item;
 
             const { tag, options } = values;
-
-            const PopoverContent = () => (
-              <IonContent className="ion-padding">Hello World!</IonContent>
-            );
-
-            const [presentPopover, dismissPopover] = useIonPopover(
-              PopoverContent, // Your popover content component
-              {
-                showBackdrop: false,
-                backdropDismiss: false,
-                cssClass: "my-popover-class",
-                animated: true,
-                mode: "ios",
-                event: "none", // Disable default event handling
-              }
-            );
-
-            const handleTriggerClick = (e) => {
-              const triggerElement = e.target;
-              if (triggerElement) {
-                presentPopover({
-                  event: {
-                    target: triggerElement,
-                    clientX: 0,
-                    clientY: 0,
-                  },
-                });
-              }
-            };
-            const handleTriggerMouseLeave = () => {
-              dismissPopover();
-            };
 
             return (
               <IonCol
@@ -506,9 +398,9 @@ function Section({
 
                       const minSub = minSubscription;
                       if (!minSub.length) {
-                        console.log("title",title)
-                        console.log('object',option)
-                        console.log('minsubscription',minSub)
+                        console.log("title", title);
+                        console.log("object", option);
+                        console.log("minsubscription", minSub);
                         throw new Error("no min subscription:" + minSub);
                       }
 

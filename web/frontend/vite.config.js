@@ -3,7 +3,11 @@ import { dirname } from "path";
 import { fileURLToPath } from "url";
 import https from "https";
 import react from "@vitejs/plugin-react";
-import 'dotenv/config'
+import viteCompression from "vite-plugin-compression";
+import { copy } from "vite-plugin-copy";
+import { chromeExtension } from 'rollup-plugin-chrome-extension'
+import extension from 'rollup-plugin-browser-extension'
+// import 'dotenv/config'
 if (
   process.env.npm_lifecycle_event === "build" &&
   !process.env.CI &&
@@ -13,7 +17,6 @@ if (
     "\nBuilding the frontend app without an API key. The frontend build will not run without an API key. Set the SHOPIFY_API_KEY environment variable when running the build command.\n"
   );
 }
-
 
 const proxyOptions = {
   target: `http://127.0.0.1:${process.env.BACKEND_PORT}`,
@@ -43,37 +46,68 @@ if (host === "localhost") {
   };
 }
 
-const dir_name = dirname(fileURLToPath(import.meta.url))
-
+const dir_name = dirname(fileURLToPath(import.meta.url));
+console.log("dir_name", dir_name);
 export default defineConfig({
-  root: dir_name,
-  plugins: [react()],
+  // build: {
+  //   minify: true, // Enables minification
+  //   brotliSize: true, // Enables Brotli compression
+  //   chunkSizeWarningLimit: 1000, // Adjust if needed
+  //   terserOptions:{
+  //     compress:{
+  //       drop_console: true
+  //     }
+  //   }
 
+  // },
+  // esbuild: {
+  //   drop: ['console', 'debugger'],
+  // },
+
+  root: dir_name,
+  plugins: [
+    react(),
+    copy({
+      targets: [{ src: "node_modules/tinymce/**/*", dest: "tinymce" }],
+      verbose: true,
+    }),
+    viteCompression(),
+  ],
   optimizeDeps: {
-    exclude: []
+    //include: ["tinymce"], // Expose tinymce as a module
   },
+
   define: {
-  
+    
+    
+"API_URL":JSON.stringify(host),
     "process.env.SHOPIFY_API_KEY": JSON.stringify(process.env.SHOPIFY_API_KEY),
   },
   resolve: {
     preserveSymlinks: true,
-    alias:{
-      
-    }
+    // alias: {
+    //   "/": "tinymce/skins",
+    // },
+  },
+  build: {
+  //  assetsInclude: ["tinymce/**"],
   },
   server: {
     host: "localhost",
+
     port: process.env.FRONTEND_PORT,
+
     hmr: hmrConfig,
     proxy: {
       "^/(\\?.*)?$": proxyOptions,
       "^/api(/|(\\?.*)?$)": proxyOptions,
       "^/sse(/|(\\?.*)?$)": proxyOptions,
-      "^/dist(/|(\\?.*)?$)": proxyOptions,
-      "^/dist/assets(/|(\\?.*)?$)": proxyOptions,
-       // Add the ngrok tunnel URL as an allowed origin
-     // "https://bit-enrolled-load-sections.trycloudflare.com": proxyOptions,
+      "^/tinymce(/|(\\?.*)?$)": proxyOptions,
+      // "^/*": proxyOptions,
+      // "^/dist(/|(\\?.*)?$)": proxyOptions,
+      // "^/dist/assets(/|(\\?.*)?$)": proxyOptions,
+      // Add the ngrok tunnel URL as an allowed origin
+      // "https://bit-enrolled-load-sections.trycloudflare.com": proxyOptions,
     },
   },
 });

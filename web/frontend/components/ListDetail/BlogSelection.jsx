@@ -24,7 +24,6 @@ import {
 } from "ionicons/icons";
 import {
   useDataProvidersContext,
-  stableFetchComponent,
   DataFetchingComponent,
 } from "../../components";
 
@@ -152,8 +151,6 @@ const BlogSelection = forwardRef(({ article, currentBox }, ref) => {
   }
 
   async function createArticle(blog_id, title, author, body_html, published) {
-    console.log("has properties ");
-
     const createArticleBody = { blog_id, title, author, body_html, published };
     return await async_fetchData({
       url: "/api/article/create",
@@ -168,7 +165,7 @@ const BlogSelection = forwardRef(({ article, currentBox }, ref) => {
     error,
   } = DataFetchingComponent({ url: "/api/blog/list" });
 
-  // console.log('error---->', error)
+
 
   const handleBlogChange = (event) => {
     const selectedBlog = event.target.value;
@@ -255,7 +252,7 @@ const BlogSelection = forwardRef(({ article, currentBox }, ref) => {
                 animated="true"
                 trigger={"article-post-validation" + currentBox}
                 triggerAction="hover"
-                ionPopoverWillPresent={(e) => console.log("i will pop")}
+                //ionPopoverWillPresent={(e) => console.log("i will pop")}
               >
                 <IonContent className="ion-padding">
                   <IonText>

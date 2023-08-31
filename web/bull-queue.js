@@ -1,10 +1,10 @@
 import { Queue, Worker, QueueEvents } from "bullmq";
-import shopify from "./shopify.js";
-import  {inspect}  from 'util';
+import { shopify } from "./shopify.js";
+import { inspect } from "util";
 import * as userStore from "./userStore.js";
 import { processFunctions } from "./bull-queue-function-dictionary.js";
 import { testBullMqJobProcessFailure } from "./testMethods.js";
-import {countTokens} from "./tokenTools.js"
+import { countTokens } from "./tokenTools.js";
 import { updateTokenUsageAfterJob } from "./subscriptionManager.js";
 const dataCallbacks = new Map();
 
@@ -166,11 +166,6 @@ export async function enqueueApiRequest(promptObject) {
 export function serverSideEvent(app, redisClient, queue) {
   // EventSource route for Server-Sent Events
 
-  const errorHandler = (err, req, res, next) => {
-    console.error("Error occurred:", err);
-    res.status(500).json({ error: "Internal Server Error" });
-  };
-
   app.get("/sse/stream", (req, res, next) => {
     try {
       res.setHeader("Content-Type", "text/event-stream");
@@ -179,14 +174,12 @@ export function serverSideEvent(app, redisClient, queue) {
       res.setHeader("Access-Control-Allow-Origin", "*");
 
       const { shop } = req.query;
-      if(!shop){
-
+      if (!shop) {
         res.end();
-      
-      //  throw new Error('no shop specified in sse')
+
+        //  throw new Error('no shop specified in sse')
       }
-   
-     
+
       const queueEvents = new QueueEvents(queueName, {
         connection: redisClient,
       });
@@ -209,14 +202,18 @@ export function serverSideEvent(app, redisClient, queue) {
         res.end();
       }
       listenForData(shop, async (data) => {
-        const {res:gptStream, shop, openai, api, promptTokenCountEstimate} = data;
+        const {
+          res: gptStream,
+          shop,
+          openai,
+          api,
+          promptTokenCountEstimate,
+        } = data;
 
-        if (gptStream &&  gptStream.data) {
+        if (gptStream && gptStream.data) {
           const dataGenerator = generateOpenAIMessages(data);
           for await (const delta of dataGenerator) {
             // Process each delta of data as it arrives
-
-              
 
             sendSSEMessage({ message: "Job stream", delta });
           }
@@ -225,7 +222,6 @@ export function serverSideEvent(app, redisClient, queue) {
         res.write("event: close\n");
         res.write("data: Connection closed by the server\n\n");
         res.end();
-
       });
 
       // Set up event listeners to send SSE messages to the client
@@ -276,24 +272,33 @@ export function serverSideEvent(app, redisClient, queue) {
       // If the client disconnects, stop sending SSE messages
       req.on("close", () => {
         console.log("Closed connection socket");
-   
+
         // queueEvents.off("completed");
         // queueEvents.off("stalled");
         // queueEvents.off("failed");
-       
       });
     } catch (err) {
       next(err); // Pass any uncaught errors to the error handling middleware
     }
   });
-  app.use(errorHandler);
+
+  const sseErrorHandler = (err, req, res, next) => {
+    // Your custom error handling logic for the SSE route
+    console.error("Error occurred in SSE:", err);
+    res.status(500).json({ error: "Internal Server Error in SSE" });
+  };
+  app.use("/sse/stream", sseErrorHandler);
 }
 
-
-
 // Modified generateOpenAIMessages function to accept the res object as a parameter
-async function* generateOpenAIMessages({res, shop, documentType, openai, api, promptTokenCountEstimate}) {
-
+async function* generateOpenAIMessages({
+  res,
+  shop,
+  documentType,
+  openai,
+  api,
+  promptTokenCountEstimate,
+}) {
   let responseContentCompleteText = "";
   try {
     // console.log('res inspect===>', inspect(res, {depth:null, colors:true, compact:false}))
@@ -302,59 +307,59 @@ async function* generateOpenAIMessages({res, shop, documentType, openai, api, pr
 
     // Use the 'for await' loop to process the data stream
     for await (const data of stream) {
-     
-      const lines = data.toString().split('\n').filter(line => line.trim() !== '');
+      const lines = data
+        .toString()
+        .split("\n")
+        .filter((line) => line.trim() !== "");
       for (const line of lines) {
-     
-        const message = line.replace(/^data: /, '');
-      
-        if (message === '[DONE]') {
+        const message = line.replace(/^data: /, "");
+
+        if (message === "[DONE]") {
           // console.log('res inspect===>', inspect(res.headers, {depth:null, colors:true, compact:false}))
-          
+
           //https://community.openai.com/t/how-to-get-total-tokens-from-a-stream-of-completioncreaterequests/110700
-  
+
           const estimateOverheadForStream = 43;
           //console.log('token count nlp', countTokens(responseContentCompleteText))
-          const totalResponseEstimate = countTokens(responseContentCompleteText) + promptTokenCountEstimate + estimateOverheadForStream;
-       
-          await updateTokenUsageAfterJob(shop, totalResponseEstimate)
+          const totalResponseEstimate =
+            countTokens(responseContentCompleteText) +
+            promptTokenCountEstimate +
+            estimateOverheadForStream;
+
+          await updateTokenUsageAfterJob(shop, totalResponseEstimate);
           const storeData = await userStore.readJSONFromFileAsync(shop);
           storeData.documentType = documentType;
 
           storeData.shop = shop;
           storeData.gptText = responseContentCompleteText;
-          storeData.documentType= documentType;
+          storeData.documentType = documentType;
           await userStore.writeJSONToFileAsync(shop, storeData);
-            // console.log('wrote user data-===>', storeData);
+          // console.log('wrote user data-===>', storeData);
           return; // Stream finished
         }
         try {
-
           const parsed = JSON.parse(message);
- 
+
           // console.log('parsed message1===>', JSON.stringify(parsed));
           // console.log('parsed choices===>', parsed.choices);
           // console.log('parsed content===>', parsed.choices[0]);
           // Access the usage tokens from the response data
-          if(parsed.choices[0].delta?.content){
+          if (parsed.choices[0].delta?.content) {
             responseContentCompleteText += parsed.choices[0].delta?.content;
           }
-       
-            //countTokens(parsed.choices[0].delta.content);
-          
+
+          //countTokens(parsed.choices[0].delta.content);
 
           // Process the rest of the data as needed
           parsed.choices[0].index;
           yield parsed.choices[0].delta;
         } catch (error) {
-          console.error('Could not JSON parse stream message', message, error);
+          console.error("Could not JSON parse stream message", message, error);
         }
       }
     }
   } catch (error) {
     // Handle errors
-    console.error('An error occurred during OpenAI request', error);
+    console.error("An error occurred during OpenAI request", error);
   }
 }
-
-

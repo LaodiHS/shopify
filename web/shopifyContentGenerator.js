@@ -1,4 +1,4 @@
-import shopify from "./shopify.js";
+import {shopify} from "./shopify.js";
 
 
 // HTTP/1.1 201 Created

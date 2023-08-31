@@ -794,7 +794,7 @@ function generateLanguageRequirementsList(language) {
       requirements.push(keyLabelRequirements);
     }
   }
-
+console.log('requirements: ' , requirements)
   return requirements;
 }
 
@@ -901,12 +901,12 @@ const addQuotes= (text) => text.length ? `"${text}"`: '';
   const addProductDescription = (exampleDetails, exampleStyles) => {
     const exampleDetailsStr = exampleDetails
       .slice(-1)
-      .map(([key, value]) => `(${key} - ${value})`)
+      .map(([key, value]) => `(${key.trim()} - ${value})`)
       .join(", ");
 
     const exampleStylesStr = exampleStyles
       .slice(-1)
-      .map(([key, value]) => `(${key} - ${value})`)
+      .map(([key, value]) => `(${key.trim()} - ${value})`)
       .join(",  ");
     const title = productData.title.replace(/\n/g, "");
     addLineFront(
@@ -1137,7 +1137,7 @@ export function withProductDetails(productData, focus) {
 }
 
 export function withLanguageAndProductOption(productData, language, focus) {
-  language = language.map((languageOptions) => languageOptions[1]);
+ 
   const requirementsList = generateLanguageRequirementsList(language);
 
   const prompt = focusRequirements(productData, focus, requirementsList);

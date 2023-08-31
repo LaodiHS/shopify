@@ -36,7 +36,7 @@ import { Toast } from "@shopify/app-bridge-react";
 import { chevronBack, fileTray } from "ionicons/icons";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { Redirect } from "@shopify/app-bridge/actions";
-import { useDataProvidersContext } from "../components";
+import { useDataProvidersContext} from "../components";
 export const SubscriptionComponent = (
   {
     //  subscriptions
@@ -62,17 +62,15 @@ export const SubscriptionComponent = (
     setShowModal(true);
   }
 
-console.log('location',Redirect)
+  console.log("location", Redirect);
 
-   const url =  window.location.href.slice()
-   //.href.slice().split("/")
+  const url = window.location.href.slice();
+  //.href.slice().split("/")
 
-   const returnUrl =''
-     console.log('returnUrl', returnUrl)
+  const returnUrl = "";
+  console.log("returnUrl", returnUrl);
 
   async function handleProductSelection(selection) {
-
-
     try {
       const response = await fetch("/api/subscription/selection", {
         method: "POST",
@@ -81,7 +79,7 @@ console.log('location',Redirect)
         },
         body: JSON.stringify({
           plan: selection.toLowerCase(),
-          returnUrl
+          returnUrl,
         }),
       });
 
@@ -129,9 +127,7 @@ console.log('location',Redirect)
               const current = subscriptions.includes(subscription.title);
 
               return (
-
                 <IonCol size="12" size-md="4" key={index}>
-                
                   <IonCard color={current ? "dark" : ""}>
                     <IonCardHeader>
                       <IonCardTitle className="ion-text-capitalize">
@@ -153,7 +149,7 @@ console.log('location',Redirect)
                         {subscription.features.map((feature, index) => (
                           <div key={index}>
                             <IonRadio
-                            className="ion-text-capitalize"
+                              className="ion-text-capitalize"
                               value={feature}
                               color="success"
                               checked
@@ -189,6 +185,7 @@ console.log('location',Redirect)
                             : "Select"}
                         </IonButton>
                       </div>
+                      <div></div>
                     </IonCardContent>
                   </IonCard>
                 </IonCol>

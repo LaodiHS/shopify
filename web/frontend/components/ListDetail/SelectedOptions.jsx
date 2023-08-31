@@ -12,7 +12,7 @@ import {
   IonText,
   IonThumbnail,
 } from "@ionic/react";
-import {L} from "../../components"
+import { L } from "../../components";
 const shortenText = (text, maxLength) => {
   if (text && text.length > maxLength) {
     return text.substring(0, maxLength) + "...";
@@ -21,88 +21,83 @@ const shortenText = (text, maxLength) => {
 };
 
 export function SelectedOptions({ productDescOptions, title, legend }) {
-if(legend){
-
-  legend = legend.reduce((acc,[key, value])=> {
-
-  if(key.includes('variant:')){
-   key = 'title:' + key.split(':')[1]
-
+  if (legend) {
+    legend = legend.reduce((acc, [key, value]) => {
+      if (key.includes("variant:")) {
+        key = "title:" + key.split(":")[1];
+      }
+      acc[key] = value;
+      return acc;
+    }, {});
+  } else {
+    legend = {};
   }
-  acc[key] = value;
-  return acc;
-},{}) 
-}else {
-  legend={};
-}
- 
+
   const renderOption = (key, option, itemIndex) => {
     let optionValue, optionKey;
 
-
-
     if (Array.isArray(option)) {
-
     } else if (typeof option === "object") {
-     
-  
-
-      for (const [ key, value ] of Object.entries(option)) {
+      for (const [key, value] of Object.entries(option)) {
         if (key === "id" || !value) continue;
-        if(key === "title"  && value){
-        optionKey = key;
-        optionValue = value;
-        break;
-        }else{
-
+        if (key === "title" && value) {
           optionKey = key;
           optionValue = value;
-
+          break;
+        } else {
+          optionKey = key;
+          optionValue = value;
         }
       }
     } else {
       optionKey = key;
       optionValue = option;
     }
-  // console.log('color', legend[optionValue])
+    // console.log('color', legend[optionValue])
     return (
       <IonCol size="12" key={itemIndex + key}>
-        
         <IonRow>
           <IonCol size="9">
-        <IonList key={itemIndex + key}>
-          <IonRadioGroup
-        
-            key={itemIndex + key}
-            style={{
-              display: "flex",
+            <IonList key={itemIndex + key}>
+              <IonRadioGroup
+                key={itemIndex + key}
+                style={{
+                  display: "flex",
 
-              justifyContent: "start",
-            }}
-          >
-            <IonRadio
-              color="success"
-              checked
-              value={{ optionKey } + shortenText(optionValue, 30)}
-              key={itemIndex}
-              justify="space-between"
-            >
-              <IonText
-                color="success"
-                stye={{ fontSize: "12px" }}
-                disabled={true}
+                  justifyContent: "start",
+                }}
               >
-                {key==='images' && (<IonThumbnail > <img  src={optionValue} /></IonThumbnail>)}
-                {key!=="images" && shortenText(optionValue, 30)}
-              </IonText>
-            </IonRadio> 
-          </IonRadioGroup>
-        
-        </IonList></IonCol> <IonCol size="3"><L r="" c={legend[optionValue] || ""} /> </IonCol></IonRow>
+                <IonRadio
+                  color="success"
+                  checked
+                  value={{ optionKey } + shortenText(optionValue, 30)}
+                  key={itemIndex}
+                  justify="space-between"
+                >
+                  <IonText
+                    color="success"
+                    stye={{ fontSize: "12px" }}
+                    disabled={true}
+                  >
+                    {key === "images" && (
+                      <IonThumbnail>
+                        {" "}
+                        <img src={optionValue} />
+                      </IonThumbnail>
+                    )}
+                    {key !== "images" && shortenText(optionValue, 30)}
+                  </IonText>
+                </IonRadio>
+              </IonRadioGroup>
+            </IonList>
+          </IonCol>{" "}
+          <IonCol size="3">
+            <L r="" c={legend[optionValue] || ""} />{" "}
+          </IonCol>
+        </IonRow>
       </IonCol>
     );
   };
-
 
   return (
     <IonGrid fixed={true}>

@@ -1,5 +1,5 @@
 import { GraphqlQueryError, BillingInterval } from "@shopify/shopify-api";
-import shopify from "./shopify.js";
+import {shopify} from "./shopify.js";
 
 const USAGE_CHARGE_INCREMENT_AMOUNT = 1.0;
 export const isTest = true;

@@ -1,6 +1,6 @@
 import Queue from "better-queue";
 import productTagger from "./product-tagger.js";
-import shopify from "./shopify.js";
+import {shopify} from "./shopify.js";
 
 const productTaggingQueue = new Queue(async (input, done) => {
   const { product, shop } = input;

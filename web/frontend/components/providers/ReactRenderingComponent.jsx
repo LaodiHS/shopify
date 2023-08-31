@@ -30,11 +30,12 @@ export function addMarkup(plainText) {
     allowedSchemesByTag: {
       a: ["http", "https"],
       img: ["data"],
+   
     },
-    allowedClasses: {
-      div: ["my-class", "other-class"],
-      p: ["my-paragraph"],
-    },
+    // allowedClasses: {
+    //   div: ["my-class", "other-class"],
+    //   p: ["my-paragraph"],
+    // },
     allowedAttributes: {
       a: ["href", "title", "target"],
       img: ["src", "alt"],
@@ -42,6 +43,18 @@ export function addMarkup(plainText) {
     allowedSchemesAppliedToAttributes: {
       src: ["http", "https", "data"],
     },
+    allowedTags: [
+      'a', 'abbr', 'acronym', 'address', 'article', 'aside',
+      'b', 'bdi', 'bdo', 'big', 'blockquote', 'br', 'caption', 'cite',
+      'code', 'data', 'dd', 'del', 'dfn', 'div', 'dl', 'dt', 'em',
+      'figcaption', 'figure', 'footer', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+      'header', 'hr', 'i', 'img', 'ins', 'kbd', 'li', 'main', 'mark',
+      'nav', 'ol', 'p', 'pre', 'q', 's', 'samp', 'section', 'small', 'span',
+      'strong', 'sub', 'sup', 'table', 'tbody', 'td', 'tfoot', 'th', 'thead',
+      'time', 'tr', 'u', 'ul', 'var'
+      // Add more tags as needed
+      
+    ],
   });
   const result = md.render(plainText);
   return result;

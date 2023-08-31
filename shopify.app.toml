@@ -2,11 +2,8 @@
 
 name = "testing-vibefenwei"
 client_id = "b2919712bc4555c05f978c56eb4f5750"
-application_url = "https://reconstruction-observe-yourself-introduce.trycloudflare.com"
+application_url = "https://campus-impression-toner-coleman.trycloudflare.com"
 embedded = true
-
-
-NODE_ENV = "production"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
@@ -14,9 +11,9 @@ scopes = "write_products,read_content,write_content"
 
 [auth]
 redirect_urls = [
-  "https://reconstruction-observe-yourself-introduce.trycloudflare.com/auth/callback",
-  "https://reconstruction-observe-yourself-introduce.trycloudflare.com/auth/shopify/callback",
-  "https://reconstruction-observe-yourself-introduce.trycloudflare.com/api/auth/callback"
+  "https://campus-impression-toner-coleman.trycloudflare.com/auth/callback",
+  "https://campus-impression-toner-coleman.trycloudflare.com/auth/shopify/callback",
+  "https://campus-impression-toner-coleman.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

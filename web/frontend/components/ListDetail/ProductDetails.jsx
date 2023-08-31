@@ -1,5 +1,8 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useMemo } from "react";
 // import { Redirect } from 'react_router_dom';
+import { Editor } from "@tinymce/tinymce-react";
+// import "tinymce/tinymce";
+// import "tinymce/models/dom/model";
 import {
   IonGrid,
   IonRow,
@@ -31,11 +34,7 @@ import {
   exitOutline,
   informationCircle,
 } from "ionicons/icons";
-import {
-  Context,
-  SharedData,
-  
-} from "../../utilities/data-context.js";
+import { Context, SharedData } from "../../utilities/data-context.js";
 import { shortenText } from "../../utilities/utility-methods";
 import { ReactRenderingComponent } from "../providers";
 import { useAuthenticatedFetch } from "../../hooks";
@@ -43,69 +42,30 @@ import {
   AppTypeahead,
   extractTextFromHtml,
   useDataProvidersContext,
+  ImageLoader,
+  Tinymce,
 } from "../../components";
 // import { navigate } from "ionicons/icons";
 
 export function ProductDetails({ data }) {
   //const fetch = useAuthenticatedFetch();
-  const { checkFeatureAccess,includeProductImagesFeature, 
-    basic_crafted_advanced , subscriptions,  contextualOptions, setContextualOptions } = useDataProvidersContext();
-  const [selectedOptions, setSelectedOptions] = useState({});
-  const [selectedCollections, setSelectedCollections] = useState([]);
+  const {
+    includeProductImagesFeature,
+    basic_crafted_advanced,
+    productDetailOptions,
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedImageText, setSelectedImageText] = useState("0 Items");
-  const [selectedImages, setSelectedImages] = useState([]);
+    optionChange,
 
-  const optionChange = (propName, data) => {
-    if (data.length) {
-      SharedData.includeProductDetails[propName] = data;
-    } else {
-      delete SharedData.includeProductDetails[propName];
-    }
+    selectedImages,
 
-    if (!Object.entries(SharedData.includeProductDetails).length) {
-      delete SharedData.serverOptions["included-product-details"];
-    } else {
-      SharedData.serverOptions["included-product-details"] =
-        SharedData.includeProductDetails;
-    }
+    clearSelection,
+    imageSelectionChanged,
 
-    SharedData.includeProductDetails = { ...SharedData.includeProductDetails };
-
-    setSelectedOptions(SharedData.includeProductDetails);
-    const serverOptions = { ...SharedData.serverOptions };
-    Context.sendData("AudienceOptions", { serverOptions }, "optionChange");
-  };
-
-
-
-  const handleIncludeChange = (event, category) => {
-    Object.entries(category).forEach(([key, value]) => {
-      if (value === "delete") {
-        delete SharedData.includeProductDetails[key];
-      } else if (value) {
-        SharedData.includeProductDetails[key] = value;
-      } else {
-        delete SharedData.includeProductDetails[key];
-      }
-    });
-
-    if (Object.entries(SharedData.includeProductDetails).length > 0) {
-      SharedData.serverOptions["included-product-details"] =
-        SharedData.includeProductDetails;
-    } else {
-      delete SharedData.serverOptions["included-product-details"];
-    }
-
-    const serverOptions = SharedData.serverOptions;
-    Context.sendData(
-      "AudienceOptions",
-      { serverOptions },
-      "handleIncludeChange"
-    );
-  };
-
+    imageSelectionModalIsOpen,
+    assignImageSelectionModalIsOpen,
+  } = useDataProvidersContext();
+  // console.log('descriptio', productDetailOptions)
+  // console.log('descriptoin------>', productDetailOptions.find(([key, value]) => key === "description"))
   let {
     images,
     title,
@@ -118,40 +78,6 @@ export function ProductDetails({ data }) {
     collections,
   } = data;
 
-  const formatData = (data) => {
-    if (data.length === 1) {
-      const image = images.find((image) => image.transformedSrc === data[0]);
-      return image.transformedSrc;
-    }
-  };
-
-  const imageSelectionChanged = (images) => {
-    optionChange("images", images);
-    setSelectedImages(images);
-    setSelectedImageText(formatData(images));
-    setIsOpen(false);
-  };
-
-
-
-  function addCollection(obj) {
-    setSelectedCollections([...obj]);
-  }
-  function clearSelection() {
-    SharedData.clearSharedData();
-    console.log("selection cleared");
-    const serverOptions = SharedData.serverOptions;
-    setSelectedOptions({});
-    setSelectedCollections([]);
-    setSelectedImageText("0 Items");
-    setSelectedImages([]);
-      setContextualOptions({});
-    Context.sendData(
-      "AudienceOptions",
-      { serverOptions },
-      "handleIncludeChange"
-    );
-  }
   return (
     <IonGrid>
       <IonRow>
@@ -218,32 +144,40 @@ export function ProductDetails({ data }) {
               <IonButton
                 onClick={clearSelection}
                 fill="clear"
+                size="small"
                 className="ion-float-end"
               >
                 Clear Selections
               </IonButton>
             </IonCol>
-            {/* <IonCol size="12" className={title ? "" : " ion-hide"} key={title}>
-              <IonItem lines="none">
-                <IonInput
-                  label="Product Title"
-                  label-placement="stacked"
-                  aria-label="description"
-                  autoGrow={true}
-                  style={{ fontSize: "12px" }}
-                  value={title}
-                  readonly
-                />
-              </IonItem>
-            </IonCol> */}
 
             <IonCol style={{ padding: 0, margin: 0 }} size="12">
               <IonRow className={"ion-align-items-end"}>
                 <IonCol key="fourth" size="12">
                   <IonItem lines="none">
-                    <ReactRenderingComponent
-                      text={description || "no description"}
+                    <Editor
+                      value={description}
+                      inline
+                      disabled={true}
+                      init={{
+                        branding: false,
+                        promotion: false,
+                        theme: false,
+                     //   content_css:"tinymce/skins/content/tinymce-5/content.min.css",
+                        inline_styles: true,
+                        inline_boundaries: true,
+
+                        menubar: false,
+                        toolbar_sticky: false,
+                        min_height: 400,
+                        height: 400,
+                        readyOnly: true,
+                        disable: true,
+                      }}
                     />
+                    {/* <ReactRenderingComponent
+                      text={description || "no description"}
+                    /> */}
                   </IonItem>
                 </IonCol>
                 <IonCol key="fifth" size="5" offset="7">
@@ -258,11 +192,13 @@ export function ProductDetails({ data }) {
                         slot="start"
                         allowEmptySelection={true}
                         onIonChange={(e) =>
-                          handleIncludeChange(e, {
-                            description: e?.detail?.value
-                              ? [extractTextFromHtml(description)]
-                              : "delete",
-                          })
+                          // console.log('-----',Boolean(e.detail.value)) &&
+                          optionChange(
+                            "description",
+                            Boolean(e?.detail?.value)
+                              ? extractTextFromHtml(description).slice(10)
+                              : null
+                          )
                         }
                       >
                         <IonRadio
@@ -270,6 +206,9 @@ export function ProductDetails({ data }) {
                           style={{ fontSize: "12px" }}
                           color="success"
                           value="include"
+                          checked={productDetailOptions.find(
+                            ([key, value]) => key === "description"
+                          )}
                           className="ion-padding"
                         >
                           include
@@ -313,94 +252,14 @@ export function ProductDetails({ data }) {
             <SelectOptions
               optionName={Object.keys({ tags }).pop()}
               options={tags}
-              selectedOptions={selectedOptions}
-              optionChange={optionChange}
-              validUser={basic_crafted_advanced}
+              // selectedProperty={"title"}
+            />
+            <SelectOptions
+              optionName={Object.keys({ collections }).pop()}
+              options={collections}
+              selectedProperty={"title"}
             />
 
-            <IonCol
-              key="seventh"
-              className={collections.length ? "" : " ion-hide"}
-            >
-              <IonItem lines="none">
-                <IonLabel>
-                  <IonText
-                    style={{ fontSize: "11px" }}
-                    className="ion-text-wrap"
-                    color={basic_crafted_advanced.hasAccess ? "" : "medium"}
-                  >
-                    {basic_crafted_advanced.message("Collections")}
-                  </IonText>
-                </IonLabel>
-                <IonIcon
-                  size="small"
-                  color="secondary"
-                  slot="end"
-                  aria-label="Include existing description in composition"
-                  id={"collection-select-options-hover-trigger"}
-                  icon={informationCircleOutline}
-                ></IonIcon>
-              </IonItem>
-
-              <IonItem key="collections">
-                <IonSelect
-                  disabled={!basic_crafted_advanced.hasAccess}
-                  label="Select A Collection"
-                  aria-label="Select A Collection"
-                  style={{ fontSize: "12px" }}
-                  labelPlacement="stacked"
-                  interface="action-sheet"
-                  placeholder={"Include A Collection"}
-                  multiple="true"
-                  value={selectedCollections}
-                  selectedText={selectedCollections?.title}
-                  onIonChange={(e) => {
-                    optionChange("collections", e.detail.value);
-                    console.log("collection", e.detail.value);
-                    addCollection(e.detail.value);
-                  }}
-                >
-                  {collections &&
-                    collections.map((collection, index) => {
-                      const { title, description, value } = collection;
-
-                      return (
-                        <IonSelectOption
-                          color="success"
-                          key={index + title}
-                          value={collection}
-                        >
-                          {title}
-                        </IonSelectOption>
-                      );
-                    })}
-                </IonSelect>
-              </IonItem>
-              <IonPopover
-                key={"collection-select-options-hover-trigger"}
-                translucent={true}
-                animated="true"
-                trigger={"collection-select-options-hover-trigger"}
-                triggerAction="hover"
-              >
-                <IonContent className="ion-padding ion-text-capitalize">
-                  <IonText>
-                    <p>
-                      {" "}
-                      select collection options to include in the composition.
-                    </p>
-                  </IonText>
-                  <IonText color="secondary">
-                    {" "}
-                    <sub>
-                      {" "}
-                      <IonIcon icon={exitOutline}></IonIcon> click outside box
-                      to close
-                    </sub>
-                  </IonText>
-                </IonContent>
-              </IonPopover>
-            </IonCol>
             {metafields &&
               metafields.length > 0 &&
               (() => {
@@ -413,9 +272,6 @@ export function ProductDetails({ data }) {
                     key="metafields"
                     optionName={Object.keys({ metafields }).pop()}
                     options={values}
-                    selectedOptions={selectedOptions}
-                    optionChange={optionChange}
-                    validUser={basic_crafted_advanced}
                     sizes={{ size: "12", "size-md": "4" }}
                   />
                 );
@@ -432,11 +288,9 @@ export function ProductDetails({ data }) {
                     return (
                       <SelectOptions
                         key={index}
+                        // selectedProperty={"title"}
                         optionName={key}
                         options={values}
-                        selectedOptions={selectedOptions}
-                        optionChange={optionChange}
-                        validUser={basic_crafted_advanced}
                         sizes={{ size: "12", "size-md": "4" }}
                       />
                     );
@@ -460,8 +314,10 @@ export function ProductDetails({ data }) {
                   weightUnit,
                 } = variant;
                 const displayVariant = JSON.parse(JSON.stringify(variant));
+                displayVariant.title = displayVariant.title.toLowerCase();
+
                 delete displayVariant.id;
-                delete displayVariant.sku;
+
 
                 for (const [key, value] of Object.entries(displayVariant)) {
                   if (!value) {
@@ -473,7 +329,9 @@ export function ProductDetails({ data }) {
                 }
                 delete displayVariant.weightUnit;
 
-                const key = "variant_" + title;
+                const key =
+                  "variant_" +
+                  displayVariant.title.replace(/ /g, "_").toLowerCase();
 
                 const values = Object.entries(displayVariant).map(
                   ([key, value]) => key + ": " + value
@@ -484,7 +342,6 @@ export function ProductDetails({ data }) {
                     key={index}
                     optionName={key}
                     options={values}
-                    selectedOptions={selectedOptions}
                     optionChange={optionChange}
                     validUser={basic_crafted_advanced}
                     sizes={{ size: "12", "size-md": "4" }}
@@ -527,7 +384,7 @@ export function ProductDetails({ data }) {
                 size="small"
                 disabled={!includeProductImagesFeature.hasAccess}
                 onClick={() => {
-                  setIsOpen((prevIsOpen) => !prevIsOpen);
+                  assignImageSelectionModalIsOpen((prevIsOpen) => !prevIsOpen);
                 }}
                 color="tertiary"
                 fill="clear"
@@ -561,12 +418,12 @@ export function ProductDetails({ data }) {
           </IonPopover>
         </IonCol>
       </IonRow>
-      <IonModal key="typeHead" isOpen={isOpen}>
+      <IonModal key="typeHead" isOpen={imageSelectionModalIsOpen}>
         <AppTypeahead
           title="Include Images"
           items={images}
           selectedItems={selectedImages}
-          onSelectionCancel={() => setIsOpen(false)}
+          onSelectionCancel={() => assignImageSelectionModalIsOpen(false)}
           onSelectionChange={imageSelectionChanged}
         />
       </IonModal>
@@ -590,19 +447,35 @@ function PremiumAccessLabels() {
   );
 }
 
-function SelectOptions({
-  optionName,
-  options,
-  selectedOptions,
-  optionChange,
-  validUser,
-  sizes,
-}) {
-  let displayName = optionName.split("_").join(" ");
+function SelectOptions({ optionName, options, selectedProperty, sizes }) {
+  const { productDetailOptions, optionChange, basic_crafted_advanced } =
+    useDataProvidersContext();
 
-  if (displayName[displayName.length - 1] !== "s") {
-    displayName += "s";
+  const selections = productDetailOptions.find(
+    (option) => option[0] === optionName
+  );
+
+  const selectedOption = selections ? selections[1] : [];
+
+  const selectedText = (selectedProperty, allOptions) =>
+    selectedProperty ? allOptions[selectedProperty] : allOptions;
+
+  const truncateText = (text, maxLength) => {
+    if (text.length > maxLength) {
+      return text.slice(0, maxLength - 3) + "...";
+    }
+    return text;
+  };
+
+  function getName() {
+    let name = optionName.split("_").join(" ");
+    if (name[name.length - 1] !== "s") {
+      name = name + "s";
+    }
+    return name;
   }
+
+  const displayName = getName();
 
   return (
     <IonCol
@@ -615,9 +488,9 @@ function SelectOptions({
           <IonText
             style={{ fontSize: "11px" }}
             className="ion-text-wrap ion-text-capitalize"
-            color={validUser.hasAccess ? "" : "medium"}
+            color={basic_crafted_advanced.hasAccess ? "" : "medium"}
           >
-            {validUser.message(displayName)}{" "}
+            {basic_crafted_advanced.message(displayName)}{" "}
           </IonText>
         </IonLabel>{" "}
         <IonIcon
@@ -629,25 +502,33 @@ function SelectOptions({
           icon={informationCircleOutline}
         ></IonIcon>
       </IonItem>
-
+      {/* {JSON.stringify(selectedOption)} */}
       <IonItem key={displayName}>
         <IonSelect
           className="ion-text-capitalize"
-          disabled={!validUser?.hasAccess}
-          label={"Select " + displayName}
+          disabled={!basic_crafted_advanced?.hasAccess}
+          label={"Select ".concat(
+            /variant/i.test(displayName) ? "your variant options" : displayName
+          )}
           aria-label={"Select " + displayName}
           style={{ fontSize: "12px" }}
           labelPlacement="stacked"
           placeholder={"Include " + displayName}
           multiple="true"
-          value={selectedOptions[optionName]}
+          value={selectedOption}
+          selectedText={
+            selectedProperty && selectedText(selectedProperty, selectedOption)
+          }
           onIonChange={(e) => optionChange(optionName, e.detail.value)}
         >
           {options &&
             options.map((optionValue, index) => {
               return (
                 <IonSelectOption key={index + optionValue} value={optionValue}>
-                  {optionValue}
+                  {truncateText(
+                    selectedText(selectedProperty, optionValue),
+                    20
+                  )}
                 </IonSelectOption>
               );
             })}

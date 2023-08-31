@@ -1,0 +1,9 @@
+Search,
+Test Chat GPT,
+ImageLoading and caching,
+fix paging,
+add features, 
+organize layout,
+Improve Loading Times.
+Establish a App Flow.  
+

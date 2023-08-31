@@ -37,6 +37,7 @@ export async function fetchData ({ url, method = "GET", headers, body }, fetch) 
   return { data, error };
 };
 
+
 export function DataFetchingComponent({ url, method = "GET", body }, fetch) {
   // const fetch = useAuthenticatedFetch()
 const {fetchData}= useDataProvidersContext();
@@ -63,22 +64,3 @@ const {fetchData}= useDataProvidersContext();
 }
 
 
-const stableFetchComponent = {
-  get: ({ url, headers, body }) =>
-    DataFetchingComponent({ url, method: "GET", headers, body }),
-  get_async: ({ url, body }, fetch) =>
-    fetchData({ url, method: "GET", headers, body }, fetch),
-  post: ({ url, headers, body }) =>
-    DataFetchingComponent({ url, method: "POST", headers, body }),
-  post_async: ({ url, body }, fetch) =>
-    fetchData({ url, method: "POST", body }, fetch),
-  put: ({ url, headers, body }) =>
-    DataFetchingComponent({ url, method: "PUT", headers, body }),
-  put_async: ({ url, body }, fetch) =>
-    fetchData({ url, method: "PUT", body }, fetch),
-  delete: ({ url, headers, body }) =>
-    DataFetchingComponent({ url, method: "DELETE", headers, body }),
-  delete_async: ({ url, headers, body }, fetch) =>
-    fetchData({ url, method: "DELETE", headers, body }, fetch),
-};
-export { stableFetchComponent };

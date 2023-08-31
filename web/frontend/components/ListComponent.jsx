@@ -145,7 +145,7 @@ console.log('isProductsLoading', isProductsLoading)
                             style={{
                               display: "flex",
                               justifyContent: "center",
-                              marginTop: "10px",
+                              Top: "10px",
                             }}
                           >
                             {images.map((image, imageIndex) => (

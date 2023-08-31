@@ -37,7 +37,7 @@ export function AppTypeahead({
 
   const confirmChanges = () => {
     if (onSelectionChange !== undefined) {
-      onSelectionChange(workingSelectedValues);
+      onSelectionChange(workingSelectedValues, items);
     }
   };
 

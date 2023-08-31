@@ -7,26 +7,26 @@
     "shopify": "shopify",
     "build": "shopify app build",
     "dev": "shopify app dev",
-    "reset": "npm run dev  -- --reset", 
+    "reset": "npm run dev  -- --reset",
     "info": "shopify app info",
     "generate": "shopify app generate",
     "deploy": "shopify app deploy",
     "build_vibefenwei": "SHOPIFY_API_KEY=f844c74769e61de9647977a2ed79bd3d SHOPIFY_API_SECRET=87fd6b6d808b66234e300255fec6263b npm run build",
     "build_vibefenwei_test": "SHOPIFY_API_KEY=b2919712bc4555c05f978c56eb4f5750 SHOPIFY_API_SECRET=b7ba5443d00ce826f34624bf9e49c2b0 npm run build",
     "use_config": "shopify app config use",
-    "config_push":"npm run shopify app config push",
-    "env_pull":"npm run shopify app env pull",
+    "config_push": "npm run shopify app config push",
+    "env_pull": "npm run shopify app env pull",
     "fly_deploy": "fly deploy"
   },
   "dependencies": {
     "@shopify/app": "^3.48.3",
-    "@shopify/cli": "^3.48.3"
+    "@shopify/cli": "^3.48.3",
+    "@shopify/shopify-app-session-storage-redis": "^1.1.8"
   },
   "author": "hasan seirafi",
   "private": true,
   "workspaces": [
     "web",
-    "web/frontend",
-    "extensions/*"
+    "web/frontend"
   ]
 }

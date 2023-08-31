@@ -1,5 +1,5 @@
 import { GraphqlQueryError } from "@shopify/shopify-api";
-import shopify from "./shopify.js";
+import {shopify} from "./shopify.js";
 
 
 const UPDATE_DESCRIPTION_MUTATION = `mutation UpdateProductDescription($productId: ID!, $descriptionHtml: String!) {

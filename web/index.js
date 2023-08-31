@@ -1,16 +1,17 @@
 // @ts-check
 import { env } from "./envVars.js";
 import { join } from "path";
+import * as util from "util";
 import { readFileSync } from "fs";
 import express from "express";
 import serveStatic from "serve-static";
-import shopify from "./shopify.js";
+import { shopify } from "./shopify.js";
 import productCreator from "./product-creator.js";
 import descriptionUpdate from "./product-update.js";
 import { updateProductVariantMetafields } from "./variant-update.js";
 import webhookHandlers from "./webhook-handlers.js";
 import getProducts from "./product-paging.js";
-import * as util from "util";
+import path from "path";
 import { connectToRedis } from "./redis.js";
 import { setupBullMQServer, serverSideEvent } from "./bull-queue.js";
 import { body, validationResult } from "express-validator";
@@ -24,17 +25,21 @@ import {
   handleArticleEndpoints,
   handlePostEndpoints,
 } from "./description-requests.js";
-import {
-  authentication,
-  subscriptionMiddleWearCheck,
-  redirectOutOfAPP,
-} from "./authentication.js";
+import { productSearch } from "./product-search.js";
+import { authentication } from "./authentication.js";
+import { dirname } from "path";
+import { fileURLToPath } from "url";
+import logger from "morgan";
+import cookieParser from "cookie-parser";
 
 import * as userStore from "./userStore.js";
 
+console.log("loadeded");
+
 const { writeJSONToFileAsync } = userStore;
-const { NODE_ENV, REDIS_API_PASSWORD, SHOPIFY_API_KEY, SHOPIFY_API_SECRET } = process.env;
-//  console.log("NODE_ENV:----->", NODE_ENV, "REDIS_API_PASSWORD--->", REDIS_API_PASSWORD, "SHOPIFY_API_KEY=====>", SHOPIFY_API_KEY, "SHOPIFY_API_SECRET_KEY=====>", SHOPIFY_API_SECRET);
+const { NODE_ENV, REDIS_API_PASSWORD, SHOPIFY_API_KEY, SHOPIFY_API_SECRET } =
+  process.env;
+// console.log("NODE_ENV:----->", NODE_ENV, "REDIS_API_PASSWORD--->", REDIS_API_PASSWORD, "SHOPIFY_API_KEY=====>", SHOPIFY_API_KEY, "SHOPIFY_API_SECRET_KEY=====>", SHOPIFY_API_SECRET);
 
 const reconciliation = {};
 const log = (message, obj) =>
@@ -64,34 +69,16 @@ async function startServer() {
       10
     );
     console.log("NODE_ENV--->", process.env.NODE_ENV);
-    process.env.NODE_ENV = "production";
+    // process.env.NODE_ENV = "production";
 
     const STATIC_PATH =
       process.env.NODE_ENV === "production"
         ? `${process.cwd()}/frontend/dist`
         : `${process.cwd()}/frontend`;
 
-    const app = express();
-    // console.log("shopify.config.auth.path", shopify.config.auth.path);
-    // Set up Shopify authentication and webhook handling
-    app.get(shopify.config.auth.path, shopify.auth.begin());
+    const app = await authentication();
 
-    //order matters for webhooks it needs to be placed before app.use(express.json())
-    app.post(
-      shopify.config.webhooks.path,
-      shopify.processWebhooks({
-        webhookHandlers,
-      })
-    );
-
-    // If you are adding routes outside of the /api path, remember to
-    // also add a proxy rule for them in web/frontend/vite.config.js
-    // app.use("/sse/*", shopify.validateAuthenticatedSession());
-
-    app.use("/api/*", shopify.validateAuthenticatedSession());
-
-    app.use(express.json());
-    authentication(app);
+    serverSideEvent(app, redisClient, queue);
     handleDescriptionEndpoints(app, queue);
     handleArticleEndpoints(app, queue);
     handlePostEndpoints(app, queue);
@@ -99,20 +86,20 @@ async function startServer() {
     app.get("/api/current/subscription/status", async (req, res) => {
       try {
         const session = res.locals.shopify.session;
+
+        console.log("session", session);
         const subscriptions = await shopify.api.billing.subscriptions({
           session,
         });
 
-        console.log("subscriptions", subscriptions);
-        // const shopi = shopify.api.utils.sanitizeShop(req.query.shop, true);
-        // console.log('shopi', shopi)
         // const host = shopify.api.utils.sanitizeHost(req.query.host, true);
         // console.log('hots',host)
-        console.log("has plan", shopify.config.auth.path);
+
         const plans = Object.keys(billingConfig);
 
-        const shop = session.shop;
+        const shop = shopify.api.utils.sanitizeShop(session.shop);
         let user = null;
+
         for (const subscription of subscriptions.activeSubscriptions) {
           user = await updateSubscription(shop, subscription.name);
         }
@@ -216,7 +203,6 @@ async function startServer() {
           // });
           const { plan } = req.body;
           const { session } = res.locals.shopify;
-          const { shop } = session;
 
           const plans = Object.keys(billingConfig);
 
@@ -275,8 +261,10 @@ async function startServer() {
       let status = 200;
       let error = null;
       let data = null;
-      const { shop } = res.locals.shopify.session;
-
+      const shop = shopify.api.utils.sanitizeShop(
+        res.locals.shopify.session.shop
+      );
+console.log('shop: ' , shop)
       try {
         const user = await getUserById(shop);
         user.seen = true;
@@ -301,6 +289,7 @@ async function startServer() {
         res.status(201).json({ message: "User data written successfully." });
       })
     );
+
     contentGenerator(app);
     app.get("/api/user", async (_req, res) => {
       const userData = await shopify.api.rest.User.all({
@@ -346,6 +335,7 @@ async function startServer() {
       }
     });
 
+    productSearch(app);
     app.get("/api/inventory-item/", async (_req, res) => {
       if (_req.params.id && _req.params.id !== "") {
         const item = await shopify.api.rest.InventoryItem.find({
@@ -499,6 +489,8 @@ async function startServer() {
       res.status(status).send({ success: status === 200, data, error });
     });
 
+    
+
     // app.get("/api/products/create", async (_req, res) => {
     //   let status = 200;
     //   let error = null;
@@ -514,16 +506,25 @@ async function startServer() {
     // });
 
     app.use(shopify.cspHeaders());
+    
 
-    serverSideEvent(app, redisClient, queue);
-    // seting the index to true will fail, because it is checked by shopify bullshit.
+    // setting the index to true will fail, because it is checked by shopify.
     app.use(serveStatic(STATIC_PATH, { index: false }));
+    const dir_name = dirname(fileURLToPath(import.meta.url));
 
-    const skipEnsureInstalledOnShop = (req, res, next) => {
-      if (req.path === "/sse/stream") {
+    app.use(express.urlencoded({ extended: false }));
+
+    const completePath = path
+      .join(dir_name, "node_modules", "tinymce")
+      .replace("/web/", "/");
+    console.log("complete path: " + completePath);
+    app.use("/tinymce", express.static(completePath));
+
+    const ensureInstalledOnShop = (req, res, next) => {
+      console.log("ensure installed on shopify");
+      if (req.path.includes("/sse/stream")) {
         res.locals.shopify = req.query.locals;
 
-        // Skip the shopify.ensureInstalledOnShop() middleware for /sse/stream
         next();
       } else {
         // Continue with the shopify.ensureInstalledOnShop() middleware for other routes
@@ -531,37 +532,15 @@ async function startServer() {
       }
     };
 
-    app.use(skipEnsureInstalledOnShop);
+    // app.use("/*", shopify.ensureInstalledOnShop());
 
-    app.use(
-      "/*",
-      //     (req, res, next)=>{
-      //       if (req.path === "/sse/stream") {
-      //         console.log('req---->', req.query.locals)
-      //       if(req.query.locals){
-      //         res.locals.shopify =  req.query.locals
-      //  console.log('req---->', req.query.locals)
-      //         // Skip the shopify.ensureInstalledOnShop() middleware for /sse/stream
-      //       }
-      //         next();
+    app.use("/*", shopify.ensureInstalledOnShop(), async (_req, res, _next) => {
+      // console.log('middleware', shopify.ensureInstalledOnShop())
 
-      //       }else{ next()
-      //       }
-
-      //     },
-      //       shopify.ensureInstalledOnShop(),
-      async (_req, res, _next) => {
-        // console.log('middleware', shopify.ensureInstalledOnShop())
-
-        return res
-          .status(200)
-          .set("Content-Type", "text/html")
-          .send(readFileSync(join(STATIC_PATH, "index.html")));
-      }
-    );
-    app.use((err, req, res, next) => {
-      console.error("Error:", err);
-      res.status(500).json({ error: "Something went wrong." });
+      return res
+        .status(200)
+        .set("Content-Type", "text/html")
+        .send(readFileSync(join(STATIC_PATH, "index.html")));
     });
 
     app.listen(PORT);

@@ -19,22 +19,10 @@
   }
   
 
+ body {
+margin:0 !important;
+} 
 
-  /* CSS */
-.typewriter p{
-  overflow: hidden; /* Hide overflowing characters */
-  white-space: nowrap; /* Prevent line breaks */
-  animation: typewriter 2s steps(40) 1s forwards; /* Use the 'typewriter' animation */
-}
-
-@keyframes typewriter {
-  from {
-    width: 0; /* Start with a width of 0 (no characters visible) */
-  }
-  to {
-    width: 100%; /* Gradually increase the width to show all characters */
-  }
-}
 
 ion-toast.custom-toast::part(message) {
   font-size: 15px;
@@ -46,11 +34,6 @@ ion-toast.custom-toast::part(message) {
   display: inline-block;
 }
 
-@keyframes typing {
-  from {
-    width: 0;
-  }
-}
 
 ion-accordion {
   margin: 0 auto;
@@ -101,22 +84,4 @@ ion-accordion.accordion-expanded ion-item[slot='header'] {
   position: relative;
 }
 
-.particle {
-  position: absolute;
-  width: 4px;
-  height: 4px;
-  background-color: #ff0000;
-  border-radius: 50%;
-  opacity: 1;
-  animation: particleAnimation 1s linear infinite;
-}
 
-@keyframes particleAnimation {
-  0% {
-    opacity: 1;
-  }
-  100% {
-    transform: translate(calc(random() * 100vw), calc(random() * 100vh));
-    opacity: 0;
-  }
-}

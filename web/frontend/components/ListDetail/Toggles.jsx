@@ -14,7 +14,7 @@ import React, { useState } from "react";
 
 import {useDataProvidersContext} from "../../components"
 export function Toggles ({ onToggleChange, toggles, modal }){
-  const { checkFeatureAccess,  contextualOptions, setContextualOptions } = useDataProvidersContext();
+
 
   const [toggleState, setToggleState] = useState(toggles);
 
