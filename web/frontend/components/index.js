@@ -1,5 +1,6 @@
 export { ProductsCard } from "./ProductsCard";
 
+
 export { AppTypeahead } from "./ListDetail/AppTypeahead";
 export { SelectedOptions } from "./ListDetail/SelectedOptions";
 export { ImageLoader } from "./ImageLoader";
@@ -14,7 +15,7 @@ export { Toggles } from "./ListDetail/Toggles";
 export { ListComponent } from "./ListComponent";
 export { ListDetailComponent } from "./ListDetailComponent";
 export { LayoutSection } from "./LayoutSection";
-export { extractTextFromHtml } from "./ListDetail/TextExtractor";
+export {ChartComponent, ReadabilityStats,BarChartComponent} from "./TextExtractor";
 export { StoreForm } from "./StoreForm";
 export { Search } from "./Search";
 export { SubscriptionComponent } from "./Subscription";
@@ -29,4 +30,5 @@ export { PaidFeature } from "./PaidFeature";
 
 export { IonButtonInformation } from "./ListDetail/IonButtonInformation";
 
-export { Tinymce } from "./Tinymce";
+export { tinymceCustomPlugins, quicksBarConfig } from "../utilities/TinymcePlugins";
+// export {extractKeywords} from './TextExtractor';

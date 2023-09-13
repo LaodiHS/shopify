@@ -9,6 +9,7 @@ import rehypeKatex from "rehype-katex";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize from "rehype-sanitize";
 import markdownItSanitizer from "markdown-it-sanitizer";
+import he from "he"
 const containerStyle = {
   maxWidth: "400px", // Set a maximum width for the container
   margin: "0 auto", // Center the container horizontally
@@ -75,4 +76,14 @@ export function ReactRenderingComponent({ text }) {
 
 export function RemoveHtml({}){
   
+}
+
+export function extractTextFromHtml(renderedHtml) {
+  const decodedHtml = he.decode(renderedHtml);
+  const domParser = new DOMParser();
+  const doc = domParser.parseFromString(decodedHtml, "text/html");
+
+  const text = doc.body.textContent;
+
+  return text.trim();
 }

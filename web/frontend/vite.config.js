@@ -3,10 +3,13 @@ import { dirname } from "path";
 import { fileURLToPath } from "url";
 import https from "https";
 import react from "@vitejs/plugin-react";
+import vuePlugin from "rollup-plugin-vue";
+import legacy from "@vitejs/plugin-legacy";
+import vue from "@vitejs/plugin-vue";
 import viteCompression from "vite-plugin-compression";
 import { copy } from "vite-plugin-copy";
-import { chromeExtension } from 'rollup-plugin-chrome-extension'
-import extension from 'rollup-plugin-browser-extension'
+import { chromeExtension } from "rollup-plugin-chrome-extension";
+import extension from "rollup-plugin-browser-extension";
 // import 'dotenv/config'
 if (
   process.env.npm_lifecycle_event === "build" &&
@@ -66,37 +69,67 @@ export default defineConfig({
 
   root: dir_name,
   plugins: [
-    react(),
-    copy({
-      targets: [{ src: "node_modules/tinymce/**/*", dest: "tinymce" }],
-      verbose: true,
+    react({
+      // Additional esbuild options
+      esbuild: {
+        // ...
+        minify: true,
+      },
     }),
-    viteCompression(),
+    vuePlugin(),
+    vue({
+      template: {
+        isProduction: true,
+      },
+    }),
+    viteCompression({
+    
+      
+      deleteOriginalAssets: true,
+      algorithm: 'brotli',
+      // filter: (source) => !source.includes('startsWith'),
+      // filter: (source) => source.endsWith('.jsx')
+    }),
+    // legacy({
+    //   targets: ["defaults", "not IE 11"],
+    //   esbuildOptions: {
+    //     minify: true,
+    //   },
+    // }),
+    // copy({
+    //   targets: [{ src: "node_modules/tinymce/**/*", dest: "tinymce" }],
+    //   verbose: true,
+    // }),
   ],
   optimizeDeps: {
     //include: ["tinymce"], // Expose tinymce as a module
   },
 
   define: {
-    
-    
-"API_URL":JSON.stringify(host),
+    DEPLOYMENT_ENV: process.env.NODE_ENV === "production",
+    API_URL: JSON.stringify(host),
     "process.env.SHOPIFY_API_KEY": JSON.stringify(process.env.SHOPIFY_API_KEY),
   },
   resolve: {
     preserveSymlinks: true,
-    // alias: {
-    //   "/": "tinymce/skins",
-    // },
+ 
   },
   build: {
-  //  assetsInclude: ["tinymce/**"],
+
+    chunkSizeWarningLimit: 4000, 
+    minify: "terser", // <-- add
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+     
+      },
+      mangle :true,
+    },
   },
   server: {
     host: "localhost",
-
     port: process.env.FRONTEND_PORT,
-
     hmr: hmrConfig,
     proxy: {
       "^/(\\?.*)?$": proxyOptions,

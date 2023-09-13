@@ -27,7 +27,10 @@ export function useAuthenticatedFetch() {
 
  
 }
-
+function customStartsWith(str, search, position) {
+  position = position || 0;
+  return str.indexOf(search, position) === position;
+}
 function checkHeadersForReauthorization(headers, app) {
   if (headers.get("X-Shopify-API-Request-Failure-Reauthorize") === "1") {
     const authUrlHeader =
@@ -37,7 +40,7 @@ function checkHeadersForReauthorization(headers, app) {
     const redirect = Redirect.create(app);
     redirect.dispatch(
       Redirect.Action.REMOTE,
-      authUrlHeader.startsWith("/")
+     customStartsWith( authUrlHeader,"/")
         ? `https://${window.location.host}${authUrlHeader}`
         : authUrlHeader
     );

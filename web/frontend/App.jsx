@@ -1,3 +1,5 @@
+import tinymce from "tinymce/tinymce";
+tinymce._setBaseUrl("/tinymce");
 import { Page, Layout, Image, Text } from "@shopify/polaris";
 import {
   useEffect,
@@ -6,6 +8,8 @@ import {
   createContext,
   useContext,
   useRef,
+  forwardRef,
+  useImperativeHandle,
 } from "react";
 import "@ionic/react/css/core.css";
 import "@ionic/react/css/normalize.css";
@@ -17,12 +21,12 @@ import "@ionic/react/css/text-alignment.css";
 import "@ionic/react/css/text-transformation.css";
 import "@ionic/react/css/flex-utils.css";
 import "@ionic/react/css/display.css";
-import "./themes/variables.css";
+
 import "typeface-lato";
 import "typeface-roboto";
 import "./components/ListDetail/styles/GridStack.css";
 import "./components/ListDetail/styles/App.css";
-
+import "./themes/variables.css";
 import "animate.css";
 
 import {
@@ -34,8 +38,18 @@ import {
   arrowForwardOutline,
   arrowDownOutline,
   chevronBack,
+  informationCircleOutline,
 } from "ionicons/icons";
-
+import {
+  descriptionWorkStation,
+  clear,
+  bookshelf,
+  save,
+  aiIcon,
+  pencilCase,
+  newsPaperWorStation,
+  halfMoon,
+} from "./assets";
 import { IonReactRouter } from "@ionic/react-router";
 
 import {
@@ -64,6 +78,8 @@ import {
   useIonViewDidEnter,
   withIonLifeCycle,
   IonNav,
+  useIonPopover,
+  IonPopover,
 } from "@ionic/react";
 setupIonicReact({ mode: "ios" });
 
@@ -82,7 +98,9 @@ import {
   useDataProvidersContext,
   Search,
   Accordion,
-  AnimatedContent,
+  tinymceCustomPlugins,
+  ImageCacheWorker,
+  TokenUsageComponent,
 } from "./components";
 import { useAuthenticatedFetch } from "./hooks";
 import { NavigationMenu } from "@shopify/app-bridge-react";
@@ -94,12 +112,30 @@ import {
   useNavigate,
   useLocation,
 } from "react_router_dom";
-
-import { Context } from "./utilities/data-context";
-// import { useUniqueKeys, UniqueKeysProvider } from "./utilities/utility-methods";
+tinymceCustomPlugins(tinymce);
 
 export default function App() {
   const pages = import.meta.globEager("./pages/**/!(*.test.[jt]sx)*.([jt]sx)");
+  const navigationPanel = !DEPLOYMENT_ENV
+    ? [
+        {
+          label: "Products Page",
+          destination: "/",
+        },
+        {
+          label: "Subscription",
+          destination: "/subscriptions",
+        },
+        {
+          label: "welcome",
+          destination: "/welcome",
+        },
+        {
+          label: "search",
+          destination: "/search",
+        },
+      ]
+    : [];
   useEffect(() => {
     return () => {
       const handleBeforeUnload = (event) => {
@@ -121,42 +157,21 @@ export default function App() {
   }, []);
 
   return (
-    <IonApp>
+    <IonApp force-theme="light">
       <PolarisProvider>
         <BrowserRouter>
           <AppBridgeProvider>
             <QueryProvider>
-              <NavigationMenu
-                navigationLinks={[
-                  {
-                    label: "Products Page",
-                    destination: "/",
-                  },
-
-                  {
-                    label: "Subscription",
-                    destination: "/subscriptions",
-                  },
-                  {
-                    label: "welcome",
-                    destination: "/welcome",
-                  },
-                  {
-                    label: "search",
-                    destination: "/search",
-                  },
-                ]}
-              />
-              {/* <Routes pages={pages} /> */}
-              {/* <IonReactRouter>  */}
+              <ImageCacheWorker />
               <NavigationDataProvider>
+                <NavigationMenu navigationLinks={navigationPanel} />
+
                 <ProductDataProvider>
                   <DataProvidersProvider>
                     <IonMenuNav />
                   </DataProvidersProvider>
                 </ProductDataProvider>
               </NavigationDataProvider>
-              {/* </IonReactRouter> */}
             </QueryProvider>
           </AppBridgeProvider>
         </BrowserRouter>
@@ -165,27 +180,7 @@ export default function App() {
   );
 }
 
-function loading() {
-  return (
-    <IonContent>
-      <IonGrid style={{ height: "100vh" }}>
-        <IonRow
-          className="ion-justify-content-center ion-align-items-center"
-          style={{ height: "100%" }}
-        >
-          <IonCol size="auto">
-            <IonSpinner
-              style={{ width: "100px", height: "100px" }}
-              color="tertiary"
-            ></IonSpinner>
-          </IonCol>
-        </IonRow>
-      </IonGrid>
-    </IonContent>
-  );
-}
-
-function LandingPage() {
+function LandingPage({ animationRef }) {
   const arrowRef = useRef(null);
   const [arrowAnimation, setArrowAnimation] = useState("animate__bounceIn");
   const {
@@ -193,6 +188,7 @@ function LandingPage() {
     subscriptionRetrievalLoading,
     setUser,
     uncachedFetchData,
+    DataProviderNavigate,
   } = useDataProvidersContext();
   useIonViewDidEnter(() => {
     arrowRef.current?.addEventListener("animationend", () => {
@@ -218,114 +214,100 @@ function LandingPage() {
     if (error === null) {
       setUser(data);
     } else {
-      navigate("/", { target: "host", relative: "path", state: "/welcome" });
+      DataProviderNavigate("/", {
+        target: "host",
+        relative: "path",
+        state: "/welcome",
+      });
     }
 
     setTimeout(async () => {
-      navigate("/");
+      DataProviderNavigate("/", { target: "host" });
     }, 2000); // Set the duration as needed
   };
 
   console.log("subscriptions", subscriptions);
   const navigate = useNavigate();
 
-  if (subscriptionRetrievalLoading) {
-    return loading();
-  } else {
-    return (
-      <IonPage>
-        <IonHeader>
-          <IonToolbar>
-            <IonTitle>Welcome to VibeFenWei</IonTitle>
-          </IonToolbar>
-        </IonHeader>
-        <IonContent className="ion-padding">
-          <IonText class="">
-            <h1 className="ion-text-center">VibeFenWei</h1>
-
-            <p className="ion-text-center">
-              Experience a seamless journey with our amazing features.
-            </p>
-            <IonText color="dark">
-              <p className="ion-text-center">Thank You For Becoming a</p>
-              <h2 className="ion-text-center ion-text-capitalize">
-                {subscriptions.join(" ")}
-              </h2>
-              <p className="ion-text-center">Subscriber</p>
-            </IonText>
-          </IonText>
-          <div className="ion-text-center">
-            <IonIcon
-              ref={arrowRef}
-              icon={
-                arrowAnimation === "animate__flip"
-                  ? arrowDownOutline
-                  : arrowForwardOutline
-              }
-              size="large"
-              color="primary"
-              className={`animate__animated ${arrowAnimation}`}
-            />
-          </div>
-          <div className="ion-text-center animate__animated animate__fadeInUp">
-            <IonButton
-              fill="clear"
-              expand="block"
-              color="primary"
-              onClick={handleGetStarted}
-            >
-              Get Started
-            </IonButton>
-          </div>
-        </IonContent>
-      </IonPage>
-    );
-  }
-}
-
-function Home() {
-  const { subscriptionRetrievalLoading } = useDataProvidersContext();
-
-  if (subscriptionRetrievalLoading) {
-    return loading();
-  }
-
-  return <ProductsCard />;
-}
-
-function ProductDetails() {
-  const { subscriptionRetrievalLoading } = useDataProvidersContext();
-
-  if (subscriptionRetrievalLoading) {
-    return loading();
-  }
-  const animationConfig = {
-    direction: "in",
-    duration: 500,
-    startX: 300, // Start off-screen to the left
-    endX: 0, // Slide in to on-screen position
-  };
-
   return (
-    <div>
-      {/* <AnimatedContent animationConfig={animationConfig } > */}
+    <IonPage
+      ref={(el) => {
+        animationRef.current = el; // Attach the IonPage element to animationRef
+        // Forward the ref to the parent component
+      }}
+    >
+      <IonHeader translucent={true}>
+        <IonToolbar>
+          <IonTitle>Welcome to VibeFenWei</IonTitle>
+        </IonToolbar>
+      </IonHeader>
 
-      <ListDetailComponent />
+      <IonContent className="ion-padding">
+        {/* <div class="container">
+          <div class="photo">
+            {/* <img src="https://www.svgrepo.com/show/300968/monitor-graph.svg" /> 
+          </div>
+          <div class="info"></div>
+          <div class="tag"></div>
+          <div class="comment"></div>
+          <div class="album"></div>
+          <div class="rotate"></div>
+        </div> */}
 
-      {/* </AnimatedContent> */}
+        <IonText class="ion-padding-top">
+          <h1 className="ion-text-center">VibeFenWei</h1>
 
-      {/* <ListDetailComponent /> */}
-    </div>
+          <p className="ion-text-center">
+            Experience a seamless journey with our amazing features.
+          </p>
+          <IonText color="dark">
+            <p className="ion-text-center ion-padding-top">Thank You For Becoming a</p>
+            <h2 className="ion-text-center ion-text-capitalize">
+              {subscriptions.join(" ")}
+            </h2>
+            <p className="ion-text-center">Subscriber</p>
+          </IonText>
+        </IonText>
+        <div className="ion-text-center">
+          <IonIcon
+            ref={arrowRef}
+            icon={
+              arrowAnimation === "animate__flip"
+                ? arrowDownOutline
+                : arrowForwardOutline
+            }
+            size="large"
+            color="primary"
+            className={`animate__animated ${arrowAnimation}`}
+          />
+        </div>
+        <div className="ion-text-center animate__animated animate__fadeInUp">
+          <IonButton
+            fill="clear"
+            expand="block"
+            color="primary"
+            onClick={handleGetStarted}
+          >
+            Get Started
+          </IonButton>
+        </div>
+      </IonContent>
+    </IonPage>
   );
 }
 
-function Subscriptions() {
+function Home({ animationRef }) {
+  return <ProductsCard animationRef={animationRef} />;
+}
+
+function ProductDetails({ animationRef }) {
+  return <ListDetailComponent animationRef={animationRef} />;
+}
+
+function Subscriptions({ animationRef }) {
   const { subscriptionRetrievalLoading } = useDataProvidersContext();
 
-  if (subscriptionRetrievalLoading) {
-    return loading();
-  }
-  return <SubscriptionComponent />;
+  return <SubscriptionComponent animationRef={animationRef} />;
 }
 
 // Other page components...
@@ -334,24 +316,153 @@ function NoMatch() {
   return <IonPage>404 Not Found</IonPage>;
 }
 
+function Description() {
+  const {
+    assistRequest,
+    clearAssistResult,
+    updateArticleMethod,
+    markupText,
+    AnimatedContent,
+    refDictionary,
+    DataProviderNavigate,
+    serverSentEventLoading,
+    contentSaved,
+    user,
+  } = useDataProvidersContext();
+  return (
+    <IonPage ref={refDictionary["/description"]}>
+      <IonHeader key={"10"} translucent={true}>
+        <IonToolbar key={"11"}>
+          <IonButtons key={"12"} slot="start">
+            <IonButton
+              disabled={serverSentEventLoading}
+              onClick={() => {
+                DataProviderNavigate("/product-details");
+              }}
+              key={"13"}
+            >
+              <IonIcon slot="icon-only" key={"14"} icon={chevronBack} />
+            </IonButton>
+          </IonButtons>
+          <IonTitle key={"15"}>Description Workstation</IonTitle>
+          {contentSaved && (
+            <IonButton
+              fill="clear"
+              color={contentSaved && "success"}
+              size="small"
+              slot="end"
+            >
+              saved
+            </IonButton>
+          )}
+          <IonButton
+            size="small"
+            disabled={true}
+            fill="clear"
+            color="dark"
+            slot="end"
+          >
+            <IonIcon
+              slot="icon-only"
+              size="large"
+              icon={descriptionWorkStation}
+            />
+          </IonButton>
+          <IonButtons slot="end"></IonButtons>
+        </IonToolbar>
+      </IonHeader>
+      <IonContent>
+        <TokenUsageComponent tokenUsage={user} />
+        <Accordion />
+      </IonContent>
+    </IonPage>
+  );
+}
+
+function Article() {
+  const {
+    assistRequest,
+    clearAssistResult,
+    updateArticleMethod,
+    markupText,
+    AnimatedContent,
+    refDictionary,
+    DataProviderNavigate,
+    serverSentEventLoading,
+    contentSaved,
+  } = useDataProvidersContext();
+
+  return (
+    <IonPage key="IonPage/article" ref={refDictionary["/article"]}>
+      {" "}
+      <IonHeader key={"10"} translucent={true}>
+        <IonToolbar key={"11"}>
+          <IonButtons key={"12"} onClick={() => {}} slot="start">
+            <IonButton
+              key="Ionbuttons/article"
+              disabled={serverSentEventLoading}
+              onClick={() => {
+                DataProviderNavigate("/product-details");
+              }}
+            >
+              <IonIcon key={"14"} icon={chevronBack} />
+            </IonButton>
+          </IonButtons>
+
+          <IonTitle key={"15"}>Article Workstation</IonTitle>
+          {contentSaved && (
+            <IonButton
+              fill="clear"
+              color={contentSaved && "success"}
+              size="small"
+              slot="end"
+            >
+              saved
+            </IonButton>
+          )}
+          <IonButton
+            key="ionbutton/icon/asset"
+            size="small"
+            disabled={true}
+            fill="clear"
+            color="dark"
+            slot="end"
+          >
+            <IonIcon
+              key="ionbutton/icon/asset/svg"
+              slot="icon-only"
+              size="large"
+              icon={newsPaperWorStation}
+            />
+          </IonButton>
+        </IonToolbar>
+      </IonHeader>
+      <IonContent>
+        <Accordion />
+      </IonContent>
+    </IonPage>
+  );
+}
+
 function IonMenuNav() {
   const { checkFeatureAccess, freeOptions, navigateRoute } =
     useDataProvidersContext();
   const location = useLocation();
-  const navigate = useNavigate();
-  const { aiWorkStationSetter } = useNavigationDataContext();
-  const { assistRequest } = useDataProvidersContext();
+
+  const { aiWorkStationSetter, aiWorkStation } = useNavigationDataContext();
+  const {
+    assistRequest,
+    clearAssistResult,
+    updateArticleMethod,
+    markupText,
+    AnimatedContent,
+    refDictionary,
+    DataProviderNavigate,
+    serverSentEventLoading,
+    contentSaved,
+  } = useDataProvidersContext();
   const [currentRoute, setCurrentRoute] = useState("/");
   const router = useIonRouter();
-  location;
-
-  const handleNavigation = (path, animationConfig) => {
-    navigate(path);
-
-    // Pass the animation configuration to the AnimatedContent
-    // The animation will be triggered automatically based on the configuration
-    setContentAnimation(animationConfig);
-  };
 
   useEffect(() => {
     // console.log("pathname", location.pathname);
@@ -366,7 +477,7 @@ function IonMenuNav() {
         label: "Home",
         icon: homeOutline,
         clickHandler: (event, hasAccess, router) => {
-          navigate("/", { target: "host" });
+          DataProviderNavigate("/", { target: "host" });
           //  router.push("/")
           // router.tab = "/home"
           // console.log('router', router)
@@ -376,47 +487,56 @@ function IonMenuNav() {
     "/": [],
 
     "/description": [
-
       {
         access: checkFeatureAccess(["free"]),
         disabled: false,
         label: "Description Selection",
-        src: "../assets/description-select.svg",
-        icon: homeOutline,
+
+        icon: pencilCase,
         clickHandler: (event) => {
-          navigate("/product-details", { target: "host" });
+          // AnimatedContent(refDictionary["/description"], "fadeOutRight", {
+          //   onComplete: () => {
+          //     navigate("/product-details", { target: "host" });
+          //     AnimatedContent(refDictionary["/product-details"], "fadeInRight");
+          //   },
+          // });
+
+          DataProviderNavigate("/product-details");
         },
       },
       {
         access: checkFeatureAccess(["free"]),
         disabled: false,
         label: "Description Assist",
-        icon: homeOutline,
-        src: "../assets/ai-icon.svg",
+        icon: aiIcon,
+
         clickHandler: (event) => {
-          console.log("event", event);
-          assistRequest("description");
-          // navigate("/product-details", { target: "host" });
+          console.log("aiWorkStation", aiWorkStation);
+
+          assistRequest(aiWorkStation);
+          // DataProviderNavigate("/product-details", { target: "host" });
         },
       },
       {
         access: checkFeatureAccess(["free"]),
         disabled: false,
         label: "Clear Description",
-        src: "../assets/clear2.svg",
-        icon: homeOutline,
+
+        icon: clear,
         clickHandler: (event) => {
-          navigate("/product-details", { target: "host" });
+          clearAssistResult(aiWorkStation);
+          // DataProviderNavigate("/product-details", { target: "host" });
         },
       },
       {
         access: checkFeatureAccess(["free"]),
         disabled: false,
         label: "Save Description",
-        src: "../assets/save.svg",
-        icon: homeOutline,
+
+        saveSignal: true,
+        icon: save,
         clickHandler: (event) => {
-          navigate("/product-details", { target: "host" });
+          updateArticleMethod(aiWorkStation, markupText);
         },
       },
     ],
@@ -424,10 +544,47 @@ function IonMenuNav() {
       {
         access: checkFeatureAccess(["free"]),
         disabled: false,
-        label: "product details",
-        icon: homeOutline,
+        label: "Description Selection",
+
+        icon: pencilCase,
         clickHandler: (event) => {
-          navigate("/product-details", { target: "host" });
+          DataProviderNavigate("/product-details", { target: "host" });
+        },
+      },
+      {
+        access: checkFeatureAccess(["free"]),
+        disabled: false,
+        label: "Description Assist",
+        icon: aiIcon,
+
+        clickHandler: (event) => {
+          console.log("aiWorkStation", aiWorkStation);
+          assistRequest(aiWorkStation);
+          // DataProviderNavigate("/product-details", { target: "host" });
+        },
+      },
+      {
+        access: checkFeatureAccess(["free"]),
+        disabled: false,
+        label: "Clear Description",
+
+        icon: clear,
+        clickHandler: (event) => {
+          clearAssistResult(aiWorkStation);
+          // DataProviderNavigate("/product-details", { target: "host" });
+        },
+      },
+      {
+        access: checkFeatureAccess(["free"]),
+        disabled: false,
+        label: "Save Description",
+
+        saveSignal: true,
+        icon: save,
+        clickHandler: (event) => {
+          console.log("aiWorkStation", aiWorkStation);
+          updateArticleMethod(aiWorkStation, markupText);
+          // DataProviderNavigate("/product-details", { target: "host" });
         },
       },
     ],
@@ -435,39 +592,41 @@ function IonMenuNav() {
       {
         access: checkFeatureAccess(["free"]),
         disabled: false,
-        label: "Home",
-        icon: homeOutline,
+        label: "Products Pages",
+
+        icon: bookshelf,
         clickHandler: (event) => {
-          navigate("/", { target: "host" });
+          DataProviderNavigate("/", { target: "host" });
         },
       },
       {
         access: checkFeatureAccess(["basic"]),
 
-        label: "Description",
-        icon: newspaperOutline,
+        label: "Description Workstation",
+        icon: descriptionWorkStation,
+
         clickHandler: (event, hasAccess) => {
           if (!hasAccess) {
-            navigate("/subscriptions");
+            DataProviderNavigate("/subscriptions");
           } else {
             aiWorkStationSetter("description");
 
             // router.push("/description")
-            navigate("/description");
+            DataProviderNavigate("/description");
           }
         },
       },
       {
         access: checkFeatureAccess(["crafted"]),
+        label: "Article Workstation",
 
-        label: "Article",
-        icon: documentTextOutline,
+        icon: newsPaperWorStation,
         clickHandler: (event, hasAccess) => {
           if (!hasAccess) {
-            navigate("/subscriptions");
+            DataProviderNavigate("/subscriptions");
           } else {
             aiWorkStationSetter("article");
-            navigate("/article");
+            DataProviderNavigate("/article");
           }
         },
       },
@@ -482,81 +641,121 @@ function IonMenuNav() {
   };
 
   return (
-    <IonReactRouter>
-      <IonTabs>
-        <IonRouterOutlet>
-          <Routes>
-            <Route index path="/" element={<Home />} />
-            <Route path="/product-details" element={<ProductDetails />} />
-            <Route path="/subscriptions" element={<Subscriptions />} />
-            <Route path="/search" element={<Search />} />
-            <Route path="/welcome" element={<LandingPage />} />
+    <IonReactRouter key="ionreactrouter">
+      <IonTabs key="IonTabs">
+        <IonRouterOutlet key="IonRouterOutlet">
+          <Routes key="Routes">
             <Route
+              key="/"
+              index
+              path="/"
+              element={<Home animationRef={refDictionary["/"]} />}
+            />
+            <Route
+              key="/product-details"
+              path="/product-details"
+              element={
+                <ProductDetails
+                  animationRef={refDictionary["/product-details"]}
+                />
+              }
+            />
+            <Route
+              key="/subscriptions"
+              path="/subscriptions"
+              element={
+                <Subscriptions animationRef={refDictionary["/subscriptions"]} />
+              }
+            />
+            <Route
+              key="/search"
+              path="/search"
+              element={<Search animationRef={refDictionary["/search"]} />}
+            />
+            <Route
+              key={"/welcome"}
+              path="/welcome"
+              element={
+                <LandingPage
+                  key="landingPage"
+                  animationRef={refDictionary["/welcome"]}
+                />
+              }
+            />
+            <Route
+              key="/description"
               path="/description"
-              element={
-                <IonPage>
-                  {" "}
-                  <IonHeader key={"10"} translucent={true}>
-                    <IonToolbar key={"11"}>
-                      <IonButtons key={"12"} onClick={() => {}} slot="start">
-                        <IonButton key={"13"}>
-                          <IonIcon key={"14"} icon={chevronBack} />
-                        </IonButton>
-                      </IonButtons>
-                      <IonTitle key={"15"}>Description</IonTitle>
-                      <IonButtons slot="end"></IonButtons>
-                    </IonToolbar>
-                  </IonHeader>
-                  <IonContent>
-                    <Accordion />
-                  </IonContent>
-                </IonPage>
-              }
+              element={<Description />}
             />
-            <Route
-              path="/article"
-              element={
-                <IonPage>
-                  {" "}
-                  <IonHeader key={"10"} translucent={true}>
-                    <IonToolbar key={"11"}>
-                      <IonButtons key={"12"} onClick={() => {}} slot="start">
-                        <IonButton key={"13"}>
-                          <IonIcon key={"14"} icon={chevronBack} />
-                        </IonButton>
-                      </IonButtons>
-                      <IonTitle key={"15"}>Article</IonTitle>
-                      <IonButtons slot="end"></IonButtons>
-                    </IonToolbar>
-                  </IonHeader>
-                  <IonContent>
-                    <Accordion />
-                  </IonContent>
-                </IonPage>
-              }
-            />
-            <Route path="*" element={<NoMatch />} />
+            <Route key="/article" path="/article" element={<Article />} />
+            <Route key="noMatch" path="*" element={<NoMatch />} />
           </Routes>
         </IonRouterOutlet>
-        <IonTabBar slot="bottom">
-          {tabs[currentRoute]?.map((tab, index) => (
-            <IonTabButton
-              // disabled= {tab.disabled}
-              key={index}
-              tab={currentRoute}
-              onClick={(e) => tab.clickHandler(e, tab.access.hasAccess, router)}
-            >
-              <IonIcon
-                src={tab.src && tab.src}
-                icon={!tab.src && tab.access.hasAccess ? tab.icon : lockClosed}
-              />
-              <IonLabel color={tab.access.hasAccess ? "secondary" : "danger"}>
-                {tab.access.message(tab.label)}
-              </IonLabel>
-            </IonTabButton>
-          ))}
+        <IonTabBar key="iontabbar" slot="bottom">
+          {tabs[currentRoute]?.map((tab, index) => {
+            const buttonId = "tabButtonId" + index;
+
+            return (
+              <IonTabButton
+                id={buttonId}
+                disabled={serverSentEventLoading || tab.disabled}
+                key={index}
+                tab={currentRoute}
+                onClick={(e) =>
+                  tab.clickHandler(e, tab.access.hasAccess, router)
+                }
+              >
+                <IonIcon
+                  color={tab.saveSignal && contentSaved && "success"}
+                  key={"icon" + index}
+                  src={tab.access.hasAccess && tab.src}
+                  icon={
+                    !tab.src && tab.access.hasAccess ? tab.icon : lockClosed
+                  }
+                  // className="custom-icon"
+                />
+                <IonLabel
+                  key={index}
+                  color={tab.access.hasAccess ? "secondary" : "danger"}
+                >
+                  {serverSentEventLoading}
+                  {tab.access.message(tab.label)}
+                </IonLabel>
+              </IonTabButton>
+            );
+          })}
         </IonTabBar>
       </IonTabs>
     </IonReactRouter>
+  );
+}
+
+function IonPopovers() {
+  return (
+    <IonPopover
+      key="Include existing description in composition"
+      translucent={true}
+      animated="true"
+      trigger="advanced-options-select-options-hover-trigger"
+      triggerAction="hover"
+      area-label="Advanced Language and Formatting Options"
+    >
+      <IonContent className="ion-padding">
+        <IonText>
+          <p>
+            Explore Advanced Language and Formatting Choices. Choose your
+            preferred categories from the advanced menu options, and they will
+            be displayed below.
+          </p>
+        </IonText>
+        <IonText color="secondary">
+          {" "}
+          <sub>
+            {" "}
+            <IonIcon icon={exitOutline}></IonIcon> click outside box to close
+          </sub>
+        </IonText>
+      </IonContent>
+    </IonPopover>
   );
 }

@@ -567,43 +567,55 @@ function generateLanguageRequirementsList(language) {
         tokens: 23,
       },
     },
-    engagingFormats :{
+    engagingFormats: {
       textWithVisuals: {
-        prompt: "Create a series of brief slides with concise text to tell a story or convey a message. Enhance each slide using imagery, animations, or graphics.",
+        prompt:
+          "Create a series of brief slides with concise text to tell a story or convey a message. Enhance each slide using imagery, animations, or graphics.",
       },
       quotesMessages: {
-        prompt: "Share inspirational quotes, motivating messages, or thought-provoking statements. Divide them into multiple slides to emphasize and leave an impact.",
+        prompt:
+          "Share inspirational quotes, motivating messages, or thought-provoking statements. Divide them into multiple slides to emphasize and leave an impact.",
       },
       howToTips: {
-        prompt: "Provide quick tips, life hacks, or step-by-step instructions. Split the content across multiple slides, highlighting each tip or step.",
+        prompt:
+          "Provide quick tips, life hacks, or step-by-step instructions. Split the content across multiple slides, highlighting each tip or step.",
       },
       factsStatistics: {
-        prompt: "Present intriguing facts, statistics, or trivia with visual appeal. Unveil each piece of information one by one across different slides.",
+        prompt:
+          "Present intriguing facts, statistics, or trivia with visual appeal. Unveil each piece of information one by one across different slides.",
       },
       storytelling: {
-        prompt: "Engage viewers with short, captivating stories. Use cliffhangers to encourage swiping for the next part of the story.",
+        prompt:
+          "Engage viewers with short, captivating stories. Use cliffhangers to encourage swiping for the next part of the story.",
       },
       questionAnswer: {
-        prompt: "Ask a question on one slide and offer the answer on the next. Encourage audience engagement and interaction.",
+        prompt:
+          "Ask a question on one slide and offer the answer on the next. Encourage audience engagement and interaction.",
       },
       beforeAfter: {
-        prompt: "Showcase transformations, makeovers, or progress using a before-and-after approach. Each slide reveals a different stage of change.",
+        prompt:
+          "Showcase transformations, makeovers, or progress using a before-and-after approach. Each slide reveals a different stage of change.",
       },
       listsRankings: {
-        prompt: "Create lists or rankings of items, ideas, or preferences. Number the slides to guide viewers through the list.",
+        prompt:
+          "Create lists or rankings of items, ideas, or preferences. Number the slides to guide viewers through the list.",
       },
       miniBlogInsights: {
-        prompt: "Share bite-sized insights, mini-blog posts, or reflections. Split the content into several slides for a series of concise thoughts.",
+        prompt:
+          "Share bite-sized insights, mini-blog posts, or reflections. Split the content into several slides for a series of concise thoughts.",
       },
       wordplayPuns: {
-        prompt: "Craft clever wordplay, puns, or jokes that unfold across multiple slides. Entertain and engage your audience with humor.",
+        prompt:
+          "Craft clever wordplay, puns, or jokes that unfold across multiple slides. Entertain and engage your audience with humor.",
       },
       fictionalStories: {
-        prompt: "Write brief fictional stories or scenarios that span across slides. Keep viewers engaged by revealing the plot gradually.",
+        prompt:
+          "Write brief fictional stories or scenarios that span across slides. Keep viewers engaged by revealing the plot gradually.",
       },
       educationalNuggets: {
-        prompt: "Share interesting facts, history, or cultural insights in small, digestible portions across multiple slides.",
-      }
+        prompt:
+          "Share interesting facts, history, or cultural insights in small, digestible portions across multiple slides.",
+      },
     },
     socialMedia: {
       none: {
@@ -794,7 +806,7 @@ function generateLanguageRequirementsList(language) {
       requirements.push(keyLabelRequirements);
     }
   }
-console.log('requirements: ' , requirements)
+  console.log("requirements: ", requirements);
   return requirements;
 }
 
@@ -820,10 +832,6 @@ export async function generateReport({
 }
 
 const colors = generateComplementaryScheme("#A66F2E", 200);
-
-
-
-
 
 function imageId(url) {
   if (!url) {
@@ -896,7 +904,7 @@ function focusRequirements(productData, details, requirements) {
   const addLine = (text) => lines.push(text);
   const addLineFront = (text) => lines.unshift(text);
   const addHeading = (heading) => addLine(`\n${heading}`);
-const addQuotes= (text) => text.length ? `"${text}"`: '';
+  const addQuotes = (text) => (text.length ? `"${text}"` : "");
 
   const addProductDescription = (exampleDetails, exampleStyles) => {
     const exampleDetailsStr = exampleDetails
@@ -910,7 +918,11 @@ const addQuotes= (text) => text.length ? `"${text}"`: '';
       .join(",  ");
     const title = productData.title.replace(/\n/g, "");
     addLineFront(
-      `Compose a narrative that introduces the ${title} and creatively incorporates the following product details using the narrative stylistic requirements below. In this document are unique identifiers; they look like this ${addQuotes(exampleDetailsStr)}. These are all requirements. Reference them in the composition as labels, where you fulfill a requirement. Examples: ${addQuotes(exampleStylesStr)}  ${addQuotes(exampleDetailsStr)}`
+      `Compose a narrative that introduces the ${title} and creatively incorporates the following product details using the narrative stylistic requirements below. In this document are unique identifiers; they look like this ${addQuotes(
+        exampleDetailsStr
+      )}. These are all requirements. Reference them in the composition as labels, where you fulfill a requirement. Examples: ${addQuotes(
+        exampleStylesStr
+      )}  ${addQuotes(exampleDetailsStr)}`
     );
     addLineFront(`Product Name: ${title}`);
   };
@@ -1075,7 +1087,9 @@ const addQuotes= (text) => text.length ? `"${text}"`: '';
       .join(" or ");
 
     addLine(
-      `\nUse a single round bracket tags for every label and id to reference the requirements in the composition. Tag examples: ${addQuotes(exampleDetailsStr)}  ${addQuotes(exampleStylesStr)}`
+      `\nUse a single round bracket tags for every label and id to reference the requirements in the composition. Tag examples: ${addQuotes(
+        exampleDetailsStr
+      )}  ${addQuotes(exampleStylesStr)}`
     );
   };
 
@@ -1115,12 +1129,10 @@ export function withoutOptions(productData) {
 }
 
 export function withLanguageOption(productData, language) {
-  language = language.map((languageOptions) => languageOptions[1]);
-
   const focus = [];
   const requirementsList = generateLanguageRequirementsList(language);
   const prompt = focusRequirements(productData, focus, requirementsList);
-  console.log("prompt with language only");
+
   return prompt;
 }
 
@@ -1132,15 +1144,14 @@ export function withProductDetails(productData, focus) {
 
   const requirementsList = generateLanguageRequirementsList(language);
   const prompt = focusRequirements(productData, focus, requirementsList);
-  console.log("prompt with product only");
+
   return prompt;
 }
 
 export function withLanguageAndProductOption(productData, language, focus) {
- 
   const requirementsList = generateLanguageRequirementsList(language);
 
   const prompt = focusRequirements(productData, focus, requirementsList);
-  console.log("prompt with both options");
+
   return prompt;
 }

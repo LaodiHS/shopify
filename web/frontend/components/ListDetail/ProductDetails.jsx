@@ -34,16 +34,20 @@ import {
   exitOutline,
   informationCircle,
 } from "ionicons/icons";
+import {trash} from "../../assets";
+
+
 import { Context, SharedData } from "../../utilities/data-context.js";
 import { shortenText } from "../../utilities/utility-methods";
 import { ReactRenderingComponent } from "../providers";
-import { useAuthenticatedFetch } from "../../hooks";
+
 import {
   AppTypeahead,
   extractTextFromHtml,
   useDataProvidersContext,
   ImageLoader,
-  Tinymce,
+  // Tinymce,
+  ImageCache 
 } from "../../components";
 // import { navigate } from "ionicons/icons";
 
@@ -79,7 +83,8 @@ export function ProductDetails({ data }) {
   } = data;
 
   return (
-    <IonGrid>
+    <>
+    <IonGrid style={{ padding: 0, margin: 0 }}>
       <IonRow>
         <IonCol>
           <IonRow>
@@ -88,7 +93,7 @@ export function ProductDetails({ data }) {
                 images
                   .slice(0, 1)
                   .map((image, index) => (
-                    <IonImg
+                    <ImageCache
                       key={index}
                       className={`ion-padding ${
                         index > 0 ? "ion-hide-sm-down" : ""
@@ -141,14 +146,27 @@ export function ProductDetails({ data }) {
           <IonRow>
             <IonCol size="12">
               {" "}
-              <IonButton
-                onClick={clearSelection}
-                fill="clear"
-                size="small"
-                className="ion-float-end"
-              >
-                Clear Selections
-              </IonButton>
+              <IonButtons className="ion-float-end">
+                <IonButton
+                  onClick={clearSelection}
+                  fill="clear"
+                  size="small"
+                  className="ion-float-end ion-padding-top"
+                >
+                  Clear Selections
+                </IonButton>
+                <IonButton
+                  onClick={clearSelection}
+                  className="ion-float-start"
+                  size="large"
+                >
+                  <IonIcon
+                    slot="icon-only"
+                    color="dark"
+                    icon={trash}
+                  ></IonIcon>
+                </IonButton>
+              </IonButtons>
             </IonCol>
 
             <IonCol style={{ padding: 0, margin: 0 }} size="12">
@@ -162,8 +180,8 @@ export function ProductDetails({ data }) {
                       init={{
                         branding: false,
                         promotion: false,
-                        theme: false,
-                     //   content_css:"tinymce/skins/content/tinymce-5/content.min.css",
+                        // theme: false,
+                        //   content_css:"tinymce/skins/content/tinymce-5/content.min.css",
                         inline_styles: true,
                         inline_boundaries: true,
 
@@ -187,7 +205,7 @@ export function ProductDetails({ data }) {
                     color="transparent"
                     detail="false"
                   >
-                    <IonItem lines="none" color="transparent">
+                    <IonItem lines="none" slot="end" color="transparent">
                       <IonRadioGroup
                         slot="start"
                         allowEmptySelection={true}
@@ -318,7 +336,6 @@ export function ProductDetails({ data }) {
 
                 delete displayVariant.id;
 
-
                 for (const [key, value] of Object.entries(displayVariant)) {
                   if (!value) {
                     delete displayVariant[key];
@@ -350,74 +367,9 @@ export function ProductDetails({ data }) {
               })}{" "}
           </IonRow>
         </IonCol>
-        <IonCol
-          size="12"
-          key="ImageSelection"
-          className={images && images.length ? "image-selection" : "ion-hide"}
-        >
-          <IonItem className="ion-no-padding" lines="none">
-            <IonLabel slot="end">
-              <IonText
-                style={{ fontSize: "11px" }}
-                className="ion-text-wrap"
-                color={includeProductImagesFeature.hasAccess ? "" : "medium"}
-              >
-                {includeProductImagesFeature.message("Images")}
-              </IonText>
-            </IonLabel>
-            <IonIcon
-              size="small"
-              color="secondary"
-              slot="end"
-              aria-label="Information about Images"
-              id="Image-options-hover-trigger"
-              icon={informationCircleOutline}
-            ></IonIcon>
-            <IonItem
-              lines="none"
-              slot="end"
-              button={false}
-              key="images"
-              detail={false}
-            >
-              <IonButton
-                size="small"
-                disabled={!includeProductImagesFeature.hasAccess}
-                onClick={() => {
-                  assignImageSelectionModalIsOpen((prevIsOpen) => !prevIsOpen);
-                }}
-                color="tertiary"
-                fill="clear"
-              >
-                Select Images
-              </IonButton>
-            </IonItem>
-          </IonItem>
-          <IonPopover
-            key="Image-options-hover-trigger"
-            translucent={true}
-            animated="true"
-            trigger="Image-options-hover-trigger"
-            triggerAction="hover"
-          >
-            <IonContent className="ion-padding ion-text-capitalize">
-              <IonText>
-                <p>
-                  Choose the images you wish to incorporate into the document.
-                </p>
-              </IonText>
-              <IonText color="secondary">
-                {" "}
-                <sub>
-                  {" "}
-                  <IonIcon icon={exitOutline}></IonIcon> click outside box to
-                  close
-                </sub>
-              </IonText>
-            </IonContent>
-          </IonPopover>
-        </IonCol>
       </IonRow>
+   
+
       <IonModal key="typeHead" isOpen={imageSelectionModalIsOpen}>
         <AppTypeahead
           title="Include Images"
@@ -428,6 +380,81 @@ export function ProductDetails({ data }) {
         />
       </IonModal>
     </IonGrid>
+    <div
+        style={{ padding: 0, margin: 0 }}
+        size="12"
+        key="ImageSelection"
+        className={images && images.length ? "image-selection" : "ion-hide"}
+      >
+        <IonItem lines="none" button={false} key="images" detail={false}>
+          <IonButtons slot="end">
+            {" "}
+            {/* <IonLabel slot="end"> */}
+            <IonText
+              style={{ fontSize: "11px" }}
+              className="ion-text-wrap  ion-padding-top"
+              color={includeProductImagesFeature.hasAccess ? "" : "medium"}
+            >
+              {includeProductImagesFeature.message("")}
+            </IonText>
+            {/* </IonLabel> */}
+            <IonButton
+              className="ion-padding-top"
+              size="small"
+              disabled={!includeProductImagesFeature.hasAccess}
+              onClick={() => {
+                assignImageSelectionModalIsOpen((prevIsOpen) => !prevIsOpen);
+              }}
+              color="tertiary"
+              fill="clear"
+            >
+              Select Images
+            </IonButton>
+            <IonButton
+                disabled={!includeProductImagesFeature.hasAccess}
+             onClick={() => {
+              assignImageSelectionModalIsOpen((prevIsOpen) => !prevIsOpen);
+            }}
+            color="dark" 
+            size="large">
+              <IonIcon slot="icon-only" src="../assets/pictures.svg"></IonIcon>
+            </IonButton>{" "}
+            <IonIcon
+              size="small"
+              color="secondary"
+              slot="end"
+              aria-label="Information about Images"
+              id="Image-options-hover-trigger"
+              icon={informationCircleOutline}
+            ></IonIcon>
+          </IonButtons>
+        </IonItem>
+
+        <IonPopover
+          key="Image-options-hover-trigger"
+          translucent={true}
+          animated="true"
+          trigger="Image-options-hover-trigger"
+          triggerAction="hover"
+        >
+          <IonContent className="ion-padding ion-text-capitalize">
+            <IonText>
+              <p>
+                Choose the images you wish to incorporate into the document.
+              </p>
+            </IonText>
+            <IonText color="secondary">
+              {" "}
+              <sub>
+                {" "}
+                <IonIcon icon={exitOutline}></IonIcon> click outside box to
+                close
+              </sub>
+            </IonText>
+          </IonContent>
+        </IonPopover>
+      </div>
+    </>
   );
 }
 

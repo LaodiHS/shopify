@@ -4,11 +4,20 @@ import React, {
   useMemo,
   useState,
   useEffect,
+  useRef,
+  createRef,
 } from "react";
-
-import { Context, SharedData } from "../../utilities/data-context.js";
-import { updateObject } from "../../utilities/utility-methods";
-import { audienceModel } from "../../utilities/language-model";
+import {
+  useIonViewDidEnter,
+  useIonViewWillEnter,
+  useIonViewDidLeave,
+  useIonViewWillLeave,
+  IonContent,
+  IonGrid,
+  IonRow,
+  IonCol,
+  IonSpinner,
+} from "@ionic/react";
 import { useAuthenticatedFetch, useAppBridge } from "@shopify/app-bridge-react";
 import { useLocation, useNavigate } from "react_router_dom";
 import { request } from "@shopify/app-bridge/actions/AuthCode";
@@ -17,6 +26,7 @@ import { getSessionToken } from "@shopify/app-bridge/utilities";
 import { Redirect } from "@shopify/app-bridge/actions";
 import { SessionToken, TitleBar } from "@shopify/app-bridge/actions";
 import { useIonToast, useIonRouter } from "@ionic/react";
+import { AnimatedContent } from "./";
 const DataProvidersContext = createContext(null);
 
 export function useDataProvidersContext() {
@@ -32,7 +42,28 @@ function modifyState(setter, updateOptions) {
     }
   });
 }
+function createEventEmitter() {
+  const listeners = {};
 
+  function on(eventType, callback) {
+    if (!listeners[eventType]) {
+      listeners[eventType] = [];
+    }
+    listeners[eventType].push(callback);
+  }
+
+  function emit(eventType, data) {
+    const eventListeners = listeners[eventType];
+    if (eventListeners) {
+      eventListeners.forEach((callback) => {
+        callback(data);
+      });
+    }
+  }
+
+  return { on, emit };
+}
+const eventEmitter = createEventEmitter();
 export function DataProvidersProvider({ children }) {
   const fetch = useAuthenticatedFetch(); // Make sure you have this hook defined somewhere
   const navigate = useNavigate();
@@ -75,14 +106,18 @@ export function DataProvidersProvider({ children }) {
         );
 
         if (!subscriptionsResponse.ok) {
+        
+
           // If the response status is not ok (e.g., 401 Unauthorized or 403 Forbidden),
           // it means the user is not authenticated or doesn't have access.
           // Redirect the user to the login page or show an error message.
           // navigation("/login");
+          
+          setSubscriptionRetrievalLoading(false);
           return;
         }
-
         const data = await subscriptionsResponse.json();
+
         const { activeSubscriptions, session, user, redirectUri } = data;
         const redirect = Redirect.create(app);
         console.log("subscription redirectUri: ", redirectUri);
@@ -238,10 +273,10 @@ export function DataProvidersProvider({ children }) {
       url + JSON.stringify(method) + JSON.stringify(body);
 
     if (mapState.has(cached_url_method_body_parameters)) {
-      console.log(
-        "This is a cached fetchDataWithCache call: ",
-        mapState.get(cached_url_method_body_parameters)
-      );
+      // console.log(
+      //   "This is a cached fetchDataWithCache call: ",
+      //   mapState.get(cached_url_method_body_parameters)
+      // );
       return mapState.get(cached_url_method_body_parameters);
     }
 
@@ -354,6 +389,7 @@ export function DataProvidersProvider({ children }) {
   const [selectedImages, setSelectedImages] = useState([]);
   const [languageOptions, setLanguageOptions] = useState([]);
   const handleSelectChange = async (event, category) => {
+    console.log('select_change',event, category)
     category = category.trim();
     setLanguageOptions((previous) => {
       const map = {};
@@ -368,7 +404,9 @@ export function DataProvidersProvider({ children }) {
         map[category] = [category, categoryValues];
       }
 
-      return Object.values(map);
+      const toneOptions =  Object.values(map);
+      console.log('Tone options', toneOptions);
+      return toneOptions;
     });
   };
 
@@ -386,7 +424,9 @@ export function DataProvidersProvider({ children }) {
       if (categoryValues.length && !categoryValues.includes("none")) {
         map[propName] = [propName, categoryValues];
       }
-      return Object.values(map);
+       const objectValues = Object.values(map);
+       console.log('objectValue',objectValues)
+      return objectValues
     });
   };
 
@@ -451,21 +491,102 @@ export function DataProvidersProvider({ children }) {
     modifyState(setAssistRequestInstance, updateOption);
   }
 
-async function assistRequest(id) {
+  async function assistRequest(id) {
     if (assistRequest) {
       await assistRequestInstance(id);
     } else {
       console.error("assist request not assigned");
     }
   }
-  // useIonViewWillEnter(() => {
 
-  //   // Your animation code here
+  const [clearAssistResultMethod, setClearAssistResultMethod] = useState(null);
 
-  //   console.log("Component is----- about to enter the view.");
-  // });
+  function assignClearAssistMethod(updateOption) {
+    modifyState(setClearAssistResultMethod, updateOption);
+  }
+
+  async function clearAssistResult(id) {
+    clearAssistResultMethod(id);
+  }
+
+  const [updateArticleMethod, setUpdateArticleMethod] = useState(null);
+
+  function assignUpdateArticleMethod(updateOption) {
+    modifyState(setUpdateArticleMethod, updateOption);
+  }
+
+  const [markupText, setMarkupText] = useState("");
+  function assignMarkupText(text) {
+    modifyState(setMarkupText, text);
+  }
+
+  const ArticleRefAnimate = useRef(null);
+  const ProductRefAnimate = useRef(null);
+
+  const [refDictionary, setRefDictionary] = useState({});
+
+  // Create refs and add them to the dictionary
+  useEffect(() => {
+    const createRefs = () => {
+      const newRefDictionary = {};
+      [
+        "/",
+        "/product-details",
+        "/description",
+        "/article",
+        "/subscriptions",
+        "/welcome",
+        "/search",
+      ].forEach((key) => {
+        newRefDictionary[key] = createRef(null);
+      });
+      return newRefDictionary;
+    };
+
+    // Update the refDictionary state
+    setRefDictionary(createRefs());
+  }, []);
+
+  function DataProviderNavigate(route, options = {}) {
+    AnimatedContent(refDictionary[location.pathname], "fadeOutRight", {
+      //timingFunction:"ease",
+      onComplete: () => {
+        navigate(route, options);
+        AnimatedContent(refDictionary[route], "fadeInRight", {
+          //  timingFunction
+          duration: 0.05,
+        });
+      },
+    });
+  }
+
+  const [serverSentEventLoading, setServerSentEventLoading] = useState(false);
+
+  function assignServerSentEventLoading(updateOption) {
+    modifyState(setServerSentEventLoading, updateOption);
+  }
+
+
+  const [contentSaved, setContentSaved] = useState(false)
+
+  function assignContentSaved(updateOptions){
+     modifyState(setContentSaved, updateOptions);
+    setTimeout(()=>{
+    setContentSaved(false)
+    },5000)
+  }
+
+
+
+
+
 
   const value = {
+    eventEmitter,
+    contentSaved,
+    setContentSaved:assignContentSaved,
+    setServerSentEventLoading: assignServerSentEventLoading,
+    serverSentEventLoading,
     languageOptions,
     productDetailOptions,
     imageSelectionModalIsOpen,
@@ -488,6 +609,15 @@ async function assistRequest(id) {
     navigateRoute,
     assignAssistRequest,
     assistRequest,
+    assignClearAssistMethod,
+    clearAssistResult,
+    assignUpdateArticleMethod,
+    updateArticleMethod,
+    markupText,
+    setMarkupText: assignMarkupText,
+    AnimatedContent,
+    refDictionary,
+    DataProviderNavigate,
   };
 
   Object.assign(value, SubscriptionAndSession);
@@ -495,7 +625,27 @@ async function assistRequest(id) {
 
   return (
     <DataProvidersContext.Provider value={value}>
-      {children}
+      {subscriptionRetrievalLoading ? <Loading /> : children}
     </DataProvidersContext.Provider>
+  );
+}
+
+function Loading() {
+  return (
+    <IonContent>
+      <IonGrid style={{ height: "100vh" }}>
+        <IonRow
+          className="ion-justify-content-center ion-align-items-center"
+          style={{ height: "100%" }}
+        >
+          <IonCol size="auto">
+            <IonSpinner
+              style={{ width: "100px", height: "100px" }}
+              color="tertiary"
+            ></IonSpinner>
+          </IonCol>
+        </IonRow>
+      </IonGrid>
+    </IonContent>
   );
 }

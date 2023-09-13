@@ -1,29 +1,33 @@
 import Redis from "ioredis";
-import 'dotenv/config'
-const { REDIS_API_PASSWORD} = process.env;
+import "dotenv/config";
+import { createClient } from "redis";
 
+import { BullREDIS } from "./dev_production_vars.js";
 let redisClient;
 
-
 export async function connectToRedis() {
+  const { host, port, password } = BullREDIS;
   return new Promise((resolve, reject) => {
     if (redisClient) {
       resolve(redisClient); // If the client is already connected, resolve immediately
     } else {
-      redisClient = new Redis({
-        host: "redis-12960.c60.us-west-1-2.ec2.cloud.redislabs.com",
-        port: 12960,
-        password: REDIS_API_PASSWORD,
-        retryStrategy: (times) => {
-          if (times > 5) {
-            // Stop retrying after 5 attempts
-            return undefined;
-          }
-          // Retry with an exponential backoff strategy
-          return Math.min(times * 50, 2000);
-        },
-        maxRetriesPerRequest: null, // Set maxRetriesPerRequest to null
-      });
+      redisClient = new Redis(
+        // RedisConnectionString,{ maxRetriesPerRequest: null}
+        {
+          host,
+          port,
+          password,
+          retryStrategy: (times) => {
+            if (times > 5) {
+              // Stop retrying after 5 attempts
+              return undefined;
+            }
+            // Retry with an exponential backoff strategy
+            return Math.min(times * 50, 2000);
+          },
+          maxRetriesPerRequest: null, // Set maxRetriesPerRequest to null
+        }
+      );
 
       redisClient.on("ready", () => {
         console.log("Redis client is ready to accept commands.");
@@ -38,4 +42,12 @@ export async function connectToRedis() {
   });
 }
 
+// export async function connectToRedis() {
 
+//   const client = createClient({
+//     url: RedisConnectionString,
+//   });
+//   await client.connect();
+
+//   return client;
+// }

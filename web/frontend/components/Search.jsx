@@ -3,7 +3,7 @@ import "@ionic/react/css/core.css";
 import { Autocomplete, Icon } from "@shopify/polaris";
 import { SearchMinor } from "@shopify/polaris-icons";
 import { useState, useCallback, useMemo } from "react";
-import { IonSearchbar, IonSelect, IonSelectOption, IonHeader, IonToolbar, IonTitle, IonList, IonItem  } from "@ionic/react";
+import { IonSearchbar, IonSelect, IonSelectOption, IonHeader, IonToolbar, IonTitle, IonList, IonItem,IonPage  } from "@ionic/react";
 
 import {useDataProvidersContext} from "../components";
 const options = [
@@ -11,7 +11,7 @@ const options = [
   { value: "option2", label: "Option 2" },
   // Add more options as needed
 ];
-export  function Search() {
+export  function Search({animationRef}) {
   const {
  fetchDataWithCache
   } = useDataProvidersContext();
@@ -53,7 +53,7 @@ export  function Search() {
   };
 
   return (
-    <>
+    <IonPage ref={animationRef}>
     <IonHeader>
       <IonToolbar>
         <IonTitle>VibeFenWei Product Search</IonTitle>
@@ -73,6 +73,6 @@ export  function Search() {
           <IonItem key={i}>{result}</IonItem>
         ))}
       </IonList>
-    </>
+    </IonPage>
   );
 }

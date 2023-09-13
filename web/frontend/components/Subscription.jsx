@@ -39,6 +39,7 @@ import { Redirect } from "@shopify/app-bridge/actions";
 import { useDataProvidersContext} from "../components";
 export const SubscriptionComponent = (
   {
+    animationRef
     //  subscriptions
   }
 ) => {
@@ -119,7 +120,7 @@ export const SubscriptionComponent = (
   });
 
   return (
-    <IonPage>
+    <IonPage ref={animationRef}>
       <IonContent>
         <IonGrid>
           <IonRow>

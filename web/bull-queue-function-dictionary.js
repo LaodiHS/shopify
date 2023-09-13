@@ -4,9 +4,10 @@ import "dotenv/config";
 import * as userStore from "./userStore.js";
 import {
   mockGptTurboResponse,
-  testNonNetWorkErrorOnChatGptTurboFailure,
+  testNonNetWorkErrorOnChatGptTurboFailure, max_tokens, MockGptTurboPrompt
 } from "./testMethods.js";
 import { updateTokenUsageAfterJob } from "./subscriptionManager.js";
+
 const { OPEN_AI_SECRET_KEY } = process.env;
 
 const configuration = new Configuration({
@@ -61,7 +62,7 @@ const chatGptTurboConfig = ({ prompt }) => ({
         content: prompt,
       },
     ],
-    max_tokens: 450,
+    max_tokens: max_tokens,
 
     presence_penalty: 0.7,
 
@@ -99,7 +100,8 @@ export const processFunctions = {
       if (mockData) {
         return mockData;
       }
-        const res = await generatorCall()
+      console.log('prompt', prompt)
+        const res = await generatorCall(prompt)
        return {res, ...arguments[0]}
 
 
@@ -184,7 +186,7 @@ async function* generateOpenAIMessages() {
               "tell me a short story about rambo, and use only 10 word tokens to do it",
           },
         ],
-        max_tokens: 20,
+        max_tokens: max_tokens,
         temperature: 0,
         stream: true,
       },
@@ -242,6 +244,10 @@ async () => {
 };
 
 async function generatorCall(prompt) {
+ if(prompt.length <= 0) {
+  throw new Error('no prompt present in generatorCall')
+ }
+  // console.log('prompt: ' + prompt);
   try {
     const res = await openai.createChatCompletion(
       {
@@ -250,11 +256,10 @@ async function generatorCall(prompt) {
           {
             role: "user",
 
-            content:
-              "  Use only 20 word for the text of the story."
+            content: MockGptTurboPrompt || prompt
           },
         ],
-        max_tokens: 10,
+        max_tokens: max_tokens,
         temperature: 0,
         stream: true,
       },

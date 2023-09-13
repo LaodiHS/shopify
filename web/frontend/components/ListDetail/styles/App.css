@@ -1,4 +1,5 @@
 /* CSS file */
+
 .ion-page {
     position: absolute;
     width: 100%;
@@ -84,4 +85,139 @@ ion-accordion.accordion-expanded ion-item[slot='header'] {
   position: relative;
 }
 
+/* .icon-inner, .ionicon, svg{
+  fill:currentColor;
+} */
 
+
+
+.grid-container {
+  position:absolute;
+ z-index: -1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  grid-gap: 10px; /* Adjust the gap as needed */
+  width: 100%;
+  height: 100%;
+}
+
+.grid-item {
+  border: 1px solid #ccc; /* Optional: Add borders for visualization */
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.background-item {
+  background-image: url('../../../assets/half-moon.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: top left;
+  width: 100%; /* Set width and height to 100% to cover the container */
+  height: 100%;
+  transform: rotate(deg);
+  /* background-position: top left; */
+  opacity: 0.5; /* Set your desired opacity value */
+}
+.grid-item {
+  grid-column: span 1;
+  grid-row: span 1;
+ /* Set position to relative for absolute positioning */
+}
+
+.overlay{
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200%; /* Adjust width to cover two columns */
+  height: 100%;
+  background-image: url('../../../assets/milkyway.svg');
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+/* Set specific styles for the first and second columns */
+.grid-item:nth-child(1)::before,
+.grid-item:nth-child(2)::before {
+  width: 400%; /* Adjust width to cover four columns */
+}
+
+
+
+/* <div class="container">
+  <div class="photo">
+    <img src="https://www.svgrepo.com/show/300968/monitor-graph.svg" />
+  </div>
+  <div class="info">info</div>
+  <div class="tag">tag</div>
+  <div class="comment">comment</div>
+  <div class="album">album</div>
+  <div class="rotate">rotate</div>
+</div> */
+
+
+ .container {
+  display: grid;
+  /* position:absolute; */
+  z-index: 0;
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: 40vh 30vh 30vh;
+  grid-gap: 10px;
+  background-image: url('../../../assets/milkyway.svg');
+  background-size: cover;
+  background-repeat: no-repeat;
+  grid-template-areas: 
+    "info    photo photo photo   photo" 
+    "comment photo photo photo   photo" 
+    "comment tag     tag   album rotate"
+}
+
+.photo {
+  /* grid-area: photo; */
+  /* background: yellow; */
+}
+
+.photo>img {
+  object-fit: cover;
+  width: 100%;
+  max-height: 100%;
+}
+
+.info {
+  grid-area: info;
+  background-image: url('../../../assets/half-moon.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: top left;
+  width: 100%; /* Set width and height to 100% to cover the container */
+  height: 100%;
+  position: relative;
+}
+
+.tag {
+  grid-area: tag;
+  /* background: teal; */
+  /* background-image:ur('https://www.svgrepo.com/show/300968/monitor-graph.svg'); */
+    background-size: contain;
+  background-repeat: no-repeat;
+    width: 100%; /* Set width and height to 100% to cover the container */
+  height: 100%;
+  position: relative;
+}
+
+.comment {
+  grid-area: comment;
+  /* background: green; */
+}
+
+.album {
+  grid-area: album;
+  /* background: red; */
+}
+
+.rotate {
+  grid-area: rotate;
+  /* background: blue  */
+}

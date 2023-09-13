@@ -87,7 +87,6 @@ export function ProductDataProvider({ children }) {
         },
         body: JSON.stringify({
           first: productsPerPage,
-      
           after: null,
         }),
       });

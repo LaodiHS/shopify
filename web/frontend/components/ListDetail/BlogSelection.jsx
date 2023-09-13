@@ -25,6 +25,7 @@ import {
 import {
   useDataProvidersContext,
   DataFetchingComponent,
+  AnimatedContent
 } from "../../components";
 
 function HumanReadableDate(ISO_8601) {
@@ -43,9 +44,47 @@ function HumanReadableDate(ISO_8601) {
   return humanReadableDate;
 }
 
+function animate(ref, animation, options = {}) {
+  const {
+    duration = 0.5,
+    prefix = "animate__",
+    iterationCount = 1,
+    direction = "normal",
+    fillMode = "both",
+    timingFunction = "ease",
+    onComplete = () => {},
+  } = options;
+
+  return new Promise((resolve, reject) => {
+    const animationName = `${prefix}${animation}`;
+
+    ref.current.style.setProperty("--animate-duration", `${duration}s`);
+    ref.current.style.setProperty("--animate-iteration-count", iterationCount);
+    ref.current.style.setProperty("--animate-direction", direction);
+    ref.current.style.setProperty("--animate-fill-mode", fillMode);
+    ref.current.style.setProperty("--animate-timing-function", timingFunction);
+
+    ref.current.classList.add(`${prefix}animated`, animationName);
+
+    function handleAnimationEnd(event) {
+      event.stopPropagation();
+      ref.current.classList.remove(`${prefix}animated`, animationName);
+      onComplete();
+      resolve("Animation ended");
+    }
+
+    ref.current.addEventListener("animationend", handleAnimationEnd, {
+      once: true,
+    });
+  });
+}
+
 const BlogSelection = forwardRef(({ article, currentBox }, ref) => {
   const fetch = useAuthenticatedFetch();
   const [presentToast] = useIonToast();
+  const selectBlogRef = useRef(null);
+  const selectNewBlogRef = useRef(null);
+  const selectArticleRef = useRef(null);
   const [selectedBlog, setSelectedBlog] = useState(null);
   const [newBlogTitle, setNewBlogTitle] = useState("");
   const [newArticleName, setNewArticleName] = useState("");
@@ -53,13 +92,13 @@ const BlogSelection = forwardRef(({ article, currentBox }, ref) => {
   const [toastMessage, setToastMessage] = useState("");
 
   const [presentAlert] = useIonAlert();
-  const { async_fetchData } = useDataProvidersContext();
+  const { async_fetchData , setContentSaved} = useDataProvidersContext();
   const showReceptModal = (selectedArticle) => {
     presentAlert({
       header: `Article Post Confirmation: `,
       message: `Blog ID:  ${selectedArticle.blog_id},
        Blog Handle:  ${selectedArticle.handle},
-      \nArticle Title: ${ selectedArticle.title},
+      \nArticle Title: ${selectedArticle.title},
       \nArticle ID:  ${selectedArticle.id},
       \nCreated At: ${HumanReadableDate(selectedArticle.created_at)},
       \nPublished At: ${HumanReadableDate(selectedArticle.published_at)},
@@ -70,16 +109,53 @@ const BlogSelection = forwardRef(({ article, currentBox }, ref) => {
   const handleAddArticle = async () => {
     try {
       const blog = selectedBlog || newBlogTitle;
-  
-      if (!blog || !article || !article.length || !newArticleName || !newArticleName.length) {
+
+      if (
+        !blog ||
+        !article ||
+        !article.length ||
+        !newArticleName ||
+        !newArticleName.length
+      ) {
+        console.log("hit not blog or not article");
+        presentToast({
+          message: "You Have Not Selected a Blog or Article Name",
+          duration: 3000,
+          color:"warning",
+          position: "middle", // top, bottom, middle
+          onDidDismiss: (e) => {
+            //setDisableButtons(false);
+            //setRoleMessage(`Dismissed with role: ${e.detail.role}`);
+          },
+        });
+        selectBlogRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "end",
+          inline: "center",
+          scrollMode: "always",
+          blockOffset: 70,
+        });
+
+        const missingValues = [
+          ...(newBlogTitle ? [] : [[selectedBlog, selectBlogRef]]),
+          ...(selectedBlog ? [] : [[newBlogTitle, selectNewBlogRef]]),
+          [newArticleName, selectArticleRef],
+        ];
+        
+        missingValues.forEach(([value, ref]) => {
+          if (!value) {
+            AnimatedContent(ref, "shakeX", { duration: 1.0 });
+          }
+        });
+
         return;
       }
-  
+
       let blogData = selectedBlog || {};
-  
+
       if (newBlogTitle) {
         const { data, error } = await createBlog(newBlogTitle);
-  
+
         if (error === null) {
           console.log("data blog creation", data);
           setSelectedBlog(data);
@@ -87,21 +163,28 @@ const BlogSelection = forwardRef(({ article, currentBox }, ref) => {
           handleNetworkError();
           return;
         }
-  
+
         blogData = data;
       }
-  
+
       const { id: blog_id, title } = blogData;
       const body_html = article;
       const published = true;
       const author = "";
-  
-      const { data, error } = await createArticle(blog_id, title, author, body_html, published);
-  
-      console.log('ceated artice',data);
-      console.log('article creation', error)
-  
+
+      const { data, error } = await createArticle(
+        blog_id,
+        title,
+        author,
+        body_html,
+        published
+      );
+
+      console.log("ceated artice", data);
+      console.log("article creation", error);
+
       if (error === null) {
+        setContentSaved(true);
         console.log("data article creation", data);
         showReceptModal(data);
       } else {
@@ -112,7 +195,7 @@ const BlogSelection = forwardRef(({ article, currentBox }, ref) => {
       handleUnexpectedError();
     }
   };
-  
+
   const handleNetworkError = () => {
     presentToast({
       message: "There was a network error! Please try again later.",
@@ -121,7 +204,7 @@ const BlogSelection = forwardRef(({ article, currentBox }, ref) => {
       onDidDismiss: () => setDisableButtons(false),
     });
   };
-  
+
   const handleUnexpectedError = () => {
     presentToast({
       message: "An unexpected error occurred. Please try again later.",
@@ -130,7 +213,6 @@ const BlogSelection = forwardRef(({ article, currentBox }, ref) => {
       onDidDismiss: () => setDisableButtons(false),
     });
   };
-  
 
   // Expose the handleChildAction function using the ref
   // Now the parent can call this function through the childRef
@@ -164,8 +246,6 @@ const BlogSelection = forwardRef(({ article, currentBox }, ref) => {
     loading,
     error,
   } = DataFetchingComponent({ url: "/api/blog/list" });
-
-
 
   const handleBlogChange = (event) => {
     const selectedBlog = event.target.value;
@@ -211,6 +291,7 @@ const BlogSelection = forwardRef(({ article, currentBox }, ref) => {
           {blogList.length ? (
             <IonCol size="6">
               <IonSelect
+                ref={selectBlogRef}
                 placeholder="Select Blog"
                 value={selectedBlog}
                 interface="action-sheet"
@@ -234,6 +315,7 @@ const BlogSelection = forwardRef(({ article, currentBox }, ref) => {
               <IonText color="danger">You have no Blogs.</IonText>
             </IonCol>
           )}
+
           <IonCol size="6">
             {" "}
             <IonItem color="light" lines="none">
@@ -273,6 +355,7 @@ const BlogSelection = forwardRef(({ article, currentBox }, ref) => {
           </IonCol>
           <IonCol size="6">
             <IonInput
+              ref={selectNewBlogRef}
               type="text"
               placeholder="Enter new blog title"
               value={newBlogTitle}
@@ -282,6 +365,7 @@ const BlogSelection = forwardRef(({ article, currentBox }, ref) => {
           </IonCol>
           <IonCol size="6">
             <IonInput
+              ref={selectArticleRef}
               type="text"
               placeholder="Enter new article name"
               value={newArticleName}

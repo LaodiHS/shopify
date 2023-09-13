@@ -1,14 +1,16 @@
 {
+  "capped_usage": 1878472,
   "shop": "quickstart-b80cd149.myshopify.com",
   "gptText": "",
-  "capped_usage": 1878472,
-  "current_usage": 0,
+  "documentType": "text",
   "subscription_name": "advanced",
-  "created_at": "2023-08-30T16:16:15-04:00",
+  "usage_limit": 0,
+  "current_usage": 3390,
+  "last_payment_date": "2023-09-12T21:14:08.828Z",
+  "created_at": "2023-09-12T18:01:06-04:00",
+  "updated_at": "2023-09-12T18:01:21-04:00",
   "currency": "USD",
   "capped_amount": 0,
   "status": "ACTIVE",
-  "updated_at": "2023-08-30T16:16:29-04:00",
-  "seen": true,
-  "last_payment_date": "2023-08-30T20:16:45.560Z"
+  "seen": true
 }

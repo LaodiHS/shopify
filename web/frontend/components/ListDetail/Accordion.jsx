@@ -65,8 +65,11 @@ import {
   SelectedOptions,
   IonButtonInformation,
   useDataProvidersContext,
-  // Tinymce,
+  quicksBarConfig,
   UseGridStack,
+  ChartComponent,
+  ReadabilityStats,
+  BarChartComponent,
 } from "../../components";
 
 const shortenText = (text) =>
@@ -95,10 +98,18 @@ export function Accordion({
     productDetailOptions,
     languageOptions,
     uncachedFetchData,
-    tinymceStyles,
+
     assignAssistRequest,
+    assignClearAssistMethod,
+    assignUpdateArticleMethod,
+    markupText,
+    setMarkupText,
+
+    setServerSentEventLoading,
+
+    setContentSaved,
+    eventEmitter,
   } = useDataProvidersContext();
-  console.log("language options", languageOptions);
 
   const Popover = () => (
     <IonContent className="ion-padding">Hello World!</IonContent>
@@ -131,6 +142,7 @@ export function Accordion({
       setCurrentAccordion(aiWorkStation);
     }
   }, [aiWorkStation]);
+
   useEffect(async () => {
     const blogName = await generateHash(currentSession.shop);
     setHashBlogName(blogName);
@@ -142,6 +154,7 @@ export function Accordion({
     // Access and trigger the handleChildAction function in the child component
 
     if (blogSelectionRef.current) {
+      console.log("blogSelectionRef.current", blogSelectionRef.current);
       blogSelectionRef.current.handleAddArticle();
     }
   };
@@ -165,7 +178,6 @@ export function Accordion({
     post: "",
   });
 
-  const [documentLoading, setDocumentLoading] = useState(false);
   const [displayDocumentType, setDisplayDocumentType] = useState("text");
 
   // Define the setDocuments object outside the function
@@ -206,19 +218,32 @@ export function Accordion({
   if (host) {
     //console.log("host: " + host);
   }
+  const location = useLocation();
+  useEffect(() => {
+    if (!productData) {
+      location.pathname = "/";
+    }
+  }, []);
+
   const [words, setWords] = useState([productData.description]);
   const [serverWords, setServerWords] = useState([]);
 
-  const [markupText, setMarkupText] = useState(productData.description);
+  function assignMarkupText(text) {
+    setMarkupText(text);
+  }
+  useEffect(() => {
+    setMarkupText(productData.description);
+  }, []);
+
   const accordionRefs = useRef({});
   const addToAccordionRefs = (name, el) => {
     accordionRefs.current[name] = el;
   };
 
   const toggleOpenAccordion = (selectedAccordion) => {
-    console.log('current accordion', currentAccordion)
-    console.log('selected accordion', selectedAccordion);
-    console.log('accordionRefs-->', accordionRefs)
+    console.log("current accordion", currentAccordion);
+    console.log("selected accordion", selectedAccordion);
+    console.log("accordionRefs-->", accordionRefs);
     const accordion = accordionRefs.current[aiWorkStation];
 
     if (!accordion) {
@@ -229,7 +254,7 @@ export function Accordion({
     nativeEl.value = selectedAccordion;
   };
 
-  function eventSource(accordionId, callback) {
+  async function eventSource(accordionId, eventEmitter) {
     // Check if the EventSource is already initialized and return the existing Promise if available
 
     setServerWords([]);
@@ -237,7 +262,7 @@ export function Accordion({
     const locals = JSON.stringify(local);
     console.log("locals----", locals);
     // Create a new Promise for the EventSource connection
-    const eventSourcePromise = new Promise((resolve, reject) => {
+    const eventSourcePromise = await  new Promise((resolve, reject) => {
       const eventSource = new EventSource(
         `/sse/stream?shop=${currentSession.shop}&locals=${encodeURIComponent(
           locals
@@ -255,15 +280,16 @@ export function Accordion({
         if (!isResolved) {
           isResolved = true;
           reject(new Error("EventSource connection timeout"));
+          setServerSentEventLoading(false);
           eventSource.close();
         }
       }, 10000); // Set the timeout to 10 seconds (adjust as needed)
 
       eventSource.onopen = () => {
-        console.log('accordion opening')
+        console.log("accordion opening");
         toggleOpenAccordion("requirements");
 
-        setDocumentLoading(true);
+        setServerSentEventLoading(true);
 
         if (!isResolved) {
           isResolved = true;
@@ -282,14 +308,51 @@ export function Accordion({
         };
       };
       const scrollSmoothly = (accordionId) => {
-        scrollRef.current[accordionId].scrollIntoView({
-          behavior: "smooth",
-          block: "end",
-          inline: "center",
-          scrollMode: "always",
-          blockOffset: 70,
-        });
+        // scrollRef.current[accordionId].scrollIntoView({
+        //   behavior: "smooth",
+        //   block: "end",
+        //   inline: "center",
+        //   scrollMode: "always",
+        //    blockOffset: 70,
+        // });
       };
+      let activityTimer = false;
+      const activityTimeoutId = setTimeout(() => {
+        if (!activityTimer) {
+          eventSource.close();
+          setServerSentEventLoading(false);
+          presentToast({
+            message: "There was a network error, Please try again later.",
+            duration: 9000,
+            position: "middle", // top, bottom, middle
+            color: "warning",
+            onDidDismiss: (e) => {
+              //setRoleMessage(`Dismissed with role: ${e.detail.role}`);
+            },
+          });
+          activityTimer = false;
+          console.log("activity timer end");
+        }
+      }, 20000);
+
+      eventEmitter.on("error", (error) => {
+        console.log("error recived", error);
+        clearTimeout(activityTimeoutId);
+        eventSource.close();
+        setServerSentEventLoading(false);
+        presentToast({
+          message: "There was a network error, Please try again later.",
+          duration: 9000,
+          position: "middle", // top, bottom, middle
+          color: "warning",
+          onDidDismiss: (e) => {
+            setServerSentEventLoading(false);
+
+            //setRoleMessage(`Dismissed with role: ${e.detail.role}`);
+          },
+        });
+      });
+
       let str = "";
       eventSource.addEventListener("message", (event) => {
         // Handle the received SSE message
@@ -299,31 +362,41 @@ export function Accordion({
         // Handle the received SSE message
 
         if (eventData.message === "Job stream") {
+          activityTimer = true;
+
           const delta = eventData.delta;
           const word = delta.content;
           const finish_reason = delta.finish_reason;
-          Debounce(scrollSmoothly(accordionId), 300);
+          Debounce(scrollSmoothly(accordionId), 400);
           str += word;
+          // console.log('word: ' , word);
           setServerWords((prevWords) => [...prevWords, word]);
+          // eventEmitter.emit("description_assist", cleanText(word));
 
           if (finish_reason) {
-            setWords((prevWords) => [...prevWords, cleanText(str)]);
+            console.log("finish_reason", finish_reason);
+            const pureText = cleanText(str);
+            setMarkupText((pre) => pre.concat(pureText));
+            eventEmitter.emit("description_assist", pureText);
+            //setWords((prevWords) => [...prevWords, cleanText(str)]);
             eventSource.close();
+            setServerSentEventLoading(false);
           }
         }
 
         // Check if the job is completed or perform other actions based on the event data
         if (eventData.message === "Job completed") {
           const data = eventData.result;
-
+         
           if (data.error) {
+             console.log("error", data.error);
             console.log("error message received: " + data.error);
             presentToast({
               message: "There was a network error! We are working on it.",
               duration: 9000,
               position: "top", // top, bottom, middle
               onDidDismiss: (e) => {
-                setDisableButtons(false);
+                setServerSentEventLoading(false);
 
                 //setRoleMessage(`Dismissed with role: ${e.detail.role}`);
               },
@@ -334,7 +407,7 @@ export function Accordion({
             defineDisplayDocument(accordionId, documentType, document);
           }
 
-          setDocumentLoading(false);
+          setServerSentEventLoading(false);
           eventSource.close();
           //setAccordionLoadingState(false);
         }
@@ -346,12 +419,12 @@ export function Accordion({
             duration: 9000,
             position: "top", // top, bottom, middle
             onDidDismiss: (e) => {
-              setDisableButtons(false);
+              setServerSentEventLoading(false);
 
               //setRoleMessage(`Dismissed with role: ${e.detail.role}`);
             },
           });
-          setDocumentLoading(false);
+          setServerSentEventLoading(false);
           eventSource.close();
         }
       });
@@ -364,9 +437,11 @@ export function Accordion({
         console.error("SSE error:", error);
         if (!isResolved) {
           isResolved = true;
+          setServerSentEventLoading(false);
           clearTimeout(timeoutId); // Clear the timeout on error
           reject(error); // Reject the promise with the specific error
         }
+        setServerSentEventLoading(false);
         eventSource.close();
       });
 
@@ -381,7 +456,7 @@ export function Accordion({
           // Resolve the promise with 'true' on successful connection
         }
 
-        setDocumentLoading(false);
+        setServerSentEventLoading(false);
       };
     });
 
@@ -401,42 +476,6 @@ export function Accordion({
     return () => {};
   }, []);
 
-  // Context.listen("AudienceOptions", ({ serverOptions }, route) => {
-  //   if (serverOptions["option-requirements"]) {
-  //     serverOptions["option-requirements"] = {
-  //       ...serverOptions["option-requirements"],
-  //     };
-
-  //     setLanguageOptions(
-  //       Object.entries(serverOptions["option-requirements"]).map(
-  //         ([key, value]) => {
-  //           if (typeof value === "string") {
-  //             return [key, [value]];
-  //           }
-
-  //           if (Array.isArray(value)) {
-  //             return [key, value];
-  //           }
-  //         }
-  //       )
-  //     );
-  //   } else {
-  //     setLanguageOptions([]);
-  //   }
-
-  //   if (serverOptions["included-product-details"]) {
-  //     const includedProductDetails = [
-  //       ...Object.entries(serverOptions["included-product-details"]),
-  //     ];
-
-  //     includedProductDetails.sort((a, b) => b[0].localeCompare(a[0]));
-
-  //     setProductDescOptions(includedProductDetails);
-  //   } else {
-  //     setProductDescOptions([]);
-  //   }
-  // });
-
   const fetch = useAuthenticatedFetch();
   const shopifySession = useShopifyContext();
   const [progress, setProgress] = useState(0);
@@ -447,7 +486,7 @@ export function Accordion({
     endpoint
   ) {
     try {
-      console.log("route", route);
+      console.log("route", route, language);
       const response = await fetch(`/api/ai/${route}/${endpoint}`, {
         method: "POST",
         headers: {
@@ -462,10 +501,19 @@ export function Accordion({
         }),
       });
 
-      const generatedPrompt = await response.json();
-      console.log(generatedPrompt.message);
-      return generatedPrompt;
+      if (response.ok) {
+        const generatedPrompt = await response.json();
+        console.log(generatedPrompt.message);
+        return generatedPrompt;
+      } else {
+        eventEmitter.emit("error", response.statusText);
+        const generatedPrompt = await response.json();
+        console.log(generatedPrompt.message);
+        return generatedPrompt;
+      }
     } catch (error) {
+      console.log("error emitted");
+      eventEmitter.emit("error", error);
       throw new Error(error.message);
     }
   }
@@ -473,13 +521,12 @@ export function Accordion({
   const resolveWithConfirm = useRef(null);
   // Function to resolve the promise with confirmation
 
-  const [disableButtons, setDisableButtons] = useState(false);
   const [handlerMessage, setHandlerMessage] = useState("");
   const [roleMessage, setRoleMessage] = useState("");
   const [presentToast] = useIonToast();
 
   async function setDataListener(accordionId, template, language) {
-    const listenerSet = await eventSource(accordionId);
+    const listenerSet = await eventSource(accordionId, eventEmitter);
     console.log("listenerSet", listenerSet);
     const focus = productDetailOptions;
     if (listenerSet.active) {
@@ -512,7 +559,7 @@ export function Accordion({
           duration: 20000,
           position: "middle", // top, bottom, middle
           onDidDismiss: (e) => {
-            setDisableButtons(false);
+            setServerSentEventLoading(false);
 
             //setRoleMessage(`Dismissed with role: ${e.detail.role}`);
           },
@@ -539,12 +586,11 @@ export function Accordion({
         console.log("legend", promptTextAndLegend.legend);
       }
     } else {
-      setDisableButtons(true);
       presentToast({
         message: "There was a network error!",
         duration: 3000,
         onDidDismiss: (e) => {
-          setDisableButtons(false);
+          setServerSentEventLoading(false);
           setRoleMessage(`Dismissed with role: ${e.detail.role}`);
         },
         buttons: [
@@ -582,8 +628,7 @@ export function Accordion({
     }));
   }
 
- async function handleNonSelectedItems (accordionId) {
-   
+  async function handleNonSelectedItems(accordionId) {
     const route = accordionId;
 
     const showAlert = async (title, message, template) => {
@@ -619,19 +664,26 @@ export function Accordion({
       );
     }
 
-    setDataListener(
-      accordionId,
-      "focus-language-options",
-      languageOptions
-    );
-  };
-  
-useEffect(()=>{
-assignAssistRequest(()=>handleNonSelectedItems);
-},[])
+    setDataListener(accordionId, "focus-language-options", languageOptions);
+  }
 
+  useEffect(() => {
+    assignAssistRequest(() => handleNonSelectedItems);
+  }, []);
 
-  const handleUpdateClick = async (productData, type) => {
+  function handleClearClick(id) {
+    setDisplayDocument((previous) => ({ ...previous, [id]: "" }));
+    setWords([]);
+    setServerWords([]);
+  }
+
+  useEffect(() => {
+    assignClearAssistMethod(() => handleClearClick);
+  }, []);
+
+  const handleUpdateClick = async (type, markupText) => {
+    console.log("type", type);
+    console.log("markup Text", markupText);
     const descriptionHtml = markupText;
     if (type === "description" && markupText.length) {
       const productId = productData.id.split("/").pop();
@@ -648,17 +700,28 @@ assignAssistRequest(()=>handleNonSelectedItems);
       console.log("error: " + error);
 
       if (error === null) {
-        updateProductProperty("description", markupText);
+        const { productUpdate } = data;
+        const { product } = productUpdate;
+        const { descriptionHtml } = product;
+        setContentSaved(true);
+        console.log("save");
+        updateProductProperty("description", descriptionHtml);
+        setMarkupText(descriptionHtml);
         console.log("current Cursor", productData.currentCursor);
         pageIngCache.clearKey(productData.currentCursor);
         console.log("product updated");
       }
     } else if (type === "article" && markupText.length) {
+      console.log("article update hit");
       addArticleClick(descriptionHtml);
     } else if (type === "post" && markupText.length) {
       addPostClick(hashedBlogName);
     }
   };
+
+  useEffect(() => {
+    assignUpdateArticleMethod(() => handleUpdateClick);
+  }, []);
 
   const showConfirmAlert = async (header, message) => {
     if (!header || !message) {
@@ -685,7 +748,12 @@ assignAssistRequest(()=>handleNonSelectedItems);
   const accordions = [
     {
       index: 0,
-
+      // markupText,   setMarkupText,
+      // checkFeatureAccess,
+      assignMarkupText,
+      scrollRef,
+      aiWorkStation,
+      addToAccordionRefs,
       accordionId: "description",
       label: "Description Assist",
       header: "Updating Your Description",
@@ -705,7 +773,12 @@ assignAssistRequest(()=>handleNonSelectedItems);
     },
     {
       index: 1,
+      // markupText,  setMarkupText,
+      // checkFeatureAccess,
 
+      scrollRef,
+      aiWorkStation,
+      addToAccordionRefs,
       accordionId: "article",
       label: "Article Assist",
       placeholder: "Create or Modify Your Article Here",
@@ -723,7 +796,12 @@ assignAssistRequest(()=>handleNonSelectedItems);
     },
     {
       index: 2,
+      // markupText,    setMarkupText,
+      // checkFeatureAccess,
 
+      scrollRef,
+      aiWorkStation,
+      addToAccordionRefs,
       accordionId: "post",
       label: "Post Assist",
       helperNotesClear: "Clear the content Post",
@@ -742,496 +820,10 @@ assignAssistRequest(()=>handleNonSelectedItems);
       productData,
     },
   ].filter((acc) => acc.accordionId === aiWorkStation);
-  console.log("acc", accordions);
-  const handleClearClick = (id) => {
-    setDisplayDocument((previous) => ({ ...previous, [id]: "" }));
-    setWords([]);
-    setServerWords([]);
-  };
-
-  const accordionGroup = useRef(null);
-
-  const renderAccordionItem = ({
-    index,
-    accordionId,
-    buttonNames,
-    productData,
-    helperNotesClear,
-    helperNotesAssist,
-    helperNotesUpdate,
-    currentAccordion:aiWorkStation,
-    accordionOptions,
-    markupText,
-    blogSelectionRef,
-    serverWords,
-  }) => {
-    const { checkFeatureAccess } = useDataProvidersContext();
-
-    const [markupViewLock, setMarkupViewLock] = useState(
-      checkFeatureAccess(["crafted"])
-    );
-    const [renderedViewLock, setRenderedViewLock] = useState(
-      checkFeatureAccess(["crafted"]).hasAccess
-    );
-    // if (accordionOptions[id])
-
-    function autosaveContent(editor) {
-      const content = editor.getContent();
-      localStorage.setItem("autosaveContent", content);
-      console.log("Content autosaved to localStorage:", content);
-    }
-
-    // Restore content from localStorage on page load
-
-    function aiButton(editor) {
-      //   editor.fire("assistFire", {
-      //     newText: "hello world",
-      //     editorView: accordionId,
-      //   });
-      // editor.on("assistFire", (t) => {
-      //   if (t.editorView === accordionId) {
-      //     // let cursor = editor.selection.getBookmark();
-
-      //     editor.selection.setContent(t.newText);
-      //     //editor.selection.moveToBookmark(cursor);
-      //   }
-      // });
-
-      editor.plugins.get("ai").register();
-      editor.ui.registry.addButton("ai", {
-        text: "Custom Button",
-        icon: "language",
-        onAction: function () {
-          editor.insertContent("Hello from custom button!");
-        },
-      });
-    }
-    const menubarConfig = {
-      menubar: "file edit view insert format tools table code",
-      menu: {
-        code: { title: "Edit Source Code", items: "code" },
-      },
-      // toolbar_location: 'bottom',
-      //  menubar: true,
-      // menubar_sticky: true,
-
-      resize: "both",
-      resize_img_proportional: true,
-      toolbar: [
-        "undo redo link | media| image | table | wordcount ",
-        "forecolor backcolor | bold italic underline | fontfamily fontsize",
-        "alignleft aligncenter alignright alignfull | numlist bullist outdent indent | emoticons | accordion |insertdatetime",
-      ],
-      statusbar: true,
-      toolbar_sticky: true,
-    };
-
-    const quicksBarConfig = {
-      menubar: false,
-      toolbar: false,
-      quickbars_insert_toolbar: "quicktable image media bullist numlist indent outdent emoticons accordion insertdatetime ai",
-      quickbars_selection_toolbar:"fontfamily fontsize bold italic underline | formatselect | blockquote quicklink",
-      contextmenu: "undo redo | inserttable | cell row column deletetable | wordcount | ai",
-
-      powerpaste_word_import: "clean",
-      powerpaste_html_import: "clean",
-    };
-
-    return (
-      <div
-        className={accordionOptions[accordionId] ? "" : "ion-hide"}
-        key={index}
-        value={index}
-      >
-        <IonGrid>
-          <IonGrid>
-            <IonRow>
-              {accordionId === "article" && (
-                <BlogSelection
-                  currentBox={currentAccordion}
-                  article={markupText}
-                  ref={blogSelectionRef}
-                />
-              )}
-            </IonRow>
-          </IonGrid>
-
-          <IonRow>
-            <IonCol size="12">
-              <IonAccordionGroup
-                expand="inset"
-                ref={(el) => {
-                  addToAccordionRefs(accordionId, el);
-                }}
-                multiple={true}
-              >
-                <IonAccordion value="requirements">
-                  <AccordionInformationHeader
-                    accordionName={`Requirements`} //HighlightHub
-                    boxName={currentAccordion}
-                    lock={true}
-                    note={`Your requirements and selections are visually highlighted within the document.`}
-                  />
-
-                  <div className="ion-padding" slot="content">
-                    <TextWithMarkers markedText={serverWords.join("")} />
-                  </div>
-                </IonAccordion>
-                <IonAccordion
-                  disabled={!markupViewLock.hasAccess}
-                  ref={(ref) => (scrollRef.current[accordionId] = ref)}
-                  value="markup"
-                >
-                  <AccordionInformationHeader
-                    accordionName={
-                      markupViewLock.hasAccess
-                        ? `MarkUp`
-                        : markupViewLock.message(`MarkUp`)
-                    }
-                    boxName={currentAccordion}
-                    lock={markupViewLock.hasAccess}
-                    note={`Examine the original text content of your descriptions, websites, blogs, and articles.`}
-                  />
-                  <div className="ion-padding" slot="content">
-                    {markupText}
-                  </div>
-                </IonAccordion>
-                <IonAccordion
-                  disabled={!markupViewLock.hasAccess}
-                  value="present"
-                >
-                  <AccordionInformationHeader
-                    accordionName={
-                      markupViewLock.hasAccess
-                        ? `Presentation`
-                        : markupViewLock.message(`Presentation`)
-                    }
-                    boxName={currentAccordion}
-                    note={`Preview how the content will appear on your websites, blogs, and articles.`}
-                    lock={markupViewLock.hasAccess}
-                  />
-                  <div className="ion-padding" slot="content">
-                    <Editor
-                      value={markupText}
-                      inline
-                      disabled={true}
-                      scriptLoading={
-                        {
-                          // async?: boolean;
-                          // defer?: boolean;
-                          // delay: 600,
-                        }
-                      }
-                      init={{
-                        branding: false,
-                        promotion: false,
-                        theme: false,
-                        skin: false,
-
-                        content_css: true,
-                        // content_style:editorStyles,
-                        inline_styles: true,
-                        inline_boundaries: true,
-
-                        menubar: false,
-                        toolbar_sticky: false,
-                        min_height: 400,
-                        height: 400,
-                        readyOnly: true,
-                        disable: true,
-                      }}
-                    />
-                    {/* <ReactRenderingComponent text={markupText} /> */}
-                  </div>
-                </IonAccordion>
-              </IonAccordionGroup>
-            </IonCol>
-          </IonRow>
-        </IonGrid>
-        <IonGrid>
-          <IonRow>
-            <IonCol size="12">
-              <IonItem lines="full">
-                <IonIcon
-                  size="small"
-                  color="secondary"
-                  slot="end"
-                  aria-label="Include existing description in composition"
-                  id={`explainer-${accordionId}-info` + currentAccordion}
-                  icon={informationCircleOutline}
-                ></IonIcon>{" "}
-              </IonItem>
-              <IonPopover
-                key={"Include existing description in composition"}
-                translucent={true}
-                animated="true"
-                trigger={`explainer-${accordionId}-info` + currentAccordion}
-                triggerAction="hover"
-              >
-                <IonContent className="ion-padding">
-                  <IonText>
-                    <p>
-                      <sub>
-                        We Support your favorite Markdown syntax.
-                        <br /> Html :{" "}
-                        <IonText color="tertiary">
-                          {`<strong>...</strong><bold>...</bold><h1>...</h1>...`}
-                        </IonText>
-                        <br /> Markdown :{" "}
-                        <IonText color="tertiary">
-                          {`< $E=mc^2$, 
-                          # Main Title
-                          ## Subtitle
-                          ### Sub-subtitle,    
-                          - [x] Task 1
-                          - [ ] Task 2
-                          - [ ] Task 3
-                          ...`}
-                        </IonText>
-                        <br />
-                        Katex :{" "}
-                        <IonText color="tertiary">
-                          {`$$\displaystyle\sum_{i=1}^n $$`}
-                        </IonText>
-                        <br />
-                        Use your favorite syntax to preview and format your
-                        document.
-                        <a
-                          target="_top"
-                          href="https://www.markdownguide.org/cheat-sheet/"
-                        >
-                          Mark Down
-                        </a>
-                        ,{" "}
-                        <a
-                          target="_top"
-                          href="https://www.markdownguide.org/cheat-sheet/"
-                        >
-                          KATEX
-                        </a>
-                      </sub>
-                    </p>
-                  </IonText>
-                  <IonText color="secondary">
-                    <sub>
-                      <IonIcon icon={exitOutline}></IonIcon> click outside box
-                      to close
-                    </sub>
-                  </IonText>
-                </IonContent>
-              </IonPopover>{" "}
-              <IonCard>
-                <IonCardHeader>
-                  <IonCardTitle>Editor</IonCardTitle>
-                  <IonCardSubtitle>
-                    {JSON.stringify(productData.title)}
-                  </IonCardSubtitle>
-                </IonCardHeader>
-                <IonCardContent>
-                  <Editor
-                    // initialValue={markupText}
-                    value={markupText}
-                    onEditorChange={(e) => {
-                      setMarkupText(e);
-                    }}
-                    inline
-                    toolbar_sticky={true}
-                    init={{
-                      branding: false,
-                      promotion: false,
-                      // theme: false,
-                      content_css:
-                        "tinymce/skins/content/tinymce-5/content.min.css",
-                      inline_styles: true,
-                      inline_boundaries: true,
-                      // autoresize_overflow_padding: 50,
-
-                      min_height: 500,
-                      image_caption: true,
-                      image_advtab: true,
-                      image_description: false,
-                      image_title: true,
-                      a11y_advanced_options: true,
-                      // ui_mode: "split",
-
-                      //ui_mode 'split'enables support for editors in scrollable containers and adjusts the behaviour as follows:Popups, menus and inline dialogs are rendered in a separate container and inserted as a sibling to the editor. These UI elements move together as you scroll the editor’s container.If toolbar_sticky is set to true, the UI element can be docked on both page and container scroll. This means the UI element will stay in the same place relative to the container, regardless of how much you scroll the page or the container itself.
-                      // readyOnly: true,
-                      // disable: true,
-                      // draggable_modal: true,
-                      // quickbars_selection_toolbar:"bold italic | formatselect | quicklink blockquote ",
-                      // quickbars_insert_toolbar:"link image | hr pagebreak | alignleft aligncenter alignright |  imageoptions | 'quickimage quicktable | hr pagebreak",
-                      // imagetools_toolbar:"rotateleft rotateright | flipv fliph | editimage imageoptions",
-                      // uickbars_image_toolbar:"alignleft aligncenter alignright | rotateleft rotateright | imageoptions",
-                      // quickbars_automatic_toolbar:"styleselect | bold italic | alignleft aligncenter alignright | link image",
-                      // quickbars_automatic_toolbar_minimal:"styleselect | bold italic | link image",
-                      // quickbars_automatic_toolbar_extended:"styleselect | bold italic underline | numlist bullist | alignleft aligncenter alignright | link image",
-                      // image_advtab: true,
-                      // image_dimensions: true,
-                      // image_caption: true,
-                      // link_title: true,
-                      // link_assume_external_targets: true,
-
-                      plugins: [
-                        "autosave",
-                        "lists",
-                        "autolink",
-                        "link",
-                        "image",
-                        "media",
-                        "advlist",
-                        "wordcount",
-                        "autoresize",
-                        "importcss",
-                        "quickbars",
-                        "insertdatetime",
-                        "pagebreak",
-                        "preview",
-                        "table",
-                        "template",
-                        "visualblocks",
-                        "visualchars",
-                        "emoticons",
-                        "accordion",
-                        "code",
-                        "directionality",
-                        "ai",
-                      ],
-                      ...quicksBarConfig,
-                      mobile: {
-                        menubar: false,
-
-                        plugins: [
-                          "autosave",
-                          "lists",
-                          "autolink",
-                          "link",
-                          "image",
-                        ],
-                        toolbar: ["undo", "bold", "italic", "styleselect"],
-                      },
-                      autosave_interval: 10, // Autosave every 10 seconds
-                      autosave_prefix: "my-editor-autosave-", // Prefix for autosave keys
-                      autosave_restore_when_empty: true,
-                      autosave_retention: "30s",
-                      setup: (editor) => {
-                        // aiButton(editor);
-
-                        // Listen for changes in the editor's content
-                        editor.on("change", function (e) {
-                          // Implement your own autosave logic here
-                          // For demonstration purposes, we're using a simple timeout
-
-                          clearTimeout(editor._autosaveTimer);
-                          editor._autosaveTimer = setTimeout(function () {
-                            autosaveContent(editor);
-                          }, 5000); // Autosave after 5 seconds of inactivity
-                        });
-
-                        // setTimeout(() => {
-                        //   editor.fire("assistFire", {
-                        //     newText: "hello world",
-                        //     editorView: accordionId,
-                        //   });
-                        // }, 6000);
-
-                        editor.on("init", () => {
-                          // editor.focus();
-                          const contentLength = editor.getContent();
-                          console.log("contentLength", contentLength);
-                          // Set the cursor to the bottom of the editor's content
-                          editor.selection.setCursorLocation(
-                            contentLength.length
-                          );
-                        });
-                      },
-                    }}
-                  />
-                  {/* <IonTextarea
-                key={id}
-                // ref={(ref) => ref && addTextareaRef(id, ref)}
-                ariaLabel={"Create a document and preview it here"}
-                label={"Create a document and preview it here"}
-                labelPlacement="stacked"
-                placeholder={placeholder}
-                value={
-                  displayDocumentType === "text"
-                    ? words.join("")
-                    : displayDocument[accordionId]
-                }
-                onIonInput={onInputTextAreaChange}
-                autoGrow={true}
-                className="description-textarea"
-                debounce={200}
-                // onIonChange={(e) => handleTextBoxChange(e, accordionId)}
-              ></IonTextarea> */}
-
-                  {/* <UseGridStack /> */}
-                </IonCardContent>
-              </IonCard>
-            </IonCol>
-          </IonRow>
-          <IonRow className="ion-justify-content-between  ion-justify-content-evenly  ">
-            <IonCol size="12">
-              <IonRow className="ion-justify-content-evenly">
-                <IonCol size="4">
-                  {buttonNames?.generate && (
-                    <IonButtonInformation
-                      ButtonName={buttonNames.generate}
-                      hoverId={
-                        "box-button" + accordionId + "-" + buttonNames.generate
-                      }
-                      PopoverContent={helperNotesAssist}
-                      disabledButton={disableButtons}
-                      clickHandler={handleNonSelectedItems}
-                      clickArgs={[accordionId]}
-                    />
-                  )}
-                </IonCol>
-                <IonCol size="4">
-                  {buttonNames?.update && (
-                    <IonButtonInformation
-                      ButtonName={buttonNames.update}
-                      hoverId={
-                        "box-button-update" +
-                        accordionId +
-                        "-" +
-                        buttonNames.update
-                      }
-                      PopoverContent={helperNotesUpdate}
-                      disabledButton={disableButtons}
-                      clickHandler={handleUpdateClick}
-                      clickArgs={[productData, accordionId]}
-                    />
-                  )}
-                </IonCol>
-                <IonCol size="4">
-                  {buttonNames?.clear && (
-                    <IonButtonInformation
-                      ButtonName={buttonNames.clear}
-                      hoverId={
-                        "box-button-clear" +
-                        accordionId +
-                        "-" +
-                        buttonNames.update
-                      }
-                      PopoverContent={helperNotesClear}
-                      disabledButton={disableButtons}
-                      clickHandler={handleClearClick}
-                      clickArgs={[accordionId]}
-                    />
-                  )}
-                </IonCol>
-              </IonRow>
-            </IonCol>
-          </IonRow>
-        </IonGrid>
-      </div>
-    );
-  };
 
   return (
-    <IonRow>
-      <IonCol className="ion-padding" size="12">
+    <IonRow key="IonRow">
+      <IonCol className="ion-padding" key="IonCol1" size="12">
         <SelectedOptions
           productDescOptions={languageOptions}
           title="Selected Tailored Discourse"
@@ -1244,25 +836,27 @@ assignAssistRequest(()=>handleNonSelectedItems);
           legend={legend}
         />
       </IonCol>
-      <IonCol size="12">
+      <IonCol key="ionColAccordionGroup" size="12">
         <IonAccordionGroup
+          key="IonAccordionGroupAnimated"
           animated={true}
           expand="inset"
           ref={accordionGroupRef}
           multiple={true}
         >
-          {accordions.map((accordion) =>
-            renderAccordionItem({
-              ...accordion,
-              displayText: displayDocument,
-              displayHTML: displayDocument,
-              currentAccordion,
-              accordionOptions,
-              markupText,
-              blogSelectionRef,
-              serverWords,
-            })
-          )}
+          {accordions.length &&
+            accordions.map((accordion) =>
+              renderAccordionItem({
+                ...accordion,
+                displayText: displayDocument,
+                displayHTML: displayDocument,
+                currentAccordion,
+                accordionOptions,
+                markupText,
+                blogSelectionRef,
+                serverWords,
+              })
+            )}
         </IonAccordionGroup>
       </IonCol>
 
@@ -1292,5 +886,537 @@ assignAssistRequest(()=>handleNonSelectedItems);
         ]}
       />
     </IonRow>
+  );
+}
+
+function renderAccordionItem({
+  index,
+  accordionId,
+  productData,
+  accordionOptions,
+  scrollRef,
+  aiWorkStation,
+  addToAccordionRefs,
+  blogSelectionRef,
+  serverWords,
+}) {
+  const {
+    checkFeatureAccess,
+    markupText,
+    serverSentEventLoading,
+    setMarkupText,
+    eventEmitter,
+  } = useDataProvidersContext();
+
+  const [markupViewLock, setMarkupViewLock] = useState(
+    checkFeatureAccess(["crafted"])
+  );
+
+  function autosaveContent(editor) {
+    const content = editor.getContent();
+    localStorage.setItem("autosaveContent", content);
+    console.log(" Editor Content autosaved to localStorage:");
+  }
+
+  useEffect(() => {}, []);
+
+  // Restore content from localStorage on page load
+
+  return (
+    <div
+      className={accordionOptions[accordionId] ? "" : "ion-hide"}
+      key={index + 1}
+      value={index + 2}
+    >
+      <IonGrid key={index + 3}>
+        <IonGrid key={index + 4}>
+          <IonRow key={index + 5}>
+            {accordionId === "article" && (
+              <BlogSelection
+                currentBox={aiWorkStation}
+                article={markupText}
+                ref={blogSelectionRef}
+              />
+            )}
+          </IonRow>
+        </IonGrid>
+
+        <IonRow key={index + 6}>
+          <IonCol key={index + 7} size="12">
+            <IonAccordionGroup
+              expand="inset"
+              ref={(el) => {
+                addToAccordionRefs(accordionId, el);
+              }}
+              multiple={true}
+            >
+              <IonAccordion key={index + 8} value="requirements">
+                <AccordionInformationHeader
+                  accordionName={`Requirements`} //HighlightHub
+                  boxName={aiWorkStation}
+                  lock={true}
+                  note={`Your requirements and selections are visually highlighted within the document.`}
+                />
+
+                <div className="ion-padding" slot="content">
+                  <TextWithMarkers markedText={serverWords.join("")} />
+                </div>
+              </IonAccordion>
+
+              {/* <IonAccordion
+                key={index + 9}
+                disabled={!markupViewLock.hasAccess}
+                ref={(ref) => (scrollRef.current[accordionId] = ref)}
+                value="markup"
+              >
+                <AccordionInformationHeader
+                  accordionName={
+                    markupViewLock.hasAccess
+                      ? `MarkUp`
+                      : markupViewLock.message(`MarkUp`)
+                  }
+                  boxName={aiWorkStation}
+                  lock={markupViewLock.hasAccess}
+                  note={`Examine the original text content of your descriptions, websites, blogs, and articles.`}
+                />
+                <div className="ion-padding" slot="content">
+
+                <IonTextarea
+              key={id}
+              // ref={(ref) => ref && addTextareaRef(id, ref)}
+              ariaLabel={"Create a document and preview it here"}
+              label={"Create a document and preview it here"}
+              labelPlacement="stacked"
+              placeholder={placeholder}
+              value={
+                displayDocumentType === "text"
+                  ? words.join("")
+                  : displayDocument[accordionId]
+              }
+              onIonInput={onInputTextAreaChange}
+              autoGrow={true}
+              className="description-textarea"
+              debounce={200}
+              // onIonChange={(e) => handleTextBoxChange(e, accordionId)}
+            ></IonTextarea>
+
+                </div>
+              </IonAccordion> */}
+
+              <IonAccordion
+              ref={(ref) => (scrollRef.current[accordionId] = ref)}
+                key={index + 10}
+                disabled={!markupViewLock.hasAccess}
+                value="present"
+              >
+                <AccordionInformationHeader
+                  accordionName={
+                    markupViewLock.hasAccess
+                      ? `Presentation`
+                      : markupViewLock.message(`Presentation`)
+                  }
+                  boxName={aiWorkStation}
+                  note={`Preview how the content will appear on your websites, blogs, and articles.`}
+                  lock={markupViewLock.hasAccess}
+                />
+                <div className="ion-padding" slot="content">
+                  <Editor
+                    value={markupText}
+                    inline
+                    disabled={true}
+                    scriptLoading={
+                      {
+                        // async?: boolean;
+                        // defer?: boolean;
+                        // delay: 600,
+                      }
+                    }
+                    init={{
+                      branding: false,
+                      promotion: false,
+                      theme: false,
+                      skin: false,
+                      content_css:
+                        "tinymce/skins/content/tinymce-5/content.min.css",
+                      // content_style:editorStyles,
+                      inline_styles: true,
+                      inline_boundaries: true,
+                      menubar: false,
+                      toolbar_sticky: false,
+                      min_height: 400,
+                      height: 400,
+                      readyOnly: true,
+                      disable: true,
+                    }}
+                  />
+                  {/* <ReactRenderingComponent text={markupText} /> */}
+                </div>
+              </IonAccordion>
+              <IonAccordion
+                key={index + 11}
+                value="seo"
+                disabled={!markupViewLock.hasAccess}
+              >
+                <AccordionInformationHeader
+                  accordionName={
+                    markupViewLock.hasAccess
+                      ? `SEO Analytics`
+                      : markupViewLock.message(`SEO Analytics`)
+                  }
+                  boxName={aiWorkStation}
+                  lock={markupViewLock.hasAccess}
+                  note={`RealTime Document Analytics.`}
+                />
+
+                <IonGrid key={index + 12} slot="content">
+                  <IonRow key={index + 13}>
+                    <IonCol key={index + 15} size="6">
+                      <IonRow key={index + 16}>
+                        <IonCol size="12" key={index + 17}>
+                          <ChartComponent key={index + 18} text={markupText} />
+                        </IonCol>
+                        <IonCol key={index + 19}>
+                          <BarChartComponent
+                            key={index + 20}
+                            text={markupText}
+                          />
+                        </IonCol>
+                      </IonRow>
+                    </IonCol>
+                    <IonCol size="6" key={index + 20}>
+                      <ReadabilityStats key={index + 21} text={markupText} />
+                    </IonCol>
+                  </IonRow>
+                </IonGrid>
+              </IonAccordion>
+            </IonAccordionGroup>
+          </IonCol>
+        </IonRow>
+      </IonGrid>
+      <IonGrid>
+        <IonRow>
+          <IonCol size="12">
+            <IonItem lines="full">
+              <IonIcon
+                size="small"
+                color="secondary"
+                slot="end"
+                aria-label="Include existing description in composition"
+                id={`explainer-${accordionId}-info` + aiWorkStation}
+                icon={informationCircleOutline}
+              ></IonIcon>{" "}
+            </IonItem>
+            <IonPopover
+              key={"Include existing description in composition"}
+              translucent={true}
+              animated="true"
+              trigger={`explainer-${accordionId}-info` + aiWorkStation}
+              triggerAction="hover"
+            >
+              <IonContent className="ion-padding">
+                <IonText>
+                  <p>
+                    <sub>
+                      We Support your favorite Markdown syntax.
+                      <br /> Html :{" "}
+                      <IonText color="tertiary">
+                        {`<strong>...</strong><bold>...</bold><h1>...</h1>...`}
+                      </IonText>
+                      <br /> Markdown :{" "}
+                      <IonText color="tertiary">
+                        {`< $E=mc^2$, 
+                        # Main Title
+                        ## Subtitle
+                        ### Sub-subtitle,    
+                        - [x] Task 1
+                        - [ ] Task 2
+                        - [ ] Task 3
+                        ...`}
+                      </IonText>
+                      <br />
+                      Katex :{" "}
+                      <IonText color="tertiary">
+                        {`$$\displaystyle\sum_{i=1}^n $$`}
+                      </IonText>
+                      <br />
+                      Use your favorite syntax to preview and format your
+                      document.
+                      <a
+                        target="_top"
+                        href="https://www.markdownguide.org/cheat-sheet/"
+                      >
+                        Mark Down
+                      </a>
+                      ,{" "}
+                      <a
+                        target="_top"
+                        href="https://www.markdownguide.org/cheat-sheet/"
+                      >
+                        KATEX
+                      </a>
+                    </sub>
+                  </p>
+                </IonText>
+                <IonText color="secondary">
+                  <sub>
+                    <IonIcon icon={exitOutline}></IonIcon> click outside box to
+                    close
+                  </sub>
+                </IonText>
+              </IonContent>
+            </IonPopover>{" "}
+            <IonCard>
+              <IonCardHeader>
+                <IonCardTitle>Editor</IonCardTitle>
+                <IonCardSubtitle>{productData.title}</IonCardSubtitle>
+              </IonCardHeader>
+              <IonCardContent>
+                {/* {markupText} */}
+                <Editor
+                  // initialValue={markupText}
+                  value={markupText}
+                  onEditorChange={(e) => {
+                    setMarkupText(e);
+                  }}
+                  setBaseUrl={"/tinymce"}
+                  inline
+                  //disabled={serverSentEventLoading}
+                  // toolbar_sticky={true}
+                  init={{
+                    branding: false,
+                    promotion: false,
+
+                    // theme: false,
+                    // content_css:
+                    //   "tinymce/skins/content/tinymce-5/content.min.css",
+                    inline_styles: true,
+                    inline_boundaries: true,
+                    // autoresize_overflow_padding: 50,
+
+                    min_height: 500,
+                    height: 500,
+
+                    image_caption: true,
+                    image_advtab: true,
+                    image_description: false,
+                    image_title: true,
+                    a11y_advanced_options: true,
+                    // ui_mode: "split",
+                    //ui_mode 'split'enables support for editors in scrollable containers and adjusts the behaviour as follows:Popups, menus and inline dialogs are rendered in a separate container and inserted as a sibling to the editor. These UI elements move together as you scroll the editor’s container.If toolbar_sticky is set to true, the UI element can be docked on both page and container scroll. This means the UI element will stay in the same place relative to the container, regardless of how much you scroll the page or the container itself.
+                    // readyOnly: true,
+                    // disable: true,
+                    // draggable_modal: true,
+                    // quickbars_selection_toolbar:"bold italic | formatselect | quicklink blockquote ",
+                    // quickbars_insert_toolbar:"link image | hr pagebreak | alignleft aligncenter alignright |  imageoptions | 'quickimage quicktable | hr pagebreak",
+                    // imagetools_toolbar:"rotateleft rotateright | flipv fliph | editimage imageoptions",
+                    // uickbars_image_toolbar:"alignleft aligncenter alignright | rotateleft rotateright | imageoptions",
+                    // quickbars_automatic_toolbar:"styleselect | bold italic | alignleft aligncenter alignright | link image",
+                    // quickbars_automatic_toolbar_minimal:"styleselect | bold italic | link image",
+                    // quickbars_automatic_toolbar_extended:"styleselect | bold italic underline | numlist bullist | alignleft aligncenter alignright | link image",
+                    // image_advtab: true,
+                    // image_dimensions: true,
+                    // image_caption: true,
+                    // link_title: true,
+                    // link_assume_external_targets: true,
+
+                    plugins: [
+                      // "autosave",
+                      "lists",
+                      "autolink",
+                      "link",
+                      "image",
+                      "media",
+                      "advlist",
+                      "wordcount",
+                      "autoresize",
+                      "importcss",
+                      "quickbars",
+                      "insertdatetime",
+                      "pagebreak",
+                      "preview",
+                      "table",
+                      "template",
+                      "visualblocks",
+                      "visualchars",
+                      "emoticons",
+                      "accordion",
+                      "code",
+                      "directionality",
+                      // "streamingai",
+                      // "ai",
+                    ],
+
+                    setup: (editor) => {
+                      let cursor;
+
+                      let selection;
+
+                      eventEmitter.on("description_assist", (text) => {
+                        // editor.fire("description_assist", text);
+                        // console.log("range", editor, selection);
+                        // const newContentElement = cursor.startContainer
+                        //   newContentElement.scrollIntoView({
+                        //         behavior: 'smooth',
+                        //         block: 'end',
+                        //       })
+                        //  editor.selection.setContent(text);
+                        // cursor = cursor || editor.selection.getBookmark();
+                        // editor.selection.moveToBookmark(cursor);
+                        // editor.selection.setContent(text);
+                      });
+
+                      editor.on("description_assist", (text) => {
+                        // console.log('editor.selection',editor)
+                        // editor.selection.moveToBookmark(cursor);
+                        // editor.selection.setContent(text,{type:"raw"});
+                      });
+                      // editor.addMenuItem('image', {
+                      //   icon: 'image',
+                      //   text: 'Image',
+                      //   onclick: Dialog(editor).open,
+                      //   context: 'insert',
+                      //   cmd: 'mceImage',
+                      //   prependToContext: true
+                      // });
+
+                      editor.on("Click", function (e) {
+                        cursor = editor.selection.getBookmark();
+                      });
+                      editor.on("focus", function (e) {
+                        editor.focus();
+                        cursor = editor.selection.getBookmark();
+                      });
+
+                      editor.on("blur", function (e) {
+                        cursor = editor.selection.getBookmark();
+                      });
+
+                      editor.ui.registry.addButton("title-image", {
+                        text: "Select Image Title",
+                        // onAction: () => editor.windowManager.open(page1Config),
+                      });
+
+                      // editor.ui.registry.addGroupToolbarButton("title-Image", {
+                      //   text: "Select Article Image",
+                      //   tooltip: "image",
+                      //   items: "image",
+                      //   onClick: () => {
+                      //     console.log("on click");
+                      //   },
+                      // });
+                      editor.on("mceImage", () => {
+                        console.log("on click ");
+                      });
+                      // Listen for changes in the editor's content
+                      editor.on("change", function (e) {
+                        // Implement your own autosave logic here
+                        // For demonstration purposes, we're using a simple timeout
+                        // clearTimeout(editor._autosaveTimer);
+                        // editor._autosaveTimer = setTimeout(function () {
+                        //   autosaveContent(editor);
+                        // }, 5000); // Autosave after 5 seconds of inactivity
+                      });
+
+                      // setTimeout(() => {
+                      //   editor.fire("assistFire", {
+                      //     newText: "hello world",
+                      //     editorView: accordionId,
+                      //   });
+                      // }, 6000);
+
+                      editor.on("init", () => {
+                        editor.focus();
+
+                        console.log("editor selecton", editor.selection);
+                        cursor = editor.selection.getBookmark();
+                        selection = editor.selection;
+
+                        //   const contentLength = editor.getContent();
+                        // console.log("contentLength", contentLength);
+                        // Set the cursor to the bottom of the editor's content
+                        // editor.selection.setCursorLocation(contentLength.length);
+                      });
+                    },
+                    ...quicksBarConfig(eventEmitter),
+                    mobile: {
+                      menubar: false,
+
+                      plugins: [
+                        //  "autosave",
+                        "lists",
+                        "autolink",
+                        "link",
+                        "image",
+                      ],
+                      toolbar: ["undo", "bold", "italic", "styleselect"],
+                    },
+                    // autosave_interval: 10, // Autosave every 10 seconds
+                    //autosave_prefix: "my-editor-autosave-", // Prefix for autosave keys
+                    //autosave_restore_when_empty: true,
+                    //autosave_retention: "30s",
+                  }}
+                />
+
+                {/* <UseGridStack /> */}
+              </IonCardContent>
+            </IonCard>
+          </IonCol>
+        </IonRow>
+        {/* <IonRow className="ion-justify-content-between  ion-justify-content-evenly  ">
+          <IonCol size="12">
+            <IonRow className="ion-justify-content-evenly">
+              <IonCol size="4">
+                {buttonNames?.generate && (
+                  <IonButtonInformation
+                    ButtonName={buttonNames.generate}
+                    hoverId={
+                      "box-button" + accordionId + "-" + buttonNames.generate
+                    }
+                    PopoverContent={helperNotesAssist}
+                    disabledButton={disableButtons}
+                    clickHandler={handleNonSelectedItems}
+                    clickArgs={[accordionId]}
+                  />
+                )}
+              </IonCol>
+              <IonCol size="4">
+                {buttonNames?.update && (
+                  <IonButtonInformation
+                    ButtonName={buttonNames.update}
+                    hoverId={
+                      "box-button-update" +
+                      accordionId +
+                      "-" +
+                      buttonNames.update
+                    }
+                    PopoverContent={helperNotesUpdate}
+                    disabledButton={disableButtons}
+                    clickHandler={handleUpdateClick}
+                    clickArgs={[productData, accordionId]}
+                  />
+                )}
+              </IonCol>
+              <IonCol size="4">
+                {buttonNames?.clear && (
+                  <IonButtonInformation
+                    ButtonName={buttonNames.clear}
+                    hoverId={
+                      "box-button-clear" +
+                      accordionId +
+                      "-" +
+                      buttonNames.update
+                    }
+                    PopoverContent={helperNotesClear}
+                    disabledButton={disableButtons}
+                    clickHandler={handleClearClick}
+                    clickArgs={[accordionId]}
+                  />
+                )}
+              </IonCol>
+            </IonRow>
+          </IonCol>
+        </IonRow> */}
+      </IonGrid>
+    </div>
   );
 }

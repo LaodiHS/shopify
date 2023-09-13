@@ -35,8 +35,6 @@ export function Toggles ({ onToggleChange, toggles, modal }){
     <>
       <IonRow className="ion-justify-content-end">
         {Object.entries(toggleState).map(([toggleName, toggleValue], index) => {
-          
-
           return (
             <IonCol key={toggleName} size="12">
               <IonItem lines="none">

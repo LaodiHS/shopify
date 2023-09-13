@@ -4,24 +4,45 @@ import { ListComponent } from "./ListComponent";
 import { useProductDataContext } from "../components";
 import { useNavigate } from "react_router_dom";
 import {
-  IonSpinner,
-  IonText,
-  IonButton,
-  IonButtons,
+  
   IonToolbar,
-  IonIcon,
+
   IonTitle,
   IonHeader,
-  IonPage,
-  IonContent,
+
+
+  IonItem,
+  IonList,
   IonGrid,
   IonRow,
   IonCol,
+  IonInput,
+  IonButton,
+  IonCard,
+  IonListHeader,
+  IonImg,
+  IonThumbnail,
+  IonSkeletonText,
+  IonLabel,
+  IonButtons,
+  IonCardHeader,
+  IonCardTitle,
+  IonCardSubtitle,
+  IonCardContent,
+  IonText,
+  IonBadge,
+  createAnimation,
+  IonNavLink,
+  IonContent,
+  IonPage,
+  IonSpinner,
+  IonIcon,
+  useIonViewWillEnter,
 } from "@ionic/react";
 import { chevronBack, chevronForward } from "ionicons/icons";
 import { pageIngCache, History, formatProducts } from "../utilities/store";
 
-export function ProductsCard() {
+export function ProductsCard({animationRef}) {
   const pagingHistory = History;
   const fetch = useAuthenticatedFetch();
 
@@ -103,26 +124,11 @@ export function ProductsCard() {
   // console.log('isProductsLoading', isProductsLoading)
   if (isProductsLoading || !productsData || !productsData.productsData.length) {
     return (
-      <IonPage>
-      <IonContent>
-        <IonGrid style={{ height: "100vh" }}>
-          <IonRow
-            className="ion-justify-content-center ion-align-items-center"
-            style={{ height: "100%" }}
-          >
-            <IonCol size="auto">
-              <IonSpinner
-                style={{ width: "100px", height: "100px" }}
-                color="tertiary"
-              ></IonSpinner>
-            </IonCol>
-          </IonRow>
-        </IonGrid>
-      </IonContent></IonPage>
-    );
+      <SkeletonComponent />
+          )
   }
   return (
-    <IonPage>
+    <IonPage  ref={animationRef} >
       <IonHeader translucent={true}>
         <IonToolbar>
           <IonButtons slot="secondary">
@@ -163,5 +169,47 @@ export function ProductsCard() {
         </div>
       )}
     </IonPage>
+  );
+}
+
+
+function SkeletonComponent() {
+  // Define the number of skeleton items to render (should match the number of products)
+  const numberOfSkeletonItems = 20; // Change this to your desired number
+
+  return (
+    <IonContent>
+      <IonGrid>
+        <IonRow>
+          {[...Array(numberOfSkeletonItems).keys()].map((productIndex) => (
+            <IonCol key={productIndex} size="12" sizeMd="6" sizeSm="12" sizeXl="3">
+              <IonCard>
+                <IonCardHeader>
+                  <IonCardTitle style={{ marginBottom: '16px' }}>
+                    <IonSkeletonText animated style={{ width: '80%' }} />
+                  </IonCardTitle>
+                </IonCardHeader>
+                <IonCardContent>
+                  <IonGrid>
+                    <IonRow>
+                      <IonCol size="6" sizeMd="12" sizeSm="12">
+                        <IonSkeletonText animated style={{ width: '100%', height: '150px' }} />
+                      </IonCol>
+                      <IonCol size="6" sizeMd="12" sizeSm="12">
+                        <IonSkeletonText animated style={{ width: '80%' }} />
+                        <IonSkeletonText animated style={{ width: '80%' }} />
+                        <IonSkeletonText animated style={{ width: '80%' }} />
+                        <IonSkeletonText animated style={{ width: '80%' }} />
+                        <IonSkeletonText animated style={{ width: '80%' }} />
+                      </IonCol>
+                    </IonRow>
+                  </IonGrid>
+                </IonCardContent>
+              </IonCard>
+            </IonCol>
+          ))}
+        </IonRow>
+      </IonGrid>
+    </IonContent>
   );
 }

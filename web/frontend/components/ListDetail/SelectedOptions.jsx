@@ -19,7 +19,9 @@ const shortenText = (text, maxLength) => {
   }
   return text;
 };
-
+function camelToNormalCase(input) {
+  return input.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase();
+}
 export function SelectedOptions({ productDescOptions, title, legend }) {
   if (legend) {
     legend = legend.reduce((acc, [key, value]) => {
@@ -70,7 +72,7 @@ export function SelectedOptions({ productDescOptions, title, legend }) {
                 <IonRadio
                   color="success"
                   checked
-                  value={{ optionKey } + shortenText(optionValue, 30)}
+                  value={{ optionKey } + shortenText( camelToNormalCase(optionValue), 30)}
                   key={itemIndex}
                   justify="space-between"
                 >
@@ -85,7 +87,7 @@ export function SelectedOptions({ productDescOptions, title, legend }) {
                         <img src={optionValue} />
                       </IonThumbnail>
                     )}
-                    {key !== "images" && shortenText(optionValue, 30)}
+                    {key !== "images" && shortenText( camelToNormalCase(optionValue), 30)}
                   </IonText>
                 </IonRadio>
               </IonRadioGroup>

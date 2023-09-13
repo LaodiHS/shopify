@@ -25,6 +25,7 @@ export async function authentication() {
         });
         console.log("has payment: " + hasPayment);
         if (hasPayment) {
+          console.log('has payment: ' + hasPayment);
           next();
         } else {
           const redirectUrl = await shopify.api.billing.request({

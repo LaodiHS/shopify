@@ -209,14 +209,21 @@ export function serverSideEvent(app, redisClient, queue) {
           api,
           promptTokenCountEstimate,
         } = data;
-
+        let finish_reason = false;
         if (gptStream && gptStream.data) {
           const dataGenerator = generateOpenAIMessages(data);
           for await (const delta of dataGenerator) {
             // Process each delta of data as it arrives
-
+            finish_reason = delta.finish_reason ? true : false;
             sendSSEMessage({ message: "Job stream", delta });
           }
+        }
+
+        if (!finish_reason) {
+          sendSSEMessage({
+            message: "Job stream",
+            delta: { finish_reason: true, delta: "", content: "" },
+          });
         }
         queueEvents.close();
         res.write("event: close\n");
@@ -314,7 +321,7 @@ async function* generateOpenAIMessages({
       for (const line of lines) {
         const message = line.replace(/^data: /, "");
 
-        if (message === "[DONE]") {
+        if (message.includes("[DONE]")) {
           // console.log('res inspect===>', inspect(res.headers, {depth:null, colors:true, compact:false}))
 
           //https://community.openai.com/t/how-to-get-total-tokens-from-a-stream-of-completioncreaterequests/110700
@@ -325,13 +332,11 @@ async function* generateOpenAIMessages({
             countTokens(responseContentCompleteText) +
             promptTokenCountEstimate +
             estimateOverheadForStream;
-
           await updateTokenUsageAfterJob(shop, totalResponseEstimate);
           const storeData = await userStore.readJSONFromFileAsync(shop);
           storeData.documentType = documentType;
-
           storeData.shop = shop;
-          storeData.gptText = responseContentCompleteText;
+          // storeData.gptText = responseContentCompleteText;
           storeData.documentType = documentType;
           await userStore.writeJSONToFileAsync(shop, storeData);
           // console.log('wrote user data-===>', storeData);

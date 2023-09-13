@@ -68,6 +68,7 @@ export async function chargeForAdditionalTokens(userId, additionalTokens) {
 
 // Function to update a user's current_usage after processing a job
 export async function updateTokenUsageAfterJob(userId, tokensUsed) {
+  console.log('toekns used', tokensUsed);
   const user = await getUserById(userId);
   if (user.current_usage) {
     user.current_usage += tokensUsed;
