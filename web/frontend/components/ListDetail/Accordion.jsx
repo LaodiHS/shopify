@@ -906,6 +906,7 @@ function renderAccordionItem({
     serverSentEventLoading,
     setMarkupText,
     eventEmitter,
+    DataProviderNavigate,
   } = useDataProvidersContext();
 
   const [markupViewLock, setMarkupViewLock] = useState(
@@ -1006,8 +1007,16 @@ function renderAccordionItem({
               <IonAccordion
               ref={(ref) => (scrollRef.current[accordionId] = ref)}
                 key={index + 10}
-                disabled={!markupViewLock.hasAccess}
-                value="present"
+               // disabled={!markupViewLock.hasAccess}
+                value="present"      
+                readonly={!markupViewLock.hasAccess}
+                      onClick={(e) => {
+                      if(!markupViewLock.hasAccess){
+                        console.log('e=---->', e)
+                        DataProviderNavigate("/subscriptions")
+                      }
+
+                  }}
               >
                 <AccordionInformationHeader
                   accordionName={
@@ -1018,6 +1027,7 @@ function renderAccordionItem({
                   boxName={aiWorkStation}
                   note={`Preview how the content will appear on your websites, blogs, and articles.`}
                   lock={markupViewLock.hasAccess}
+      
                 />
                 <div className="ion-padding" slot="content">
                   <Editor
@@ -1055,7 +1065,14 @@ function renderAccordionItem({
               <IonAccordion
                 key={index + 11}
                 value="seo"
-                disabled={!markupViewLock.hasAccess}
+                readonly={!markupViewLock.hasAccess}
+                onClick={(e) => {
+                if(!markupViewLock.hasAccess){
+                  console.log('e=---->', e)
+                  DataProviderNavigate("/subscriptions")
+                }
+
+            }}
               >
                 <AccordionInformationHeader
                   accordionName={

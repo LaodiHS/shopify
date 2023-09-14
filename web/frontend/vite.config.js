@@ -7,10 +7,13 @@ import vuePlugin from "rollup-plugin-vue";
 import legacy from "@vitejs/plugin-legacy";
 import vue from "@vitejs/plugin-vue";
 import viteCompression from "vite-plugin-compression";
+
 import { copy } from "vite-plugin-copy";
 import { chromeExtension } from "rollup-plugin-chrome-extension";
 import extension from "rollup-plugin-browser-extension";
+import htmlMinifier from 'vite-plugin-html-minifier'
 // import 'dotenv/config'
+import { VitePWA } from 'vite-plugin-pwa';
 if (
   process.env.npm_lifecycle_event === "build" &&
   !process.env.CI &&
@@ -20,6 +23,7 @@ if (
     "\nBuilding the frontend app without an API key. The frontend build will not run without an API key. Set the SHOPIFY_API_KEY environment variable when running the build command.\n"
   );
 }
+
 
 const proxyOptions = {
   target: `http://127.0.0.1:${process.env.BACKEND_PORT}`,
@@ -69,6 +73,20 @@ export default defineConfig({
 
   root: dir_name,
   plugins: [
+    htmlMinifier({
+      minify: true,
+      collapseWhitespace: true,
+      keepClosingSlash: true,
+      removeComments: true,
+      removeRedundantAttributes: true,
+      removeScriptTypeAttributes: true,
+      removeStyleLinkTypeAttributes: true,
+      removeEmptyAttributes: true,
+      useShortDoctype: true,
+      minifyCSS: true,
+      minifyJS: true,
+      minifyURLs: true,
+    }),
     react({
       // Additional esbuild options
       esbuild: {
@@ -76,12 +94,14 @@ export default defineConfig({
         minify: true,
       },
     }),
+    VitePWA({ registerType: 'autoUpdate' }),
     vuePlugin(),
     vue({
       template: {
         isProduction: true,
       },
     }),
+ 
     viteCompression({
     
       
@@ -90,12 +110,12 @@ export default defineConfig({
       // filter: (source) => !source.includes('startsWith'),
       // filter: (source) => source.endsWith('.jsx')
     }),
-    // legacy({
-    //   targets: ["defaults", "not IE 11"],
-    //   esbuildOptions: {
-    //     minify: true,
-    //   },
-    // }),
+    legacy({
+      targets: ["defaults", "not IE 11"],
+      esbuildOptions: {
+        minify: true,
+      },
+    }),
     // copy({
     //   targets: [{ src: "node_modules/tinymce/**/*", dest: "tinymce" }],
     //   verbose: true,

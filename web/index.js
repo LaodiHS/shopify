@@ -105,6 +105,9 @@ async function startServer() {
           user = await updateSubscription(shop, subscription.name);
         }
 
+
+        
+
         const activeSubscriptions = subscriptions.activeSubscriptions.map(
           (sub) => sub.name
         );

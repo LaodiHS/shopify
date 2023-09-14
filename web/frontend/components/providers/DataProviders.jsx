@@ -547,12 +547,12 @@ export function DataProvidersProvider({ children }) {
     setRefDictionary(createRefs());
   }, []);
 
-  function DataProviderNavigate(route, options = {}) {
-    AnimatedContent(refDictionary[location.pathname], "fadeOutRight", {
+  function DataProviderNavigate(route, options = {}, pa= {initialViewAnimation: "fadeOutRight", endingViewAnimation: "fadeInRight"}) {
+    AnimatedContent(refDictionary[location.pathname], pa.initialViewAnimation, {
       //timingFunction:"ease",
       onComplete: () => {
         navigate(route, options);
-        AnimatedContent(refDictionary[route], "fadeInRight", {
+        AnimatedContent(refDictionary[route], pa.endingViewAnimation, {
           //  timingFunction
           duration: 0.05,
         });

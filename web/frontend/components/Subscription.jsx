@@ -34,15 +34,34 @@ import {
 import { useAuthenticatedFetch } from "../hooks";
 import { Toast } from "@shopify/app-bridge-react";
 import { chevronBack, fileTray } from "ionicons/icons";
+import {
+  sunset,
+  yellowDeskWithLight,
+  brownDeskWithLight,
+  appleBooks,
+  simpleColorDesk,
+  readingTree,
+  autumnSvg,
+  colorBookShelves,
+  halfMoon,
+  deskLamp,
+  milkyway,
+  milkywayWashOut,
+   starWindow,
+   autumnWindLeaves,
+    closedWindow,
+    autumnTrees,
+    kidReadingBench,
+    benchWarmer,
+
+} from "../assets";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { Redirect } from "@shopify/app-bridge/actions";
-import { useDataProvidersContext} from "../components";
-export const SubscriptionComponent = (
-  {
-    animationRef
-    //  subscriptions
-  }
-) => {
+import { useDataProvidersContext } from "../components";
+export const SubscriptionComponent = ({
+  animationRef,
+  //  subscriptions
+}) => {
   const { subscriptions, plans, setSubscriptions } = useDataProvidersContext();
 
   const fetch = useAuthenticatedFetch();
@@ -119,11 +138,20 @@ export const SubscriptionComponent = (
     };
   });
 
+
   return (
     <IonPage ref={animationRef}>
-      <IonContent>
-        <IonGrid>
-          <IonRow>
+      <IonContent   >
+        <IonGrid    >
+          <IonRow 
+          // style={{
+          //         backgroundPosition: "center",
+          //         backgroundSize: "cover",
+          //         backgroundRepeat: "no-repeat",
+          //         height: "950px",
+          //          backgroundImage: `url(${autumnWindLeaves})`,
+          //       }} 
+                >
             {subscriptionsOptions.map((subscription, index) => {
               const current = subscriptions.includes(subscription.title);
 
@@ -192,6 +220,42 @@ export const SubscriptionComponent = (
                 </IonCol>
               );
             })}
+            <IonCol size="12">
+            <IonRow size="12">
+              <IonCol
+                size="4"
+                style={{
+                  backgroundPosition: "right",
+                  backgroundSize: "contain",
+                  backgroundRepeat: "no-repeat",
+                  height: "100px",
+                  backgroundImage: `url(${autumnTrees})`,
+                }}
+              ></IonCol>
+              <IonCol
+                size="4"
+                style={{
+                  backgroundPosition: "center",
+                  backgroundSize: "contain",
+                  backgroundRepeat: "no-repeat",
+                  height: "300px",
+                  transform:"scaleX(-1)",
+                  backgroundImage: `url(${ benchWarmer})`,
+                }}
+              ></IonCol>
+              <IonCol
+                size="4"
+                style={{
+                  backgroundPosition: "left",
+                  backgroundSize: "contain",
+                  backgroundRepeat: "no-repeat",
+                  height: "350px",
+                  backgroundImage: `url(${autumnTrees})`,
+                }}
+              ></IonCol>
+              
+            </IonRow>
+            </IonCol>
           </IonRow>
         </IonGrid>
         <IonAlert

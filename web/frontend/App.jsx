@@ -49,6 +49,7 @@ import {
   pencilCase,
   newsPaperWorStation,
   halfMoon,
+  readingTree,
 } from "./assets";
 import { IonReactRouter } from "@ionic/react-router";
 
@@ -238,11 +239,11 @@ function LandingPage({ animationRef }) {
     >
       <IonHeader translucent={true}>
         <IonToolbar>
-          <IonTitle>Welcome to VibeFenWei</IonTitle>
+          <IonTitle >Welcome to VibeFenWei</IonTitle>
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="ion-padding">
+      <IonContent  className="ion-padding">
         {/* <div class="container">
           <div class="photo">
             {/* <img src="https://www.svgrepo.com/show/300968/monitor-graph.svg" /> 
@@ -253,10 +254,17 @@ function LandingPage({ animationRef }) {
           <div class="album"></div>
           <div class="rotate"></div>
         </div> */}
-
-        <IonText class="ion-padding-top">
-          <h1 className="ion-text-center">VibeFenWei</h1>
-
+\
+        <IonText  class="ion-padding-top">
+          <h1   className="ion-text-center">VibeFenWei</h1>
+<div style={{
+                  backgroundPosition: "center",
+                  backgroundSize: "contain",
+                  backgroundRepeat: "no-repeat",
+                  height: "300px",
+                
+                  backgroundImage: `url(${ readingTree})`,
+                }}> </div>
           <p className="ion-text-center">
             Experience a seamless journey with our amazing features.
           </p>

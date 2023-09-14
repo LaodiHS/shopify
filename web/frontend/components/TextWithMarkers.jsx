@@ -11,8 +11,7 @@ function TextWithMarkers({ markedText }) {
   // Regular expression to match IDs surrounded by brackets
   const text = markedText.replace(/\)\,/g, ")");
 
-  const idWithBracketsRegex =
-    /\(([^)]+)\s*-\s*#([0-9A-Fa-f]{6})\)|\{([^}]+)\s*-\s*#([0-9A-Fa-f]{6})\}|\[([^\]]+)\s*-\s*#([0-9A-Fa-f]{6})\]|#([0-9A-Fa-f]{6})/g;
+  const idWithBracketsRegex = /\(([^)]+)\s*-\s*#([0-9A-Fa-f]{6})\)|\{([^}]+)\s*-\s*#([0-9A-Fa-f]{6})\}|\[([^\]]+)\s*-\s*#([0-9A-Fa-f]{6})\]|#([0-9A-Fa-f]{6})/g;
 
   const parseText = (text) => {
     const sentences = text.split(". ").map((sentence, index) => {

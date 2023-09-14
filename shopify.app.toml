@@ -2,7 +2,7 @@
 
 name = "test-vibefenwei"
 client_id = "b2919712bc4555c05f978c56eb4f5750"
-application_url = "https://labeled-automotive-opponent-donated.trycloudflare.com"
+application_url = "https://twelve-applied-levy-sandra.trycloudflare.com"
 embedded = true
 
 [access_scopes]
@@ -11,9 +11,9 @@ scopes = "write_products,read_content,write_content"
 
 [auth]
 redirect_urls = [
-  "https://labeled-automotive-opponent-donated.trycloudflare.com/auth/callback",
-  "https://labeled-automotive-opponent-donated.trycloudflare.com/auth/shopify/callback",
-  "https://labeled-automotive-opponent-donated.trycloudflare.com/api/auth/callback"
+  "https://twelve-applied-levy-sandra.trycloudflare.com/auth/callback",
+  "https://twelve-applied-levy-sandra.trycloudflare.com/auth/shopify/callback",
+  "https://twelve-applied-levy-sandra.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

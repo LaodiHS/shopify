@@ -3,6 +3,7 @@ import { animate} from 'popmotion';
 import styler from 'stylefire';
 import { useInView } from 'react-intersection-observer';
 
+
 function AnimatedContent(ref, animation, options = {}) {
 console.log('options', animation)
   const {

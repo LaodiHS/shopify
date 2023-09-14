@@ -54,7 +54,6 @@ const userSchema = {
 
 const validate = ajv.compile(userSchema);
 
-
 async function createUsersFolderAsync() {
   try {
     await fs.access(USERS_FOLDER_PATH);
@@ -83,12 +82,12 @@ async function readJSONFromFileAsync(storeName) {
       Object.entries(userSchema.properties).forEach(([key, value]) => {
         defaultData[key] = getDefaultValueByType(value.type);
       });
-    console.log('defaultdata----', defaultData);
+
       return defaultData;
     }
 
     const jsonData = await getRedisUserSchema(storeName);
-    console.log("jsondata   ", jsonData);
+
     const jsonMap = Object.entries(jsonData);
 
     for (const [key, isValid] of jsonMap) {
@@ -155,13 +154,12 @@ async function readJSONFromFileAsync(storeName) {
   }
 }
 
-
 async function writeJSONToFileAsync(storeName, jsonObject) {
   // Convert the last_payment_date to a string in ISO 8601 format
   if (jsonObject.last_payment_date instanceof Date) {
     jsonObject.last_payment_date = jsonObject.last_payment_date.toISOString();
   }
-console.log('jsob-->',jsonObject);
+  console.log("jsob-->", jsonObject);
   const ajv = new Ajv();
   const valid = ajv.validate(userSchema, jsonObject);
 
@@ -247,10 +245,10 @@ async function getRedisUserSchema(shop) {
     const isValid = validate(userSchema);
 
     if (!isValid) {
-      console.error('Validation errors:', validate.errors);
+      console.error("Validation errors:", validate.errors);
     } else {
-      console.log('Data is valid');
-      console.log('Processed data:', userSchema); // This is the coerced object
+      console.log("Data is valid");
+      console.log("Processed data:", userSchema); // This is the coerced object
     }
     const user = sanitizeObjectForJS(userSchema);
 
@@ -260,7 +258,6 @@ async function getRedisUserSchema(shop) {
     throw err; // Propagate the error up the call stack
   }
 }
-
 
 export async function getUserFieldFromHashRedis(key, field) {
   try {

@@ -38,14 +38,7 @@ export async function getRemainingUsage(userId) {
 // Function to check if a user has exceeded their usage limit
 export async function hasExceededUsageLimit(userId, additionalTokens) {
   const remainingUsage = await getRemainingUsage(userId);
-  console.log(
-    "additionalTokens",
-    additionalTokens,
-    "----",
-    remainingUsage,
-    "boolean ",
-    additionalTokens > remainingUsage
-  );
+ 
   return additionalTokens > remainingUsage;
 }
 

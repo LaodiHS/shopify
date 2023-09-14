@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 import { useNavigate } from "react_router_dom";
 import { Page, Layout, Image, Text } from "@shopify/polaris";
@@ -39,7 +39,9 @@ import {
   ProductsCard,
   useProductDataContext,
   useDataProvidersContext,
-  ImageCache,ImageCachePre
+  ImageCache,
+  ImageCachePre,
+  AnimatedContent,
 } from "../components";
 import { deskLamp } from "../assets";
 export function ListComponent({}) {
@@ -53,12 +55,6 @@ export function ListComponent({}) {
 
   const navigate = useNavigate();
 
-  const createNarrative = (e, item, index) => {
-    defineProductData(index);
-
-    DataProviderNavigate("/product-details", { target: "host" });
-  };
-
   const [selectedImages, setSelectedImages] = useState([]);
   const handleThumbnailClick = (productIndex, imageIndex) => {
     setSelectedImages((prevSelectedImages) => {
@@ -67,6 +63,36 @@ export function ListComponent({}) {
       return newSelectedImages;
     });
   };
+
+  const elementRefs = useRef([]);
+
+  const [currentProducts, setCurrentProducts] = useState(null);
+  const createNarrative = (e, item, index, ref) => {
+    AnimatedContent({ current: ref }, "fadeOutTopRight", {
+      duration: 1.0,
+      onComplete: () => {
+        ref.style.display = "none";
+        defineProductData(index);
+        DataProviderNavigate(
+          "/product-details",
+          { target: "host" },
+          {
+            initialViewAnimation: "fadeOutLeft",
+            endingViewAnimation: "fadeInRight",
+          }
+        );
+      },
+    });
+  };
+
+  // Ensure that the array is the correct length whenever the component updates
+  useEffect(() => {
+    setCurrentProducts(productsData.productsData);
+    elementRefs.current = elementRefs.current.slice(
+      0,
+      productsData.productsData.length
+    );
+  }, [productsData.products]);
 
   // useIonViewWillEnter(() => {
   //   // Your animation code here
@@ -82,7 +108,7 @@ export function ListComponent({}) {
 
   const handleRenderElement = () => {};
   console.log("isProductsLoading", isProductsLoading);
-  if (isProductsLoading || !productsData || !productsData.productsData.length) {
+  if (isProductsLoading || !currentProducts || !currentProducts.length) {
     return <SkeletonComponent />;
   }
   const cardTitleStyle = {
@@ -96,64 +122,81 @@ export function ListComponent({}) {
     <IonContent key={parentKeyScope + "ionContent----"}>
       <IonGrid key={parentKeyScope + "iongrid----"}>
         <IonRow key={parentKeyScope + "ionrow----"}>
-          {productsData.productsData.map((product, productIndex) => {
-          
+          {currentProducts.map((product, productIndex) => {
             const selectedImageIndex = selectedImages[productIndex];
-    
 
-           const imageSrc= product.images[selectedImageIndex]?.transformedSrc || "https://placehold.co/300x200?text=No+Image+Available"
-         
-           if(!imageSrc){
-            return (
-              <IonCol
-              key={productIndex}
-              size="12"
-              sizeMd="6"
-              sizeSm="12"
-              sizeXl="3"
-            >
-              <IonCard>
-                <IonCardHeader>
-                  <IonCardTitle style={{ marginBottom: "16px" }}>
-                    <IonSkeletonText animated style={{ width: "80%" }} />
-                  </IonCardTitle>
-                </IonCardHeader>
-                <IonCardContent>
-                  <IonGrid>
-                    <IonRow>
-                      <IonCol size="6" sizeMd="12" sizeSm="12">
-                        <IonSkeletonText
-                          animated
-                          style={{ width: "100%", height: "150px" }}
-                        />
-                      </IonCol>
-                      <IonCol size="6" sizeMd="12" sizeSm="12">
-                        <IonSkeletonText animated style={{ width: "80%" }} />
-                        <IonSkeletonText animated style={{ width: "80%" }} />
-                        <IonSkeletonText animated style={{ width: "80%" }} />
-                        <IonSkeletonText animated style={{ width: "80%" }} />
-                        <IonSkeletonText animated style={{ width: "80%" }} />
-                      </IonCol>
-                    </IonRow>
-                  </IonGrid>
-                </IonCardContent>
-              </IonCard>
-            </IonCol>
-            )
-           }
+            const imageSrc =
+              product.images[selectedImageIndex]?.transformedSrc ||
+              "https://placehold.co/300x200?text=No+Image+Available";
 
-    const { images } = product;
+            if (!imageSrc) {
+              return (
+                <IonCol
+                  key={productIndex}
+                  size="12"
+                  sizeMd="6"
+                  sizeSm="12"
+                  sizeXl="3"
+                >
+                  <IonCard>
+                    <IonCardHeader>
+                      <IonCardTitle style={{ marginBottom: "16px" }}>
+                        <IonSkeletonText animated style={{ width: "80%" }} />
+                      </IonCardTitle>
+                    </IonCardHeader>
+                    <IonCardContent>
+                      <IonGrid>
+                        <IonRow>
+                          <IonCol size="6" sizeMd="12" sizeSm="12">
+                            <IonSkeletonText
+                              animated
+                              style={{ width: "100%", height: "150px" }}
+                            />
+                          </IonCol>
+                          <IonCol size="6" sizeMd="12" sizeSm="12">
+                            <IonSkeletonText
+                              animated
+                              style={{ width: "80%" }}
+                            />
+                            <IonSkeletonText
+                              animated
+                              style={{ width: "80%" }}
+                            />
+                            <IonSkeletonText
+                              animated
+                              style={{ width: "80%" }}
+                            />
+                            <IonSkeletonText
+                              animated
+                              style={{ width: "80%" }}
+                            />
+                            <IonSkeletonText
+                              animated
+                              style={{ width: "80%" }}
+                            />
+                          </IonCol>
+                        </IonRow>
+                      </IonGrid>
+                    </IonCardContent>
+                  </IonCard>
+                </IonCol>
+              );
+            }
+
+            const { images } = product;
 
             return (
               <IonCol
                 key={productIndex + "ioncol126233"}
-             
                 size="12"
                 sizeMd="6"
                 sizeSm="12"
                 sizeXl="3"
               >
-                <IonCard key={productIndex + "ionCard"}>
+                <IonCard
+                  ref={(e) => (elementRefs.current[productIndex] = e)}
+                  key={productIndex + "ionCard"}
+                >
                   <IonCardHeader key={productIndex + "ionCardHeader"}>
                     <IonCardTitle
                       key={productIndex + "ioncardtitle"}
@@ -176,9 +219,7 @@ export function ListComponent({}) {
                         >
                           <ImageCache
                             key={`imageProductTitleImageCache_${productIndex}`}
-                            src={
-                              imageSrc
-                            }
+                            src={imageSrc}
                           />
                           {/* <IonImg
                             key={`DisplayImageProductsDisplay_${productIndex}`}
@@ -246,7 +287,10 @@ export function ListComponent({}) {
                             {product.tags.length > 5 && <li>...</li>}
                           </IonBadge>
                           <h4 key={productIndex + "variants"}>Variants:</h4>
-                          <ul key={productIndex + "wordBreak"}style={{ wordBreak: "break-word" }}>
+                          <ul
+                            key={productIndex + "wordBreak"}
+                            style={{ wordBreak: "break-word" }}
+                          >
                             {product.variants.slice(0, 5).map((variant) => (
                               <li key={variant.id}>
                                 {variant.title} - ${variant.price} (
@@ -256,7 +300,10 @@ export function ListComponent({}) {
                             {product.variants.length > 5 && <li>...</li>}
                           </ul>
                           <h4 key={productIndex + "Options3232"}>Options:</h4>
-                          <ul  key={productIndex + "break-word"} style={{ wordBreak: "break-word" }}>
+                          <ul
+                            key={productIndex + "break-word"}
+                            style={{ wordBreak: "break-word" }}
+                          >
                             {product.options.slice(0, 5).map((option) => (
                               <li key={option.id}>
                                 {option.name}: {option.values.join(", ")}
@@ -297,10 +344,16 @@ export function ListComponent({}) {
                                 key={product.id}
                                 fill="clear"
                                 onClick={(e) =>
-                                  createNarrative(e, product, productIndex)
+                                  createNarrative(
+                                    e,
+                                    product,
+                                    productIndex,
+                                    elementRefs.current[productIndex]
+                                  )
                                 }
                                 expand="block"
                                 size="small"
+                                color="warning"
                               >
                                 Enhance Content
                               </IonButton>

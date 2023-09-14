@@ -332,6 +332,7 @@ async function* generateOpenAIMessages({
             countTokens(responseContentCompleteText) +
             promptTokenCountEstimate +
             estimateOverheadForStream;
+            console.log('total tokens used', totalResponseEstimate)
           await updateTokenUsageAfterJob(shop, totalResponseEstimate);
           const storeData = await userStore.readJSONFromFileAsync(shop);
           storeData.documentType = documentType;
