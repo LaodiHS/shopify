@@ -4,10 +4,10 @@ import { fileURLToPath } from "url";
 import https from "https";
 import react from "@vitejs/plugin-react";
 import vuePlugin from "rollup-plugin-vue";
-import legacy from "@vitejs/plugin-legacy";
+// import legacy from "@vitejs/plugin-legacy";
 import vue from "@vitejs/plugin-vue";
 import viteCompression from "vite-plugin-compression";
-
+import terser from '@rollup/plugin-terser';
 import { copy } from "vite-plugin-copy";
 import { chromeExtension } from "rollup-plugin-chrome-extension";
 import extension from "rollup-plugin-browser-extension";
@@ -73,79 +73,67 @@ export default defineConfig({
 
   root: dir_name,
   plugins: [
-    htmlMinifier({
-      minify: true,
-      collapseWhitespace: true,
-      keepClosingSlash: true,
-      removeComments: true,
-      removeRedundantAttributes: true,
-      removeScriptTypeAttributes: true,
-      removeStyleLinkTypeAttributes: true,
-      removeEmptyAttributes: true,
-      useShortDoctype: true,
-      minifyCSS: true,
-      minifyJS: true,
-      minifyURLs: true,
-    }),
-    react({
-      // Additional esbuild options
-      esbuild: {
-        // ...
-        minify: true,
-      },
-    }),
-    VitePWA({ registerType: 'autoUpdate' }),
-    vuePlugin(),
-    vue({
-      template: {
-        isProduction: true,
-      },
-    }),
+    terser({ compress:true, mangle:true,  maxWorkers: 5}),
+    // react({}),
+    react(),
+    // VitePWA({ registerType: 'autoUpdate' }),
+    // vuePlugin(),
+    // vue({
+    //   template: {
+    //     isProduction: true,
+    //   },
+    // }),
  
-    viteCompression({
-    
-      
-      deleteOriginalAssets: true,
-      algorithm: 'brotli',
-      // filter: (source) => !source.includes('startsWith'),
-      // filter: (source) => source.endsWith('.jsx')
-    }),
-    legacy({
-      targets: ["defaults", "not IE 11"],
-      esbuildOptions: {
-        minify: true,
-      },
-    }),
+  ,
+
     // copy({
     //   targets: [{ src: "node_modules/tinymce/**/*", dest: "tinymce" }],
     //   verbose: true,
     // }),
   ],
-  optimizeDeps: {
-    //include: ["tinymce"], // Expose tinymce as a module
-  },
+  // optimizeDeps: {
+  //   //include: ["tinymce"], // Expose tinymce as a module
+  // },
 
   define: {
     DEPLOYMENT_ENV: process.env.NODE_ENV === "production",
     API_URL: JSON.stringify(host),
     "process.env.SHOPIFY_API_KEY": JSON.stringify(process.env.SHOPIFY_API_KEY),
+    // 'process.env.NODE_ENV': JSON.stringify('production')
   },
   resolve: {
     preserveSymlinks: true,
  
   },
-  build: {
+  // esbuild: {
+  //   // ...
+  //   //  drop: ['console', 'debugger'],
+  //   //  minifyIdentifiers: true,
+  //   // minifySyntax: true,
+  //   // minify: true,
+  //   // mangleCaches: true,
+  //   // mangleProps:true,
+  //   // mangleQuoted:true,
 
+  //   // splitting: {
+  //   //   // Specify the maximum size for a single chunk (in bytes)
+  //   //   maxChunkSize: 500000, // 500KB in this example
+  //   // },
+  // },
+
+  build: {
+    brotliSize: true, // Enables Brotli compression
     chunkSizeWarningLimit: 4000, 
-    minify: "terser", // <-- add
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
+
+    // minify: "terser", // <-- add
+    // terserOptions: {
+    //   compress: {
+    //     drop_console: true,
+    //     drop_debugger: true,
      
-      },
-      mangle :true,
-    },
+    //   },
+    //   mangle :true,
+    // },
   },
   server: {
     host: "localhost",

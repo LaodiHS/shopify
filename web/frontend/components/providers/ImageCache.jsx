@@ -118,6 +118,15 @@ export function ImageCache({ src, alt, sliderImg, ...props }) {
   //  console.log('imageCache', imageCache)
   const [cachedSrc, setCachedSrc] = useState(src);
   const [imageLoading, setImageLoading] = useState(false);
+const [canLoad, setCanLoad] = useState(true)
+
+useEffect(()=>{
+
+
+return ()=>{
+  setCanLoad(false)
+}
+},[])
 
   useEffect(async () => {
     setImageLoading(true);
@@ -133,8 +142,11 @@ export function ImageCache({ src, alt, sliderImg, ...props }) {
         processTaskQueue();
       }).then((imageSrc) => {
         if (imageSrc) {
+
           imageCacheMap.set(imageSrc);
+          if(canLoad){
           setCachedSrc(imageSrc);
+          }
           setImageLoading(false);
         }
       });
@@ -143,7 +155,7 @@ export function ImageCache({ src, alt, sliderImg, ...props }) {
     preloadImages();
   }, [src]);
 
-  const height = sliderImg ? "60px" : "250px";
+  const height = sliderImg ? "60px" : "300px";
   const width = sliderImg ? "60px" : "100%";
   function SkeletonImage() {
     return (
@@ -159,8 +171,9 @@ export function ImageCache({ src, alt, sliderImg, ...props }) {
     <SkeletonImage />
   ) : (
     <IonImg
-      key={cachedSrc}
-      src={cachedSrc}
+    style={{minHeight:"300px"}}
+      key={src}
+      src={cachedSrc || src}
       rel="preload"
       as="image"
       alt={alt}

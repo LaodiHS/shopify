@@ -5,7 +5,7 @@ import { env } from "./envVars.js";
 const { SCOPES, SHOPIFY_API_KEY, SHOPIFY_API_SECRET, SHOPIFY_API_URL,REDIS_API_UPSTASH_PASSWORD, REDIS_API_UPSTASH_PASSWORD_TEST_ENV, REDIS_LAB_PRODUCTION, REDIS_LAB_TEST_ENV } = process.env;
 
 export const RedisConnectionString = process.env.NODE_ENV === "production" ? REDIS_API_UPSTASH_PASSWORD :  REDIS_API_UPSTASH_PASSWORD_TEST_ENV;
-const REDIS_LAB = process.env.NODE_ENV === "production" ? REDIS_LAB_PRODUCTION : REDIS_LAB_TEST_ENV ;
+const REDIS_LAB = process.env.NODE_ENV !== "production" ? REDIS_LAB_PRODUCTION : REDIS_LAB_TEST_ENV ;
 
 
 
@@ -35,4 +35,5 @@ export {BullREDIS}
 
 
 
-const isProduction = process.env.NODE_ENV === "production";
+export const isProduction = process.env.NODE_ENV === "production";
+

@@ -72,19 +72,20 @@ import {
   BarChartComponent,
 } from "../../components";
 
-const shortenText = (text) =>
-  text && text.length > 20 ? text.substring(0, 30) + "..." : text;
+// const shortenText = (text) =>
+//   text && text.length > 20 ? text.substring(0, 30) + "..." : text;
 
-const generateHash = async (id) => {
-  const saltRounds = 10;
-  try {
-    // const salt = await bcrypt.genSalt(saltRounds);
-    const hash = await bcrypt.hash(id, "$2a$10$agg0ld9ZpiH/fVKYZDq/Tu");
-    return hash;
-  } catch (error) {
-    console.log("hash error", error);
-  }
-};
+// const generateHash = async (id) => {
+//   const saltRounds = 10;
+//   try {
+//     // const salt = await bcrypt.genSalt(saltRounds);
+//     const hash = await bcrypt.hash(id, "$2a$10$agg0ld9ZpiH/fVKYZDq/Tu");
+//     return hash;
+//   } catch (error) {
+//     console.log("hash error", error);
+//   }
+// };
+
 export function Accordion({
   setAccordionModalPopUp,
   // subscriptions,
@@ -144,8 +145,8 @@ export function Accordion({
   }, [aiWorkStation]);
 
   useEffect(async () => {
-    const blogName = await generateHash(currentSession.shop);
-    setHashBlogName(blogName);
+    // const blogName = await generateHash(currentSession.shop);
+    // setHashBlogName(blogName);
   }, []);
 
   const blogSelectionRef = useRef(null);
@@ -206,18 +207,18 @@ export function Accordion({
   }
 
   // Function to get the value of a query parameter from the URL
-  const getQueryParam = (name) => {
-    const params = new URLSearchParams(window.location.search);
-    return params.get(name);
-  };
+  // const getQueryParam = (name) => {
+  //   const params = new URLSearchParams(window.location.search);
+  //   return params.get(name);
+  // };
 
-  // Get the value of the 'host' query parameter from the URL
-  const host = getQueryParam("host");
+  // // Get the value of the 'host' query parameter from the URL
+  // const host = getQueryParam("host");
 
-  // Check if the 'host' parameter is present in the URL
-  if (host) {
-    //console.log("host: " + host);
-  }
+  // // Check if the 'host' parameter is present in the URL
+  // if (host) {
+  //   //console.log("host: " + host);
+  // }
   const location = useLocation();
   useEffect(() => {
     if (!productData) {
@@ -763,7 +764,7 @@ export function Accordion({
       helperNotesAssist:
         "Utilize the audience templates and product particulars to aid in shaping your description.",
       helperNotesUpdate:
-        "Once you've crafted your content, incorporate it into your product details",
+        "Once you've sourwood your content, incorporate it into your product details",
       buttonNames: {
         generate: "Description Assist",
         update: "Update Description",
@@ -786,7 +787,7 @@ export function Accordion({
       helperNotesAssist:
         "Utilize the audience templates and product particulars to aid in shaping your article.",
       helperNotesUpdate:
-        "Once you've crafted your content, incorporate it into your blog as an article. Be sure to choose or create a fitting title for both your blog and the article.",
+        "Once you've sourwood your content, incorporate it into your blog as an article. Be sure to choose or create a fitting title for both your blog and the article.",
       buttonNames: {
         generate: "Article Assist",
         update: "Add Article",
@@ -910,7 +911,7 @@ function renderAccordionItem({
   } = useDataProvidersContext();
 
   const [markupViewLock, setMarkupViewLock] = useState(
-    checkFeatureAccess(["crafted"])
+    checkFeatureAccess(["sourwood"])
   );
 
   function autosaveContent(editor) {
@@ -1005,6 +1006,7 @@ function renderAccordionItem({
               </IonAccordion> */}
 
               <IonAccordion
+        
               ref={(ref) => (scrollRef.current[accordionId] = ref)}
                 key={index + 10}
                // disabled={!markupViewLock.hasAccess}
@@ -1063,6 +1065,7 @@ function renderAccordionItem({
                 </div>
               </IonAccordion>
               <IonAccordion
+            
                 key={index + 11}
                 value="seo"
                 readonly={!markupViewLock.hasAccess}
@@ -1121,7 +1124,7 @@ function renderAccordionItem({
                 aria-label="Include existing description in composition"
                 id={`explainer-${accordionId}-info` + aiWorkStation}
                 icon={informationCircleOutline}
-              ></IonIcon>{" "}
+              ></IonIcon>
             </IonItem>
             <IonPopover
               key={"Include existing description in composition"}
@@ -1217,7 +1220,7 @@ function renderAccordionItem({
                     image_advtab: true,
                     image_description: false,
                     image_title: true,
-                    a11y_advanced_options: true,
+                    a11y_acacia_options: true,
                     // ui_mode: "split",
                     //ui_mode 'split'enables support for editors in scrollable containers and adjusts the behaviour as follows:Popups, menus and inline dialogs are rendered in a separate container and inserted as a sibling to the editor. These UI elements move together as you scroll the editor’s container.If toolbar_sticky is set to true, the UI element can be docked on both page and container scroll. This means the UI element will stay in the same place relative to the container, regardless of how much you scroll the page or the container itself.
                     // readyOnly: true,

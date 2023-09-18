@@ -34,7 +34,7 @@ import {
   exitOutline,
   informationCircle,
 } from "ionicons/icons";
-import {trash} from "../../assets";
+import {trash, pictures} from "../../assets";
 
 
 import { Context, SharedData } from "../../utilities/data-context.js";
@@ -55,7 +55,7 @@ export function ProductDetails({ data }) {
   //const fetch = useAuthenticatedFetch();
   const {
     includeProductImagesFeature,
-    basic_crafted_advanced,
+    chestnut_sourwood_acacia,
     productDetailOptions,
 
     optionChange,
@@ -151,18 +151,19 @@ export function ProductDetails({ data }) {
                   onClick={clearSelection}
                   fill="clear"
                   size="small"
+                color="primary"
                   className="ion-float-end ion-padding-top"
                 >
                   Clear Selections
                 </IonButton>
-                <IonButton
+                <IonButton  color="neural"
                   onClick={clearSelection}
                   className="ion-float-start"
                   size="large"
                 >
                   <IonIcon
                     slot="icon-only"
-                    color="dark"
+                  
                     icon={trash}
                   ></IonIcon>
                 </IonButton>
@@ -207,6 +208,7 @@ export function ProductDetails({ data }) {
                   >
                     <IonItem lines="none" slot="end" color="transparent">
                       <IonRadioGroup
+                  
                         slot="start"
                         allowEmptySelection={true}
                         onIonChange={(e) =>
@@ -220,6 +222,7 @@ export function ProductDetails({ data }) {
                         }
                       >
                         <IonRadio
+                       
                           key="descriptionInclude"
                           style={{ fontSize: "12px" }}
                           color="success"
@@ -360,7 +363,7 @@ export function ProductDetails({ data }) {
                     optionName={key}
                     options={values}
                     optionChange={optionChange}
-                    validUser={basic_crafted_advanced}
+                    validUser={chestnut_sourwood_acacia}
                     sizes={{ size: "12", "size-md": "4" }}
                   />
                 );
@@ -405,19 +408,21 @@ export function ProductDetails({ data }) {
               onClick={() => {
                 assignImageSelectionModalIsOpen((prevIsOpen) => !prevIsOpen);
               }}
-              color="tertiary"
+              color="primary"
               fill="clear"
             >
               Select Images
             </IonButton>
-            <IonButton
-                disabled={!includeProductImagesFeature.hasAccess}
+            <IonButton 
+            color="neural"
+            disabled={!includeProductImagesFeature.hasAccess}
              onClick={() => {
               assignImageSelectionModalIsOpen((prevIsOpen) => !prevIsOpen);
-            }}
-            color="dark" 
+            }} 
             size="large">
-              <IonIcon slot="icon-only" src="../assets/pictures.svg"></IonIcon>
+            <IonIcon slot="icon-only" icon={pictures} 
+              //src="../assets/pictures.svg"
+              ></IonIcon>
             </IonButton>{" "}
             <IonIcon
               size="small"
@@ -465,9 +470,9 @@ function PremiumAccessLabels() {
         <IonText
           style={{ fontSize: "11px" }}
           className="ion-text-wrap"
-          color={basic_crafted_advanced.hasAccess ? "" : "medium"}
+          color={chestnut_sourwood_acacia.hasAccess ? "" : "medium"}
         >
-          {basic_crafted_advanced.message("Tags")}{" "}
+          {chestnut_sourwood_acacia.message("Tags")}{" "}
         </IonText>
       </IonLabel>
     </IonItem>
@@ -475,7 +480,7 @@ function PremiumAccessLabels() {
 }
 
 function SelectOptions({ optionName, options, selectedProperty, sizes }) {
-  const { productDetailOptions, optionChange, basic_crafted_advanced } =
+  const { productDetailOptions, optionChange, chestnut_sourwood_acacia } =
     useDataProvidersContext();
 
   const selections = productDetailOptions.find(
@@ -515,9 +520,9 @@ function SelectOptions({ optionName, options, selectedProperty, sizes }) {
           <IonText
             style={{ fontSize: "11px" }}
             className="ion-text-wrap ion-text-capitalize"
-            color={basic_crafted_advanced.hasAccess ? "" : "medium"}
+            color={chestnut_sourwood_acacia.hasAccess ? "" : "medium"}
           >
-            {basic_crafted_advanced.message(displayName)}{" "}
+            {chestnut_sourwood_acacia.message(displayName)}{" "}
           </IonText>
         </IonLabel>{" "}
         <IonIcon
@@ -533,7 +538,7 @@ function SelectOptions({ optionName, options, selectedProperty, sizes }) {
       <IonItem key={displayName}>
         <IonSelect
           className="ion-text-capitalize"
-          disabled={!basic_crafted_advanced?.hasAccess}
+          disabled={!chestnut_sourwood_acacia?.hasAccess}
           label={"Select ".concat(
             /variant/i.test(displayName) ? "your variant options" : displayName
           )}

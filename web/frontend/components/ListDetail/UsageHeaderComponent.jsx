@@ -14,7 +14,7 @@ import {
 } from "@ionic/react";
 
 export function TokenUsageComponent({ tokenUsage }) {
-
+console.log('tokenUsag', tokenUsage)
   const [usage, setUsage] = useState(null);
   useEffect(() => {
     const use = (tokenUsage.current_usage / tokenUsage.capped_usage).toFixed(2);

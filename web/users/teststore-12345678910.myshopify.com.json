@@ -1,0 +1,14 @@
+{
+  "shop": "teststore-12345678910.myshopify.com",
+  "gptText": "",
+  "capped_usage": 328732,
+  "current_usage": 0,
+  "subscription_name": "chestnut",
+  "created_at": "2023-09-16T14:27:32-04:00",
+  "currency": "USD",
+  "capped_amount": 0,
+  "status": "ACTIVE",
+  "updated_at": "2023-09-16T14:27:41-04:00",
+  "seen": true,
+  "last_payment_date": "2023-09-16T18:27:52.386Z"
+}

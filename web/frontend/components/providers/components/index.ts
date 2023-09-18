@@ -1,0 +1,1 @@
+export {IonicHeaderComponent} from './IonicHeaderComponent';

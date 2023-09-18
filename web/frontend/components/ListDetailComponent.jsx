@@ -40,7 +40,7 @@ import {
   informationCircleOutline,
   exitOutline,
 } from "ionicons/icons";
-import { pencilCase,  microphone} from "../assets";
+import { pencilCase, microphone } from "../assets";
 import { useLocation, useNavigate } from "react_router_dom";
 import { useAuthenticatedFetch } from "../hooks/useAuthenticatedFetch";
 import { Context, SharedData } from "../utilities/data-context.js";
@@ -50,6 +50,7 @@ import {
   CamelToKebabCase,
   useDataProvidersContext,
   TokenUsageComponent,
+  IonicHeaderComponent,
 } from "../components";
 import { audienceModel } from "../utilities/language-model";
 import { updateObject } from "../utilities/utility-methods";
@@ -63,7 +64,7 @@ const toggles = {
   // language:false,
   tone: true,
   introduction: true,
-  feature: false,
+  focus: false,
   evocative: false,
   narrative: false,
   rhetorical: false,
@@ -79,7 +80,7 @@ export function ListDetailComponent({ animationRef }) {
     user,
 
     handleSelectChange,
-  
+
     DataProviderNavigate,
   } = useDataProvidersContext();
 
@@ -134,8 +135,6 @@ export function ListDetailComponent({ animationRef }) {
 
   // console.log("ListDetailComponentData", ListDetailComponent);
 
-
-
   const menuRef = useRef(null);
   const contentRef = useRef(null);
 
@@ -168,11 +167,8 @@ export function ListDetailComponent({ animationRef }) {
         side="end"
         contentId="main-content"
       >
-        <IonHeader key={"2"} translucent={true}>
-          <IonToolbar key={"3"}>
-            <IonTitle key={"4"}>Advanced</IonTitle>
-          </IonToolbar>
-        </IonHeader>
+        <IonicHeaderComponent centerText={"Advanced"} />
+
         <IonContent key={"5"} fullscreen={true} className="ion-padding">
           <IonMenuToggle key={"6"}>
             <IonButton key={"7"} fill="clear" expand="block" size="small">
@@ -187,27 +183,34 @@ export function ListDetailComponent({ animationRef }) {
         </IonContent>
       </IonMenu>
       <IonPage ref={animationRef} key={"9"} id="main-content">
-        <IonHeader key={"10"} translucent={true}>
-          <IonToolbar key={"11"}>
-            <IonButtons key={"12"} onClick={navigateBack} slot="start">
-              <IonButton key={"13"}>
+        <IonicHeaderComponent
+          centerText="Tailor Selections"
+          left={
+            <IonButtons
+              key={"12"}
+              onClick={navigateBack}
+             
+              slot="start"
+            >
+              <IonButton key={"13"} color="neural"
+              >
                 <IonIcon key={"14"} icon={chevronBack} />
               </IonButton>
             </IonButtons>
-            <IonTitle key={"15"}>Description Selection</IonTitle>
+          }
+          right={
             <IonButton
-               disabled={true}
+              disabled={true}
               fill="clear"
               size="small"
-              color="secondary"
+              color="neural"
               slot="end"
             >
-              <IonIcon  slot="icon-only" icon={pencilCase} />
+              <IonIcon slot="icon-only" icon={pencilCase} />
             </IonButton>
-            {/* <IonButtons slot="end"></IonButtons>
-            <IonButtons slot="end"></IonButtons> */}
-          </IonToolbar>
-        </IonHeader>
+          }
+        />
+
         <IonContent>
           <div key={"16"} className="ion-padding">
             {/* <PaidFeature /> */}
@@ -234,7 +237,9 @@ export function ListDetailComponent({ animationRef }) {
                       onClick={() => openMenu()}
                       slot="end"
                       fill="clear"
+                     
                       expand="block"
+                      color="primary"
                       area-label="Advanced Tone Options"
                     >
                       Advanced Tone Options
@@ -242,13 +247,10 @@ export function ListDetailComponent({ animationRef }) {
                     <IonButton
                       onClick={() => openMenu()}
                       fill="clear"
-                      color="dark"
+                      color="neural"
                       size="large"
                     >
-                      <IonIcon
-                        slot="icon-only"
-                        icon={microphone}
-                      ></IonIcon>
+                      <IonIcon slot="icon-only" icon={microphone}></IonIcon>
                     </IonButton>
 
                     <IonIcon
@@ -256,7 +258,7 @@ export function ListDetailComponent({ animationRef }) {
                       color="secondary"
                       slot="end"
                       aria-label="Include existing description in composition"
-                      id="advanced-options-select-options-hover-trigger"
+                      id="acacia-options-select-options-hover-trigger"
                       icon={informationCircleOutline}
                     ></IonIcon>
                   </IonButtons>
@@ -265,7 +267,7 @@ export function ListDetailComponent({ animationRef }) {
                   key="Include existing description in composition"
                   translucent={true}
                   animated="true"
-                  trigger="advanced-options-select-options-hover-trigger"
+                  trigger="acacia-options-select-options-hover-trigger"
                   triggerAction="hover"
                   area-label="Advanced Language and Formatting Options"
                 >
@@ -273,7 +275,7 @@ export function ListDetailComponent({ animationRef }) {
                     <IonText>
                       <p>
                         Explore Advanced Language and Formatting Choices. Choose
-                        your preferred categories from the advanced menu
+                        your preferred categories from the acacia menu
                         options, and they will be displayed below.
                       </p>
                     </IonText>
@@ -300,7 +302,6 @@ export function ListDetailComponent({ animationRef }) {
                   handleSelectChange={handleSelectChange}
                   section={section}
                   hiddenElements={hiddenElements}
-            
                 />
               ))}
 
@@ -322,25 +323,29 @@ export function ListDetailComponent({ animationRef }) {
             }}
             isOpen={isOpen}
           >
-            <IonHeader key={"28"}>
-              <IonToolbar>
-                <IonTitle>Compose Your Document</IonTitle>
-                <IonProgressBar
-                  type={
-                    composeTextModalLoading ? "indeterminate" : "determinate"
-                  }
-                ></IonProgressBar>
-                <IonButtons slot="end">
-                  <IonButton
-                    onClick={() => {
-                      handleModalClose();
-                    }}
-                  >
-                    Close
-                  </IonButton>
-                </IonButtons>
-              </IonToolbar>
-            </IonHeader>
+            <IonicHeaderComponent
+              centerText={"Compose Your Document"}
+              right={
+                <>
+                  <IonProgressBar
+                    type={
+                      composeTextModalLoading ? "indeterminate" : "determinate"
+                    }
+                  ></IonProgressBar>
+                  <IonButtons slot="end">
+                    <IonButton
+                      color="neural"
+                      onClick={() => {
+                        handleModalClose();
+                      }}
+                    >
+                      Close
+                    </IonButton>
+                  </IonButtons>
+                </>
+              }
+            />
+
             <IonContent className="ion-padding">
               {/* <IonLoading message={composeTextModalLoadingText} isOpen={composeTextModalLoading }  duration={0} /> */}
               <TokenUsageComponent tokenUsage={user} />
@@ -357,8 +362,9 @@ export function ListDetailComponent({ animationRef }) {
   );
 }
 
-function Section({ section, hiddenElements}) {
-  const { checkFeatureAccess, handleSelectChange, languageOptions } = useDataProvidersContext();
+function Section({ section, hiddenElements }) {
+  const { checkFeatureAccess, handleSelectChange, languageOptions } =
+    useDataProvidersContext();
   const [subscriptionMessage, setSubscriptionMessage] = useState({});
 
   return (
@@ -375,9 +381,10 @@ function Section({ section, hiddenElements}) {
               values,
               events,
             } = item;
-       
-const selection = languageOptions.find(options=> options[0]=== category ) 
 
+            const selection = languageOptions.find(
+              (options) => options[0] === category
+            );
 
             const { tag, options } = values;
 
@@ -395,7 +402,7 @@ const selection = languageOptions.find(options=> options[0]=== category )
                       key: itemIndex + item.category + itemIndex + label,
                       category: category,
                       multiple: multiple,
-                      value: (selection && selection[1])|| item.default,
+                      value: (selection && selection[1]) || item.default,
 
                       label: label,
                       placeholder: placeholder,

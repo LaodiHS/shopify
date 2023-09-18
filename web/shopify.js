@@ -9,12 +9,29 @@ import { shopifyApp } from "@shopify/shopify-app-express";
 import { RedisSessionStorage } from "@shopify/shopify-app-session-storage-redis";
 import { restResources } from "@shopify/shopify-api/rest/admin/2023-07";
 // let { restResources }  = await import( `@shopify/shopify-api/rest/admin/${LATEST_API_VERSION}`);
-import { billingConfig } from "./billing.js";
+import { billingConfig, usageTerms } from "./billing.js";
 import { SQLiteSessionStorage } from "@shopify/shopify-app-session-storage-sqlite";
 import { RedisConnectionString } from "./dev_production_vars.js";
 const { SCOPES, SHOPIFY_API_KEY, SHOPIFY_API_SECRET } = process.env;
 const DB_PATH = `${process.cwd()}/database.sqlite`;
 // const sessionStorage = new RedisSessionStorage(RedisConnectionString);
+
+// transform billing config to fit BillingConfigPlan schema
+export const BillingConfig = Object.entries(billingConfig).reduce(
+  (billingConfigObject, [plan, { amount, interval, currencyCode }]) => {
+    billingConfigObject[plan] = {
+      amount,
+      interval,
+      currencyCode,
+      usageTerms: usageTerms(plan),
+    };
+
+    //trialDays
+    //replacementBehavior
+    return billingConfigObject;
+  },
+  {}
+);
 
 const shopify = shopifyApp({
   api: {
@@ -23,9 +40,11 @@ const shopify = shopifyApp({
     scopes: SCOPES?.split(","),
     apiVersion: LATEST_API_VERSION,
     restResources,
-    billing: billingConfig, // or replace with billingConfig above to enable example billing
+    billing: BillingConfig, // or replace with billingConfig above to enable example billing
     logger: {
       level: LogSeverity.Debug,
+    //  httpRequests: true,
+      // timestamps: true
     },
   },
 
@@ -37,11 +56,9 @@ const shopify = shopifyApp({
     path: "/api/webhooks",
   },
 
-  sessionStorage: new RedisSessionStorage(
-    RedisConnectionString
-  ),
+  sessionStorage: new RedisSessionStorage(RedisConnectionString),
   //new SQLiteSessionStorage(DB_PATH),
-  useOnlineTokens: true,
+  // useOnlineTokens: true,
 });
 
 // export { sessionStorage };

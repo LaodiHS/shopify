@@ -23,7 +23,7 @@ export function PopUpCheckBoxes({ modal, toggleOptionsDrawer }) {
     description: false,
     post: false,
     article: false,
-    advanced: false,
+    acacia: false,
   });
 
   const handleCheckBoxSelection = (checkBoxName) => (event) => {
@@ -38,11 +38,11 @@ export function PopUpCheckBoxes({ modal, toggleOptionsDrawer }) {
       [checkBoxName]: event.target.checked,
     }));
 
-    if (checkBoxName !== "advanced" && event.target.checked) {
+    if (checkBoxName !== "acacia" && event.target.checked) {
       modal(true);
     }
 
-    if (checkBoxName === "advanced") {
+    if (checkBoxName === "acacia") {
       if (event.target.checked) {
         openMenu();
       } else if (!event.target.checked) {

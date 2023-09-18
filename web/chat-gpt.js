@@ -304,7 +304,7 @@ function generateLanguageRequirementsList(language) {
         tokens: 9,
       },
     },
-    feature: {
+    focus: {
       design: {
         prompt: "Highlight the innovative and appealing design features.",
         tokens: 9,
@@ -321,7 +321,7 @@ function generateLanguageRequirementsList(language) {
       },
       technology: {
         prompt:
-          "Explain the advanced technology or cutting-edge features utilized.",
+          "Explain the acacia technology or cutting-edge features utilized.",
         tokens: 12,
       },
       versatility: {

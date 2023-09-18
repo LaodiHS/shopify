@@ -1,5 +1,5 @@
 {
-  "name": "ai-craft",
+  "name": "vibefenwei",
   "version": "1.0.0",
   "main": "web/index.js",
   "license": "UNLICENSED",
@@ -19,10 +19,10 @@
     "fly_deploy": "fly deploy"
   },
   "dependencies": {
-    "@shopify/app": "^3.48.3",
-    "@shopify/cli": "^3.48.3"
+    "@shopify/app": "^3.49.3",
+    "@shopify/cli": "^3.49.3"
   },
-  "author": "hasan seirafi",
+  "author": "seirafi",
   "private": true,
   "workspaces": [
     "web",

@@ -32,3 +32,4 @@ export { IonButtonInformation } from "./ListDetail/IonButtonInformation";
 
 export { tinymceCustomPlugins, quicksBarConfig } from "../utilities/TinymcePlugins";
 // export {extractKeywords} from './TextExtractor';
+export { IonicHeaderComponent } from "./IonicHeaderComponent";

@@ -43,33 +43,54 @@ import {
   ImageCachePre,
   AnimatedContent,
 } from "../components";
-import { deskLamp } from "../assets";
+import { deskLamp, pictures} from "../assets";
 export function ListComponent({}) {
   const { DataProviderNavigate } = useDataProvidersContext();
-  const {
-    isProductsLoading,
-    setProductsLoading,
-    productsData,
-    defineProductData,
-  } = useProductDataContext();
+  const { productsData, defineProductData } = useProductDataContext();
 
-  const navigate = useNavigate();
+  const [products, setProducts] = useState([]);
+  const elementRefs = useRef([]);
+  const [mainDisplayImages, setMainDisplayImages] = useState({});
 
-  const [selectedImages, setSelectedImages] = useState([]);
   const handleThumbnailClick = (productIndex, imageIndex) => {
-    setSelectedImages((prevSelectedImages) => {
-      const newSelectedImages = [...prevSelectedImages];
-      newSelectedImages[productIndex] = imageIndex;
-      return newSelectedImages;
+    setMainDisplayImages((prev) => {
+      return {
+        ...mainDisplayImages,
+        [productIndex]: {
+          img: products[productIndex].images[imageIndex].transformedSrc,
+          index: imageIndex,
+        },
+      };
     });
   };
 
-  const elementRefs = useRef([]);
+  useEffect(() => {}, [products]);
 
-  const [currentProducts, setCurrentProducts] = useState(null);
+  useEffect(() => {
+    setProducts(productsData.productsData);
+
+    const mainImagesSrc = productsData?.productsData?.reduce(
+      (acc, product, productIndex) => {
+        acc[productIndex] = {
+          img:
+            product?.images[0]?.transformedSrc ||
+            "https://placehold.co/300x200?text=No+Image+Available",
+          index: 0,
+        };
+        return acc;
+      },
+      {}
+    );
+    setMainDisplayImages(mainImagesSrc);
+    elementRefs.current = elementRefs.current.slice(
+      0,
+      productsData.productsData.length
+    );
+  }, [productsData.productsData]);
+
   const createNarrative = (e, item, index, ref) => {
     AnimatedContent({ current: ref }, "fadeOutTopRight", {
-      duration: 1.0,
+      duration: 0.3,
       onComplete: () => {
         ref.style.display = "none";
         defineProductData(index);
@@ -85,51 +106,20 @@ export function ListComponent({}) {
     });
   };
 
-  // Ensure that the array is the correct length whenever the component updates
-  useEffect(() => {
-    setCurrentProducts(productsData.productsData);
-    elementRefs.current = elementRefs.current.slice(
-      0,
-      productsData.productsData.length
-    );
-  }, [productsData.products]);
-
-  // useIonViewWillEnter(() => {
-  //   // Your animation code here
-
-  //   console.log("Component is about to enter the view.");
-  // });
-  const parentKeyScope = "ListComponet";
-  //clears the image data on load when paging
-  useEffect(() => {
-    const initialSelectedImages = productsData.productsData.map(() => 0);
-    setSelectedImages(initialSelectedImages);
-  }, [productsData]);
-
-  const handleRenderElement = () => {};
-  console.log("isProductsLoading", isProductsLoading);
-  if (isProductsLoading || !currentProducts || !currentProducts.length) {
-    return <SkeletonComponent />;
-  }
   const cardTitleStyle = {
     fontSize: "1.2rem", // Use relative 'rem' unit for font size
     fontWeight: "bold",
     whiteSpace: "normal",
     wordWrap: "break-word",
   };
+  const parentKeyScope = "ListComponet";
 
   return (
     <IonContent key={parentKeyScope + "ionContent----"}>
       <IonGrid key={parentKeyScope + "iongrid----"}>
         <IonRow key={parentKeyScope + "ionrow----"}>
-          {currentProducts.map((product, productIndex) => {
-            const selectedImageIndex = selectedImages[productIndex];
-
-            const imageSrc =
-              product.images[selectedImageIndex]?.transformedSrc ||
-              "https://placehold.co/300x200?text=No+Image+Available";
-
-            if (!imageSrc) {
+          {products.map((product, productIndex) => {
+            if (!mainDisplayImages[productIndex]?.img) {
               return (
                 <IonCol
                   key={productIndex}
@@ -151,6 +141,50 @@ export function ListComponent({}) {
                             <IonSkeletonText
                               animated
                               style={{ width: "100%", height: "150px" }}
+                            />
+                          </IonCol>
+                          <IonCol size="6" sizeMd="12" sizeSm="12">
+                            <IonSkeletonText
+                              animated
+                              style={{ width: "80%" }}
+                            />
+                            <IonSkeletonText
+                              animated
+                              style={{ width: "80%" }}
+                            />
+                            <IonSkeletonText
+                              animated
+                              style={{ width: "80%" }}
+                            />
+                            <IonSkeletonText
+                              animated
+                              style={{ width: "80%" }}
+                            />
+                            <IonSkeletonText
+                              animated
+                              style={{ width: "80%" }}
+                            />
+                          </IonCol>
+                          <IonCol size="6" sizeMd="12" sizeSm="12">
+                            <IonSkeletonText
+                              animated
+                              style={{ width: "80%" }}
+                            />
+                            <IonSkeletonText
+                              animated
+                              style={{ width: "80%" }}
+                            />
+                            <IonSkeletonText
+                              animated
+                              style={{ width: "80%" }}
+                            />
+                            <IonSkeletonText
+                              animated
+                              style={{ width: "80%" }}
+                            />
+                            <IonSkeletonText
+                              animated
+                              style={{ width: "80%" }}
                             />
                           </IonCol>
                           <IonCol size="6" sizeMd="12" sizeSm="12">
@@ -217,9 +251,10 @@ export function ListComponent({}) {
                           sizeMd="12"
                           sizeSm="12"
                         >
-                          <ImageCache
+                       
+                          <ImageCache style={{minHeight:"300px"}}
                             key={`imageProductTitleImageCache_${productIndex}`}
-                            src={imageSrc}
+                            src={mainDisplayImages[productIndex]?.img}
                           />
                           {/* <IonImg
                             key={`DisplayImageProductsDisplay_${productIndex}`}
@@ -242,13 +277,17 @@ export function ListComponent({}) {
                             {images.map((image, imageIndex) => (
                               <ImageCache
                                 sliderImg={true}
-                                key={`thumbnail_${productIndex}_${imageIndex}`}
+                                key={
+                                  `thumbnail_${productIndex}_${imageIndex}` +
+                                  image.transformedSrc
+                                }
                                 src={image.transformedSrc}
                                 style={{
                                   width: "60px",
                                   height: "60px",
                                   border:
-                                    imageIndex === selectedImageIndex
+                                    imageIndex ===
+                                    mainDisplayImages[productIndex].index
                                       ? "2px solid blue"
                                       : "none",
                                   marginRight: "5px",
@@ -292,7 +331,7 @@ export function ListComponent({}) {
                             style={{ wordBreak: "break-word" }}
                           >
                             {product.variants.slice(0, 5).map((variant) => (
-                              <li key={variant.id}>
+                              <li key={productIndex + variant.id}>
                                 {variant.title} - ${variant.price} (
                                 {variant.inventoryQuantity} in stock)
                               </li>
@@ -304,29 +343,51 @@ export function ListComponent({}) {
                             key={productIndex + "break-word"}
                             style={{ wordBreak: "break-word" }}
                           >
-                            {product.options.slice(0, 5).map((option) => (
-                              <li key={option.id}>
+                            {product.options.slice(0, 5).map((option, indx) => (
+                              <li key={productIndex + indx + 1}>
                                 {option.name}: {option.values.join(", ")}
                               </li>
                             ))}
-                            {product.options.length > 5 && <li>...</li>}
+                            {product.options.length > 5 && (
+                              <li key={productIndex + indx + 2}>...</li>
+                            )}
                           </ul>
-                          <h4>Collections:</h4>
-                          <ul style={{ wordBreak: "break-word" }}>
+                          <h4 key={productIndex + "Collections"}>
+                            Collections:
+                          </h4>
+                          <ul
+                            key={productIndex + "UlCollectionsTitle"}
+                            style={{ wordBreak: "break-word" }}
+                          >
                             {product.collections
                               .slice(0, 5)
                               .map((collection, index) => (
-                                <li key={collection.id}>{collection.title}</li>
+                                <li key={productIndex + collection.id + index}>
+                                  {collection.title}
+                                </li>
                               ))}
-                            {product.collections.length > 5 && <li>...</li>}
+                            {product.collections.length > 5 && (
+                              <li
+                                key={
+                                  productIndex +
+                                  "collection.id + index li " +
+                                  "..."
+                                }
+                              >
+                                ...
+                              </li>
+                            )}
                           </ul>
                           <div
+                            key={productIndex + "flex + flex-end_34"}
                             style={{
                               display: "flex",
                               justifyContent: "flex-end",
                             }}
                           >
-                            <IonButtons>
+                            <IonButtons
+                              key={productIndex + "desklampIonButtons"}
+                            >
                               <IonButton
                                 fill="clear"
                                 disabled={true}
@@ -341,7 +402,7 @@ export function ListComponent({}) {
                               </IonButton>
                               <IonButton
                                 className="ion-padding-top ion-padding-right"
-                                key={product.id}
+                                key={productIndex + product.id}
                                 fill="clear"
                                 onClick={(e) =>
                                   createNarrative(
@@ -367,55 +428,6 @@ export function ListComponent({}) {
               </IonCol>
             );
           })}
-        </IonRow>
-      </IonGrid>
-    </IonContent>
-  );
-}
-function SkeletonComponent() {
-  // Define the number of skeleton items to render (should match the number of products)
-  const numberOfSkeletonItems = 20; // Change this to your desired number
-
-  return (
-    <IonContent>
-      <IonGrid>
-        <IonRow>
-          {[...Array(numberOfSkeletonItems).keys()].map((productIndex) => (
-            <IonCol
-              key={productIndex}
-              size="12"
-              sizeMd="6"
-              sizeSm="12"
-              sizeXl="3"
-            >
-              <IonCard>
-                <IonCardHeader>
-                  <IonCardTitle style={{ marginBottom: "16px" }}>
-                    <IonSkeletonText animated style={{ width: "80%" }} />
-                  </IonCardTitle>
-                </IonCardHeader>
-                <IonCardContent>
-                  <IonGrid>
-                    <IonRow>
-                      <IonCol size="6" sizeMd="12" sizeSm="12">
-                        <IonSkeletonText
-                          animated
-                          style={{ width: "100%", height: "150px" }}
-                        />
-                      </IonCol>
-                      <IonCol size="6" sizeMd="12" sizeSm="12">
-                        <IonSkeletonText animated style={{ width: "80%" }} />
-                        <IonSkeletonText animated style={{ width: "80%" }} />
-                        <IonSkeletonText animated style={{ width: "80%" }} />
-                        <IonSkeletonText animated style={{ width: "80%" }} />
-                        <IonSkeletonText animated style={{ width: "80%" }} />
-                      </IonCol>
-                    </IonRow>
-                  </IonGrid>
-                </IonCardContent>
-              </IonCard>
-            </IonCol>
-          ))}
         </IonRow>
       </IonGrid>
     </IonContent>

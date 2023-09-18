@@ -73,7 +73,7 @@ export function DataProvidersProvider({ children }) {
   useEffect(async () => {
     console.log("context", context);
     const token = await getSessionToken(app);
-
+console.log("token", token);
     let session = await app.getState();
     //   console.log('app---->',app)
     // console.log('session---->', session)
@@ -123,6 +123,7 @@ export function DataProvidersProvider({ children }) {
         console.log("subscription redirectUri: ", redirectUri);
         redirect.dispatch(Redirect.Action.REMOTE, { url: redirectUri });
         setPlans(data.plans);
+        console.log('user', user)
         assignUser(user);
         setRouteSubscriptions(activeSubscriptions, session);
 
@@ -142,7 +143,7 @@ export function DataProvidersProvider({ children }) {
     fetchDataSession();
   }, []);
 
-  const freeOptions = ["free", "basic", "crafted", "advanced", "premiere"];
+  const freeOptions = ["free", "chestnut", "sourwood", "acacia", "premiere"];
 
   function checkFeatureAccess(requiredSubscriptions) {
     if (
@@ -209,17 +210,17 @@ export function DataProvidersProvider({ children }) {
   };
 
   const includeProductImagesFeature = checkFeatureAccess([
-    "crafted",
-    "advanced",
+    "sourwood",
+    "acacia",
   ]);
-  const basic_crafted_advanced = checkFeatureAccess([
-    "basic",
-    "crafted",
-    "advanced",
+  const chestnut_sourwood_acacia = checkFeatureAccess([
+    "chestnut",
+    "sourwood",
+    "acacia",
   ]);
   const FeatureAccess = {
     includeProductImagesFeature,
-    basic_crafted_advanced,
+    chestnut_sourwood_acacia,
   };
 
   const [contextualOptions, setContextualOptions] = useState({});
@@ -554,7 +555,7 @@ export function DataProvidersProvider({ children }) {
         navigate(route, options);
         AnimatedContent(refDictionary[route], pa.endingViewAnimation, {
           //  timingFunction
-          duration: 0.05,
+          duration: 0.09,
         });
       },
     });

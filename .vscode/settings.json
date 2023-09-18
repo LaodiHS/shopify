@@ -13,5 +13,17 @@
       "name": "sqlshipify"
     }
   ],
-  "sqltools.useNodeRuntime": true
+  "sqltools.useNodeRuntime": true,
+  "redisXplorer.config": {
+    "profiles": [
+      {
+        "name": "Redis_Production",
+        "host": "redis-12960.c60.us-west-1-2.ec2.cloud.redislabs.com:12960",
+        "accessKey": "au34F3z3Bn8izOjWQ9zPITaQ6MYTE3CP",
+        "filter": "*",
+        "port": "12960"
+      }
+    ],
+    "scanLimit": 200
+  }
 }

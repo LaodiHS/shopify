@@ -10,7 +10,7 @@ import {
   IonCol,
 } from '@ionic/react';
 
-export function Header ({ tokenUsage }) {
+export function TokenUsageHeader ({ tokenUsage }) {
   const [usage, setUsage] = useState(tokenUsage);
 
   useEffect(() => {

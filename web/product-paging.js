@@ -1,7 +1,7 @@
 import { GraphqlQueryError } from "@shopify/shopify-api";
 import {shopify} from "./shopify.js";
 
-
+import {isProduction} from "./dev_production_vars.js"
 
 
 // update products query to get images from media 
@@ -141,11 +141,16 @@ export default async function getProducts(session, first = 5, after = null, befo
         },
       },
     });
+    if(!isProduction){
       console.log('product-paging-response message->',response.message)
+      console.log('product-paging-response message->',response)
+    }
      return response;
   } catch (error) {
+    if(!isProduction){
     console.log('error---->', error)
     console.log('error----->', JSON.stringify(error));
+    }
     if (error instanceof GraphqlQueryError) {
 
       throw new Error(

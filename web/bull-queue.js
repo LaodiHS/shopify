@@ -215,7 +215,8 @@ export function serverSideEvent(app, redisClient, queue) {
           for await (const delta of dataGenerator) {
             // Process each delta of data as it arrives
             finish_reason = delta.finish_reason ? true : false;
-            sendSSEMessage({ message: "Job stream", delta });
+            sendSSEMessage({ message: "Job stream", delta }); 
+             res.flush();
           }
         }
 
@@ -229,6 +230,7 @@ export function serverSideEvent(app, redisClient, queue) {
         res.write("event: close\n");
         res.write("data: Connection closed by the server\n\n");
         res.end();
+      
       });
 
       // Set up event listeners to send SSE messages to the client

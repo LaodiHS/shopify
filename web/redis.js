@@ -17,6 +17,8 @@ export async function connectToRedis() {
           host,
           port,
           password,
+          maxmemoryPolicy: 'volatile-lru',
+          maxmemorySamples: 0,  // 
           retryStrategy: (times) => {
             if (times > 5) {
               // Stop retrying after 5 attempts

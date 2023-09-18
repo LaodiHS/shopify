@@ -1,3 +1,5 @@
+import "typeface-baloo";
+import "typeface-roboto";
 import tinymce from "tinymce/tinymce";
 tinymce._setBaseUrl("/tinymce");
 import { Page, Layout, Image, Text } from "@shopify/polaris";
@@ -50,6 +52,7 @@ import {
   newsPaperWorStation,
   halfMoon,
   readingTree,
+  honeyCombGridDrop,
 } from "./assets";
 import { IonReactRouter } from "@ionic/react-router";
 
@@ -102,6 +105,7 @@ import {
   tinymceCustomPlugins,
   ImageCacheWorker,
   TokenUsageComponent,
+  IonicHeaderComponent,
 } from "./components";
 import { useAuthenticatedFetch } from "./hooks";
 import { NavigationMenu } from "@shopify/app-bridge-react";
@@ -117,36 +121,37 @@ tinymceCustomPlugins(tinymce);
 
 export default function App() {
   const pages = import.meta.globEager("./pages/**/!(*.test.[jt]sx)*.([jt]sx)");
-  const navigationPanel = !DEPLOYMENT_ENV
-    ? [
-        {
-          label: "Products Page",
-          destination: "/",
-        },
-        {
-          label: "Subscription",
-          destination: "/subscriptions",
-        },
-        {
-          label: "welcome",
-          destination: "/welcome",
-        },
-        {
-          label: "search",
-          destination: "/search",
-        },
-      ]
-    : [];
+  const navigationPanel =
+    true || !DEPLOYMENT_ENV
+      ? [
+          {
+            label: "Products Page",
+            destination: "/",
+          },
+          {
+            label: "Subscription",
+            destination: "/subscriptions",
+          },
+          {
+            label: "welcome",
+            destination: "/welcome",
+          },
+          {
+            label: "search",
+            destination: "/search",
+          },
+        ]
+      : [];
   useEffect(() => {
     return () => {
       const handleBeforeUnload = (event) => {
-        event.preventDefault();
-        event.returnValue = "Are you sure you want to leave this page?";
+        // event.preventDefault();
+        //  event.returnValue = "Are you sure you want to leave this page?";
         window.addEventListener("unload", clearLocalStorage);
       };
 
       const clearLocalStorage = () => {
-        // localStorage.clear();
+        localStorage.clear();
       };
 
       window.addEventListener("beforeunload", handleBeforeUnload);
@@ -237,13 +242,23 @@ function LandingPage({ animationRef }) {
         // Forward the ref to the parent component
       }}
     >
-      <IonHeader translucent={true}>
-        <IonToolbar>
-          <IonTitle >Welcome to VibeFenWei</IonTitle>
-        </IonToolbar>
-      </IonHeader>
+      <IonicHeaderComponent />
+      {/* <IonHeader translucent={true}>
+        <IonToolbar
+          style={{
+            backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.7)), url(${honeyCombGridDrop})`,
 
-      <IonContent  className="ion-padding">
+            backgroundPosition: "center",
+            backgroundSize: "contain",
+            backgroundRepeat: "no-repeat",
+            minHeight: "50px",
+          }}
+        >
+          <IonTitle> Neural Nectar</IonTitle>
+        </IonToolbar>
+      </IonHeader> */}
+
+      <IonContent className="ion-padding">
         {/* <div class="container">
           <div class="photo">
             {/* <img src="https://www.svgrepo.com/show/300968/monitor-graph.svg" /> 
@@ -254,26 +269,86 @@ function LandingPage({ animationRef }) {
           <div class="album"></div>
           <div class="rotate"></div>
         </div> */}
-\
-        <IonText  class="ion-padding-top">
-          <h1   className="ion-text-center">VibeFenWei</h1>
-<div style={{
+
+        <IonText class="ion-padding-top">
+          <IonGrid>
+            <IonRow>
+              <IonCol
+                style={{
+                  backgroundImage: `url(${honeyCombGridDrop})`,
                   backgroundPosition: "center",
                   backgroundSize: "contain",
                   backgroundRepeat: "no-repeat",
-                  height: "300px",
-                
-                  backgroundImage: `url(${ readingTree})`,
-                }}> </div>
+                  height: "100px",
+                }}
+                className="ion-text-center"
+                size="12"
+              >
+                <IonRow>
+                  <IonCol>
+                    <h1
+                      style={{
+                        color: "#ef8561",
+                        letterSpacing: "9px",
+                        fontFamily: "'Baloo', sans-serif",
+                        wordSpacing: "40px",
+                        fontSize: "5vw",
+                        float: "right",
+                        paddingRight: "51px",
+                        whiteSpace: "nowrap" /* Prevents wrapping */,
+                        // overflow: "hidden", /* Clips content that overflows */
+                        // textOverflow: "ellipsis"
+                        // textShadow: `4px 4px 2px rgba(150, 150, 150, 1)`,
+                      }}
+                    >
+                      Neural
+                    </h1>
+                  </IonCol>
+                  <IonCol>
+                    <h1
+                      style={{
+                        color: "#ef8561",
+                        letterSpacing: "9px",
+
+                        float: "left",
+                        fontFamily: "'Baloo', sans-serif",
+                        wordSpacing: "40px",
+                        fontSize: "5vw",
+                        paddingLeft: "53px",
+                        whiteSpace: "nowrap" /* Prevents wrapping */,
+                        // overflow: "hidden", /* Clips content that overflows */
+                        // textOverflow: "ellipsis"
+                        // textShadow: `4px 4px 2px rgba(150, 150, 150, 1)`,
+                      }}
+                    >
+                      Nectar
+                    </h1>
+                  </IonCol>
+                </IonRow>
+              </IonCol>
+            </IonRow>
+          </IonGrid>
+          <div
+            style={{
+              backgroundPosition: "center",
+              backgroundSize: "contain",
+              backgroundRepeat: "no-repeat",
+              height: "300px",
+
+              backgroundImage: `url(${readingTree})`,
+            }}
+          ></div>
           <p className="ion-text-center">
             Experience a seamless journey with our amazing features.
           </p>
           <IonText color="dark">
-            <p className="ion-text-center ion-padding-top">Thank You For Becoming a</p>
-            <h2 className="ion-text-center ion-text-capitalize">
+            <p className="ion-text-center ion-padding-top">
+              Thank You For Becoming a
+            </p>
+            <h2 style={{fontFamily: "Baloo, sans-serif"}}className="ion-text-center ion-text-capitalize">
               {subscriptions.join(" ")}
             </h2>
-            <p className="ion-text-center">Subscriber</p>
+            <p className="ion-text-center">Member</p>
           </IonText>
         </IonText>
         <div className="ion-text-center">
@@ -339,10 +414,12 @@ function Description() {
   } = useDataProvidersContext();
   return (
     <IonPage ref={refDictionary["/description"]}>
-      <IonHeader key={"10"} translucent={true}>
-        <IonToolbar key={"11"}>
+      <IonicHeaderComponent
+        centerText={"Description Workstation"}
+        left={
           <IonButtons key={"12"} slot="start">
             <IonButton
+              color="neural"
               disabled={serverSentEventLoading}
               onClick={() => {
                 DataProviderNavigate("/product-details");
@@ -352,34 +429,39 @@ function Description() {
               <IonIcon slot="icon-only" key={"14"} icon={chevronBack} />
             </IonButton>
           </IonButtons>
-          <IonTitle key={"15"}>Description Workstation</IonTitle>
-          {contentSaved && (
+        }
+        right={
+          <>
+            {contentSaved && (
+              <IonButton
+                fill="clear"
+                color={contentSaved && "success"}
+                size="small"
+                slot="end"
+              >
+                saved
+              </IonButton>
+            )}
             <IonButton
-              fill="clear"
-              color={contentSaved && "success"}
               size="small"
+              disabled={true}
+              fill="clear"
+              color="neural"
               slot="end"
             >
-              saved
+              <IonIcon
+                slot="icon-only"
+                size="large"
+                icon={descriptionWorkStation}
+              />
             </IonButton>
-          )}
-          <IonButton
-            size="small"
-            disabled={true}
-            fill="clear"
-            color="dark"
-            slot="end"
-          >
-            <IonIcon
-              slot="icon-only"
-              size="large"
-              icon={descriptionWorkStation}
-            />
-          </IonButton>
-          <IonButtons slot="end"></IonButtons>
-        </IonToolbar>
-      </IonHeader>
+            <IonButtons slot="end"></IonButtons>
+          </>
+        }
+      />
+
       <IonContent>
+   
         <TokenUsageComponent tokenUsage={user} />
         <Accordion />
       </IonContent>
@@ -402,11 +484,12 @@ function Article() {
 
   return (
     <IonPage key="IonPage/article" ref={refDictionary["/article"]}>
-      {" "}
-      <IonHeader key={"10"} translucent={true}>
-        <IonToolbar key={"11"}>
+    
+      <IonicHeaderComponent
+        left={
           <IonButtons key={"12"} onClick={() => {}} slot="start">
             <IonButton
+            color="neural"
               key="Ionbuttons/article"
               disabled={serverSentEventLoading}
               onClick={() => {
@@ -416,35 +499,38 @@ function Article() {
               <IonIcon key={"14"} icon={chevronBack} />
             </IonButton>
           </IonButtons>
-
-          <IonTitle key={"15"}>Article Workstation</IonTitle>
-          {contentSaved && (
+        }
+        centerText={"Article Workstation"}
+        right={
+          <>
+            {contentSaved && (
+              <IonButton
+                fill="clear"
+                color={contentSaved && "success"}
+                size="small"
+                slot="end"
+              >
+                saved
+              </IonButton>
+            )}
             <IonButton
-              fill="clear"
-              color={contentSaved && "success"}
+              key="ionbutton/icon/asset"
               size="small"
+              disabled={true}
+              fill="clear"
+              color="neural"
               slot="end"
             >
-              saved
+              <IonIcon
+                key="ion/icon/asset/svg"
+                slot="icon-only"
+                size="large"
+                icon={newsPaperWorStation}
+              />
             </IonButton>
-          )}
-          <IonButton
-            key="ionbutton/icon/asset"
-            size="small"
-            disabled={true}
-            fill="clear"
-            color="dark"
-            slot="end"
-          >
-            <IonIcon
-              key="ionbutton/icon/asset/svg"
-              slot="icon-only"
-              size="large"
-              icon={newsPaperWorStation}
-            />
-          </IonButton>
-        </IonToolbar>
-      </IonHeader>
+          </>
+        }
+      />
       <IonContent>
         <Accordion />
       </IonContent>
@@ -608,7 +694,7 @@ function IonMenuNav() {
         },
       },
       {
-        access: checkFeatureAccess(["basic"]),
+        access: checkFeatureAccess(["chestnut"]),
 
         label: "Description Workstation",
         icon: descriptionWorkStation,
@@ -625,7 +711,7 @@ function IonMenuNav() {
         },
       },
       {
-        access: checkFeatureAccess(["crafted"]),
+        access: checkFeatureAccess(["sourwood"]),
         label: "Article Workstation",
 
         icon: newsPaperWorStation,
@@ -705,6 +791,7 @@ function IonMenuNav() {
 
             return (
               <IonTabButton
+              size="large"
                 id={buttonId}
                 disabled={serverSentEventLoading || tab.disabled}
                 key={index}
@@ -714,7 +801,7 @@ function IonMenuNav() {
                 }
               >
                 <IonIcon
-                  color={tab.saveSignal && contentSaved && "success"}
+                  color={tab.saveSignal ? contentSaved && "success" : "shoe"}
                   key={"icon" + index}
                   src={tab.access.hasAccess && tab.src}
                   icon={
@@ -724,7 +811,7 @@ function IonMenuNav() {
                 />
                 <IonLabel
                   key={index}
-                  color={tab.access.hasAccess ? "secondary" : "danger"}
+                  color={tab.access.hasAccess ? "primary" : "danger"}
                 >
                   {serverSentEventLoading}
                   {tab.access.message(tab.label)}
@@ -744,7 +831,7 @@ function IonPopovers() {
       key="Include existing description in composition"
       translucent={true}
       animated="true"
-      trigger="advanced-options-select-options-hover-trigger"
+      trigger="acacia-options-select-options-hover-trigger"
       triggerAction="hover"
       area-label="Advanced Language and Formatting Options"
     >
@@ -752,7 +839,7 @@ function IonPopovers() {
         <IonText>
           <p>
             Explore Advanced Language and Formatting Choices. Choose your
-            preferred categories from the advanced menu options, and they will
+            preferred categories from the acacia menu options, and they will
             be displayed below.
           </p>
         </IonText>

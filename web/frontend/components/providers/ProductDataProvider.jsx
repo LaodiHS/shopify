@@ -69,6 +69,8 @@ export function ProductDataProvider({ children }) {
 
   const fetchData = async () => {
     setProductsLoading(true);
+
+    console.log('getting products DATA')
     if (pagingHistory.hasCurrentPage()) {
       const cachedData = pageIngCache.getPage(pagingHistory.getCurrentPage());
       if (cachedData) {
@@ -90,12 +92,13 @@ export function ProductDataProvider({ children }) {
           after: null,
         }),
       });
-
+console.log('response', response)
       const data = await response.json();
       const format = formatProducts(data);
       setPaging(format);
       setProductsLoading(false);
     } catch (error) {
+      console.log('error', error)
       setProductsLoading(false);
   
     }

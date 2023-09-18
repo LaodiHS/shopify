@@ -24,6 +24,7 @@ import { authentication } from "./authentication.js";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 import { request } from "./cache-to-file.js";
+import compression from "compression"
 import {handleDescriptionEndpoints, handleArticleEndpoints, handlePostEndpoints,
 } from "./description-requests.js";
 
@@ -76,7 +77,9 @@ async function startServer() {
         : `${process.cwd()}/frontend`;
 
     const app = await authentication();
+    // const csp = "frame-ancestors 'self' vibefenwei.fly.dev";
 
+    
     serverSideEvent(app, redisClient, queue);
     handleDescriptionEndpoints(app, queue);
     handleArticleEndpoints(app, queue);
@@ -320,6 +323,7 @@ async function startServer() {
       let status = 200;
       let error = null;
 
+
       try {
         let params = {
           path: "/products",
@@ -481,6 +485,7 @@ async function startServer() {
         error = err.message;
         data = null; // Reset data to null in case of an error
       }
+      console.log('data-->', data);
       // console.log("paging Data====>:", data);
       res.status(status).send({ success: status === 200, data, error });
     });
@@ -538,7 +543,7 @@ async function startServer() {
     app.use(serveStatic(STATIC_PATH, { index: false }));
 
 
-    app.use(express.urlencoded({ extended: false }));
+    // app.use(express.urlencoded({ extended: false }));
 
 
 

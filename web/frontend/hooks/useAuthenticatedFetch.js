@@ -18,14 +18,11 @@ export function useAuthenticatedFetch() {
   const app = useAppBridge();
   const fetchFunction = authenticatedFetch(app);
 
- return async (uri, options) => {
+  return async (uri, options) => {
     const response = await fetchFunction(uri, options);
     checkHeadersForReauthorization(response.headers, app);
     return response;
   };
-
-
- 
 }
 function customStartsWith(str, search, position) {
   position = position || 0;
@@ -36,11 +33,11 @@ function checkHeadersForReauthorization(headers, app) {
     const authUrlHeader =
       headers.get("X-Shopify-API-Request-Failure-Reauthorize-Url") ||
       `/api/auth`;
-
+    console.log("auth_url_header", authUrlHeader);
     const redirect = Redirect.create(app);
     redirect.dispatch(
       Redirect.Action.REMOTE,
-     customStartsWith( authUrlHeader,"/")
+      customStartsWith(authUrlHeader, "/")
         ? `https://${window.location.host}${authUrlHeader}`
         : authUrlHeader
     );

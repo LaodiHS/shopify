@@ -275,7 +275,7 @@ export default {
   
   //   {"app_subscription":{
   //     "admin_graphql_api_id":"gid://shopify/AppSubscription/30376821056",
-  //     "name":"basic",
+  //     "name":"chestnut",
   //     "status":"CANCELLED",
   //     "admin_graphql_api_shop_id":"gid://shopify/Shop/77950779712",
   //     "created_at":"2023-08-15T12:20:39-04:00",

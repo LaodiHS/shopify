@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Context } from "../utilities/data-context.js";
 import { useNavigate } from "react_router_dom";
+import facepaint from 'facepaint'
 
 import {
   IonCard,
@@ -29,7 +30,10 @@ import {
   IonBackButton,
   IonRouterOutlet,
   IonIcon,
+  IonList,
+  IonItem,
   IonLabel,
+  IonPopover,
 } from "@ionic/react";
 import { useAuthenticatedFetch } from "../hooks";
 import { Toast } from "@shopify/app-bridge-react";
@@ -47,17 +51,23 @@ import {
   deskLamp,
   milkyway,
   milkywayWashOut,
-   starWindow,
-   autumnWindLeaves,
-    closedWindow,
-    autumnTrees,
-    kidReadingBench,
-    benchWarmer,
-
+  starWindow,
+  autumnWindLeaves,
+  closedWindow,
+  autumnTrees,
+  kidReadingBench,
+  benchWarmer,
+  honeyCombGridDrop,
+  chestnutHoney,
+  acaciaHoney,
+  sourwoodHoney,
+  honeyPot,
+  honeyStick,
 } from "../assets";
+
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { Redirect } from "@shopify/app-bridge/actions";
-import { useDataProvidersContext } from "../components";
+import { useDataProvidersContext, IonicHeaderComponent } from "../components";
 export const SubscriptionComponent = ({
   animationRef,
   //  subscriptions
@@ -138,32 +148,154 @@ export const SubscriptionComponent = ({
     };
   });
 
-
   return (
     <IonPage ref={animationRef}>
-      <IonContent   >
-        <IonGrid    >
-          <IonRow 
+      <IonicHeaderComponent centerText={"neural nectar"} />
+      <IonContent>
+        <IonGrid>
+          <IonRow>
+            <IonCol
+              style={{
+                backgroundImage: `url(${honeyCombGridDrop})`,
+                backgroundPosition: "center",
+                backgroundSize: "contain",
+                backgroundRepeat: "no-repeat",
+                height: "100px",
+              }}
+              className="ion-text-center"
+              size="12"
+            >
+              <IonRow>
+                <IonCol size="6">
+                  <h1
+                    style={{
+                      color: "#ef8561",
+                      letterSpacing: "9px",
+                      fontFamily: "'Baloo', sans-serif",
+                      wordSpacing: "40px",
+                      fontSize: "5vw",
+                      float: "right",
+                      paddingRight: "51px",
+                      whiteSpace: "nowrap" /* Prevents wrapping */,
+                      // overflow: "hidden", /* Clips content that overflows */
+                      // textOverflow: "ellipsis"
+                      // textShadow: `4px 4px 2px rgba(150, 150, 150, 1)`,
+                    }}
+                  >
+                    Neural
+                  </h1>
+                </IonCol>
+                <IonCol size="6">
+                  <h1
+                    style={{
+                      color: "#ef8561",
+                      letterSpacing: "9px",
+
+                      float: "left",
+                      fontFamily: "'Baloo', sans-serif",
+                      wordSpacing: "40px",
+                      fontSize: "5vw",
+                      paddingLeft: "53px",
+                      whiteSpace: "nowrap" /* Prevents wrapping */,
+                      // overflow: "hidden", /* Clips content that overflows */
+                      // textOverflow: "ellipsis"
+                      // textShadow: `4px 4px 2px rgba(150, 150, 150, 1)`,
+                    }}
+                  >
+                    Nectar
+                  </h1>
+                </IonCol>     
+              
+              </IonRow>
+
+            </IonCol>
+         <IonCol className="ion-text-center" size="12">
+                  <h2 style={{fontFamily:"Baloo, sans-serif"}}>Membership</h2>
+                 </IonCol>
+          </IonRow>
+        </IonGrid>
+
+        <IonGrid>
+          <IonRow
           // style={{
           //         backgroundPosition: "center",
           //         backgroundSize: "cover",
           //         backgroundRepeat: "no-repeat",
           //         height: "950px",
           //          backgroundImage: `url(${autumnWindLeaves})`,
-          //       }} 
-                >
+          //       }}
+          >
             {subscriptionsOptions.map((subscription, index) => {
               const current = subscriptions.includes(subscription.title);
+
+              const honeyIcons = {
+                acacia: acaciaHoney,
+                chestnut: chestnutHoney,
+                sourwood: sourwoodHoney,
+              };
 
               return (
                 <IonCol size="12" size-md="4" key={index}>
                   <IonCard color={current ? "dark" : ""}>
                     <IonCardHeader>
-                      <IonCardTitle className="ion-text-capitalize">
-                        {subscription.title}
+                      <IonCardTitle style={{ bold: "",fontFamily:"Baloo, sans-serif"}} className="ion-text-capitalize">
+                        {subscription.title} Honey
+                        <div
+                          style={{
+                            backgroundPosition: "right",
+                            backgroundSize: "contain",
+                            backgroundRepeat: "no-repeat",
+                            height: "130px",
+                           
+
+                            backgroundImage: `url( ${
+                              honeyIcons[subscription.title]
+                            } )`,
+                          }}
+                        >
+                          {(subscription.title === "acacia" ||
+                            subscription.title === "sourwood") && (
+                            <div
+                              style={{
+
+                                backgroundPosition: "center",
+                                backgroundSize: "contain",
+                                backgroundRepeat: "no-repeat",
+                                height: "130px", minWidth:"750px",
+                                '@media (min-width: 540px)': {
+                                  
+                                },
+
+                                backgroundImage: `url( ${honeyStick} )`,
+                              }}
+                            ></div>
+                          )}
+                        </div>
                       </IonCardTitle>
                     </IonCardHeader>
-                    <IonCardContent className="ion-text-capitalize">
+                    <IonCardContent
+
+                    //className="ion-text-capitalize"
+                    >
+                      {subscription.title &&
+                        subscription?.features?.length &&
+                        subscription.features.map((feature, index) => (
+                          <IonPopover
+                            key={index}
+                            trigger={
+                              "hover-trigger-detail-popover-" +
+                              subscription.title +
+                              index
+                            }
+                            side="start"
+                            alignment="center"
+                            triggerAction="click"
+                          >
+                            <IonContent class="ion-padding">
+                              {feature.description}
+                            </IonContent>
+                          </IonPopover>
+                        ))}
                       {subscription.price && (
                         <p>
                           <strong>Price:</strong> {subscription.price}
@@ -172,24 +304,99 @@ export const SubscriptionComponent = ({
                       <p>
                         <strong>Features:</strong>
                       </p>
-                      <IonRadioGroup
-                        className={subscription.features ? "" : "ion-hide"}
-                      >
-                        {subscription.features.map((feature, index) => (
-                          <div key={index}>
-                            <IonRadio
-                              className="ion-text-capitalize"
-                              value={feature}
-                              color="success"
-                              checked
-                              slot="start"
-                              labelPlacement="end"
+                      <IonList key={index} color={current ? "dark" : ""}>
+                        {subscription.title &&
+                          subscription.features.map((feature, index) => (
+                            <div
+                              key={index}
+                              id={
+                                "hover-trigger-detail-popover-" +
+                                subscription.title +
+                                index
+                              }
                             >
-                              {feature}
-                            </IonRadio>
-                          </div>
-                        ))}
-                      </IonRadioGroup>
+                              <IonItem
+                                key={index + "first"}
+                                style={{ fontSize: "14px" }}
+                                color={current ? "dark" : ""}
+                                lines="none"
+                              >
+                                <IonRadioGroup
+                                  color={current ? "dark" : ""}
+                                  disabled={true}
+                                  className={
+                                    subscription.features ? "" : "ion-hide"
+                                  }
+                                >
+                                  <IonRadio
+                                    className="ion-text-capitalize"
+                                    value={feature.name}
+                                    color="success"
+                                    checked
+                                    slot="start"
+                                    labelPlacement="end"
+                                  >
+                                    {feature.name}
+                                  </IonRadio>
+                                </IonRadioGroup>
+                              </IonItem>
+
+                              {feature.details && (
+                                <>
+                                  <IonItem
+                                    key={index + "12"}
+                                    style={{ fontSize: "14px" }}
+                                    color={current ? "dark" : ""}
+                                    lines="none"
+                                  >
+                                    <IonRadioGroup
+                                      disabled={true}
+                                      color={current ? "dark" : ""}
+                                      className={
+                                        subscription.features ? "" : "ion-hide"
+                                      }
+                                    >
+                                      <IonRadio
+                                        value={feature.details.wordCount}
+                                        color="success"
+                                        checked
+                                        slot="start"
+                                        labelPlacement="end"
+                                      >
+                                        {feature.details.wordCount}
+                                      </IonRadio>
+                                    </IonRadioGroup>
+                                  </IonItem>
+                                  <IonItem
+                                    key={index + "third"}
+                                    style={{ fontSize: "14px" }}
+                                    color={current ? "dark" : ""}
+                                    lines="none"
+                                  >
+                                    <IonRadioGroup
+                                      disabled={true}
+                                      color={current ? "dark" : ""}
+                                      className={
+                                        subscription.features ? "" : "ion-hide"
+                                      }
+                                    >
+                                      <IonRadio
+                                        value={feature.details.novel}
+                                        color="success"
+                                        checked
+                                        slot="start"
+                                        labelPlacement="end"
+                                      >
+                                        {feature.details.novel}
+                                      </IonRadio>
+                                    </IonRadioGroup>
+                                  </IonItem>
+                                </>
+                              )}
+                            </div>
+                          ))}
+                      </IonList>
+
                       <div
                         style={{
                           display: "flex",
@@ -221,40 +428,39 @@ export const SubscriptionComponent = ({
               );
             })}
             <IonCol size="12">
-            <IonRow size="12">
-              <IonCol
-                size="4"
-                style={{
-                  backgroundPosition: "right",
-                  backgroundSize: "contain",
-                  backgroundRepeat: "no-repeat",
-                  height: "100px",
-                  backgroundImage: `url(${autumnTrees})`,
-                }}
-              ></IonCol>
-              <IonCol
-                size="4"
-                style={{
-                  backgroundPosition: "center",
-                  backgroundSize: "contain",
-                  backgroundRepeat: "no-repeat",
-                  height: "300px",
-                  transform:"scaleX(-1)",
-                  backgroundImage: `url(${ benchWarmer})`,
-                }}
-              ></IonCol>
-              <IonCol
-                size="4"
-                style={{
-                  backgroundPosition: "left",
-                  backgroundSize: "contain",
-                  backgroundRepeat: "no-repeat",
-                  height: "350px",
-                  backgroundImage: `url(${autumnTrees})`,
-                }}
-              ></IonCol>
-              
-            </IonRow>
+              <IonRow size="12">
+                <IonCol
+                  size="4"
+                  style={{
+                    backgroundPosition: "center",
+                    backgroundSize: "contain",
+                    backgroundRepeat: "no-repeat",
+                    height: "100px",
+                    backgroundImage: `url(${autumnTrees})`,
+                  }}
+                ></IonCol>
+                <IonCol
+                  size="4"
+                  style={{
+                    backgroundPosition: "center",
+                    backgroundSize: "contain",
+                    backgroundRepeat: "no-repeat",
+                    height: "390px",
+                    transform: "scaleX(-1)",
+                    backgroundImage: `url(${benchWarmer})`,
+                  }}
+                ></IonCol>
+                <IonCol
+                  size="4"
+                  style={{
+                    backgroundPosition: "center",
+                    backgroundSize: "contain",
+                    backgroundRepeat: "no-repeat",
+                    height: "350px",
+                    backgroundImage: `url(${autumnTrees})`,
+                  }}
+                ></IonCol>
+              </IonRow>
             </IonCol>
           </IonRow>
         </IonGrid>
