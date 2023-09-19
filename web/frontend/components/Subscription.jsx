@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Context } from "../utilities/data-context.js";
 import { useNavigate } from "react_router_dom";
-import facepaint from 'facepaint'
-
+import facepaint from "facepaint";
+import { css } from "@emotion/react";
 import {
   IonCard,
   IonCardContent,
@@ -67,7 +67,12 @@ import {
 
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { Redirect } from "@shopify/app-bridge/actions";
-import { useDataProvidersContext, IonicHeaderComponent } from "../components";
+import {
+  useDataProvidersContext,
+  IonicHeaderComponent,
+  CurrentScreenWidth,
+} from "../components";
+
 export const SubscriptionComponent = ({
   animationRef,
   //  subscriptions
@@ -86,6 +91,7 @@ export const SubscriptionComponent = ({
     const redirect = Redirect.create(app);
     redirect.dispatch(Redirect.Action.REMOTE, { url: redirectUrl });
   }
+
   function setAlertMessage(alertHeader, alertBody) {
     setAlertHeader(alertHeader);
     setAlertBody(alertBody);
@@ -147,14 +153,38 @@ export const SubscriptionComponent = ({
       features: body.usageTerms,
     };
   });
+  const [cardWidth, setCardWidth] = useState();
+  const screenWidth = CurrentScreenWidth();
+  const cardWidthRef = useRef(null);
+  useEffect(() => {
+    const handleResize = () => {
+      if (cardWidthRef.current) {
+        setCardWidth(cardWidthRef.current.offsetWidth);
 
+        console.log("cardWidth: " + cardWidthRef.current.offsetWidth);
+      }
+    };
+    setTimeout(() => {
+      handleResize();
+    }, 100);
+    // Add event listener for window resize
+    window.addEventListener("resize", handleResize);
+
+    // Cleanup: remove event listener when component is unmounted
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  const breakpoints = [300, 400, 472, 576, 768, 992, 1200];
+  const mq = facepaint(breakpoints.map((bp) => `@media (min-width: ${bp}px)`));
   return (
     <IonPage ref={animationRef}>
       <IonicHeaderComponent centerText={"neural nectar"} />
       <IonContent>
         <IonGrid>
           <IonRow>
-            <IonCol
+            <IonCol size="12"
               style={{
                 backgroundImage: `url(${honeyCombGridDrop})`,
                 backgroundPosition: "center",
@@ -162,10 +192,10 @@ export const SubscriptionComponent = ({
                 backgroundRepeat: "no-repeat",
                 height: "100px",
               }}
-              className="ion-text-center"
-              size="12"
+              className="ion-text-center ion-padding-bottom"
+              
             >
-              <IonRow>
+              <IonRow size="12">
                 <IonCol size="6">
                   <h1
                     style={{
@@ -204,14 +234,13 @@ export const SubscriptionComponent = ({
                   >
                     Nectar
                   </h1>
-                </IonCol>     
-              
+                </IonCol>
               </IonRow>
-
             </IonCol>
-         <IonCol className="ion-text-center" size="12">
-                  <h2 style={{fontFamily:"Baloo, sans-serif"}}>Membership</h2>
-                 </IonCol>
+            <IonCol className="ion-text-center ion-padding-top" size="12">
+              <h2 style={{ fontFamily: "Baloo, sans-serif" }}>Membership</h2>
+              <p>The Sweetest Membership This Side Of Shopify</p>
+            </IonCol>
           </IonRow>
         </IonGrid>
 
@@ -234,19 +263,30 @@ export const SubscriptionComponent = ({
                 sourwood: sourwoodHoney,
               };
 
+
               return (
                 <IonCol size="12" size-md="4" key={index}>
-                  <IonCard color={current ? "dark" : ""}>
+                  <IonCard ref={cardWidthRef} color={current ? "dark" : ""}>
                     <IonCardHeader>
-                      <IonCardTitle style={{ bold: "",fontFamily:"Baloo, sans-serif"}} className="ion-text-capitalize">
+                      <IonCardTitle
+                        style={{  fontFamily: "Baloo, sans-serif" }}
+                        className="ion-text-capitalize"
+                      >
                         {subscription.title} Honey
                         <div
+                              style={{
+                                zIndex:"200",
+                                position: cardWidth > 503 ? "absolute": "relative" ,
+                                width:"100%"
+                              }}
+                            >
+                        <div
                           style={{
+                        
                             backgroundPosition: "right",
                             backgroundSize: "contain",
                             backgroundRepeat: "no-repeat",
                             height: "130px",
-                           
 
                             backgroundImage: `url( ${
                               honeyIcons[subscription.title]
@@ -256,21 +296,17 @@ export const SubscriptionComponent = ({
                           {(subscription.title === "acacia" ||
                             subscription.title === "sourwood") && (
                             <div
-                              style={{
-
-                                backgroundPosition: "center",
-                                backgroundSize: "contain",
-                                backgroundRepeat: "no-repeat",
-                                height: "130px", minWidth:"750px",
-                                '@media (min-width: 540px)': {
-                                  
-                                },
-
-                                backgroundImage: `url( ${honeyStick} )`,
+                            style={{
+                                backgroundPosition: `right`,
+                                backgroundSize: `contain`,
+                                backgroundRepeat: `no-repeat`,
+                                height: "130px",
+                                width: `${cardWidth-110}px`,
+                                backgroundImage: `url(${honeyStick})`,
                               }}
                             ></div>
                           )}
-                        </div>
+                        </div></div>
                       </IonCardTitle>
                     </IonCardHeader>
                     <IonCardContent
@@ -412,6 +448,7 @@ export const SubscriptionComponent = ({
                           onClick={() =>
                             handleProductSelection(subscription.title)
                           }
+                          color={current ? "success" : "neural"}
                           size="small"
                         >
                           {current

@@ -1,6 +1,7 @@
 export { ProductsCard } from "./ProductsCard";
 
 
+
 export { AppTypeahead } from "./ListDetail/AppTypeahead";
 export { SelectedOptions } from "./ListDetail/SelectedOptions";
 export { ImageLoader } from "./ImageLoader";
@@ -33,3 +34,4 @@ export { IonButtonInformation } from "./ListDetail/IonButtonInformation";
 export { tinymceCustomPlugins, quicksBarConfig } from "../utilities/TinymcePlugins";
 // export {extractKeywords} from './TextExtractor';
 export { IonicHeaderComponent } from "./IonicHeaderComponent";
+export {CurrentScreenWidth} from "./CurrentScreenWidth";

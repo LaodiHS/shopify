@@ -13,6 +13,7 @@ import { chromeExtension } from "rollup-plugin-chrome-extension";
 import extension from "rollup-plugin-browser-extension";
 import htmlMinifier from 'vite-plugin-html-minifier'
 // import 'dotenv/config'
+// import { jsx } from '@emotion/react'
 import { VitePWA } from 'vite-plugin-pwa';
 if (
   process.env.npm_lifecycle_event === "build" &&
@@ -75,7 +76,12 @@ export default defineConfig({
   plugins: [
     terser({ compress:true, mangle:true,  maxWorkers: 5}),
     // react({}),
-    react(),
+    react({
+      jsxImportSource: "@emotion/react",
+      babel: {
+        plugins: ["@emotion/babel-plugin"],
+      },
+    }),
     // VitePWA({ registerType: 'autoUpdate' }),
     // vuePlugin(),
     // vue({
