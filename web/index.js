@@ -48,6 +48,7 @@ const log = (message, obj) =>
   );
 
   
+
   
 
 async function startServer() {
@@ -71,6 +72,7 @@ async function startServer() {
     console.log("NODE_ENV--->", process.env.NODE_ENV);
     // process.env.NODE_ENV = "production";
 
+    
     const STATIC_PATH =
       process.env.NODE_ENV === "production"
         ? `${process.cwd()}/frontend/dist`

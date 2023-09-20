@@ -43,7 +43,7 @@ import {
   ImageCachePre,
   AnimatedContent,
 } from "../components";
-import { deskLamp, pictures} from "../assets";
+import { deskLamp, pictures } from "../assets";
 export function ListComponent({}) {
   const { DataProviderNavigate } = useDataProvidersContext();
   const { productsData, defineProductData } = useProductDataContext();
@@ -131,7 +131,7 @@ export function ListComponent({}) {
                   <IonCard>
                     <IonCardHeader>
                       <IonCardTitle style={{ marginBottom: "16px" }}>
-                        <IonSkeletonText animated style={{ width: "80%" }} />
+                        <IonSkeletonText animated style={{height:"300px", width: "80%" }} />
                       </IonCardTitle>
                     </IonCardHeader>
                     <IonCardContent>
@@ -251,8 +251,8 @@ export function ListComponent({}) {
                           sizeMd="12"
                           sizeSm="12"
                         >
-                       
-                          <ImageCache style={{minHeight:"300px"}}
+                          <ImageCache
+                            style={{ minHeight: "300px" }}
                             key={`imageProductTitleImageCache_${productIndex}`}
                             src={mainDisplayImages[productIndex]?.img}
                           />

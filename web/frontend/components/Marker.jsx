@@ -1,61 +1,80 @@
 import React from "react";
 import { IonText, IonThumbnail, IonGrid, IonCol, IonRow } from "@ionic/react";
-const Marker = ({ r, c }) => {
-  if ((r && typeof r !== "string") || (c && typeof c !== "string")) {
+const Marker = ({ requirementText, color }) => {
+  if (
+    (requirementText && typeof requirementText !== "string") ||
+    (color && typeof color !== "string")
+  ) {
     throw Error("Invalid argument types");
   }
-
+  const key =  color;
   const style = {
-    backgroundColor: c || "transparent",
+    backgroundColor: color || "transparent",
     width: "10px",
     height: "10px",
     display: "inline",
     borderRadius: "10px",
-   // display: "inline-block",
+    // display: "inline-block",
   };
   const styleText = {
-  backgroundColor:c,
+    backgroundColor: color,
+    fontFamily: "'Baloo', sans-serif",
+    borderRadius: "5px",
+    paddingRight: "3px",
+    paddingLeft: "3px",
   };
+
+  let verifiedReq = requirementText;
   if (
-    r.includes("jpg") ||
-    r.includes("png") ||
-    r.includes("gif") ||
-    r.includes("jpe")
+    requirementText.includes("jpg") ||
+    requirementText.includes("png") ||
+    requirementText.includes("gif") ||
+    requirementText.includes("jpe")
   ) {
-    r = (
-      <IonThumbnail>
-        <img src={r} />
+    verifiedReq = (
+      <IonThumbnail key={"thumb" + key}>
+        <img key={"img" + key} src={requirementText} />
       </IonThumbnail>
     );
   }
 
   return (
-   <sub style={{
-    verticalAlign: "super",
-    fontSize: "75%"
-}}>
-    {/* <IonGrid>
+    <>
+      <sub
+        key={key}
+        className="ion-text-capitalize"
+        style={{
+          verticalAlign: "super",
+          fontSize: "20px",
+          fontFamily: "'Baloo', sans-serif",
+          paddingRight: "10px",
+        }}
+      >
+        {/* <IonGrid>
     <IonRow 
     // style={{ textAlign: "center" } }
     >
       <IonCol size="auto"> */}
 
+        <IonText
+          key={"m" + key}
+          style={{
+            ...styleText,
+            verticalAlign: "super",
+            // textAlign: "right"
+          }}
+          color="medium"
+        >
+          {verifiedReq}
+        </IonText>
 
-       <IonText style={{ ...styleText, verticalAlign: "super",
-        // textAlign: "right" 
-      }
-        } color="medium">
-          {r.trim()}
-          {/* <span style={style}></span>  */}
-         </IonText> 
-      
-{/*       
+        {/*       
       </IonCol>
     </IonRow>
   </IonGrid> */}
- 
- 
-  </sub> 
+      </sub>
+      <br key={"br" + key} />
+    </>
   );
 };
 

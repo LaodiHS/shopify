@@ -263,7 +263,7 @@ export function Accordion({
     const locals = JSON.stringify(local);
     console.log("locals----", locals);
     // Create a new Promise for the EventSource connection
-    const eventSourcePromise = await  new Promise((resolve, reject) => {
+    const eventSourcePromise = await new Promise((resolve, reject) => {
       const eventSource = new EventSource(
         `/sse/stream?shop=${currentSession.shop}&locals=${encodeURIComponent(
           locals
@@ -388,9 +388,9 @@ export function Accordion({
         // Check if the job is completed or perform other actions based on the event data
         if (eventData.message === "Job completed") {
           const data = eventData.result;
-         
+
           if (data.error) {
-             console.log("error", data.error);
+            console.log("error", data.error);
             console.log("error message received: " + data.error);
             presentToast({
               message: "There was a network error! We are working on it.",
@@ -961,7 +961,7 @@ function renderAccordionItem({
                 />
 
                 <div className="ion-padding" slot="content">
-                  <TextWithMarkers markedText={serverWords.join("")} />
+                  <TextWithMarkers markedText={serverWords.join("") }  />
                 </div>
               </IonAccordion>
 
@@ -1006,19 +1006,17 @@ function renderAccordionItem({
               </IonAccordion> */}
 
               <IonAccordion
-        
-              ref={(ref) => (scrollRef.current[accordionId] = ref)}
+                ref={(ref) => (scrollRef.current[accordionId] = ref)}
                 key={index + 10}
-               // disabled={!markupViewLock.hasAccess}
-                value="present"      
+                // disabled={!markupViewLock.hasAccess}
+                value="present"
                 readonly={!markupViewLock.hasAccess}
-                      onClick={(e) => {
-                      if(!markupViewLock.hasAccess){
-                        console.log('e=---->', e)
-                        DataProviderNavigate("/subscriptions")
-                      }
-
-                  }}
+                onClick={(e) => {
+                  if (!markupViewLock.hasAccess) {
+                    console.log("e=---->", e);
+                    DataProviderNavigate("/subscriptions");
+                  }
+                }}
               >
                 <AccordionInformationHeader
                   accordionName={
@@ -1029,7 +1027,6 @@ function renderAccordionItem({
                   boxName={aiWorkStation}
                   note={`Preview how the content will appear on your websites, blogs, and articles.`}
                   lock={markupViewLock.hasAccess}
-      
                 />
                 <div className="ion-padding" slot="content">
                   <Editor
@@ -1065,17 +1062,15 @@ function renderAccordionItem({
                 </div>
               </IonAccordion>
               <IonAccordion
-            
                 key={index + 11}
                 value="seo"
                 readonly={!markupViewLock.hasAccess}
                 onClick={(e) => {
-                if(!markupViewLock.hasAccess){
-                  console.log('e=---->', e)
-                  DataProviderNavigate("/subscriptions")
-                }
-
-            }}
+                  if (!markupViewLock.hasAccess) {
+                    console.log("e=---->", e);
+                    DataProviderNavigate("/subscriptions");
+                  }
+                }}
               >
                 <AccordionInformationHeader
                   accordionName={
@@ -1136,7 +1131,10 @@ function renderAccordionItem({
               <IonContent className="ion-padding">
                 <IonText>
                   <p>
-                    <sub>
+                  <sub>
+                      Edit Your Content Using Our In Context Editor.        
+                    </sub>
+                    {/* <sub>
                       We Support your favorite Markdown syntax.
                       <br /> Html :{" "}
                       <IonText color="tertiary">
@@ -1174,7 +1172,7 @@ function renderAccordionItem({
                       >
                         KATEX
                       </a>
-                    </sub>
+                    </sub> */}
                   </p>
                 </IonText>
                 <IonText color="secondary">
@@ -1184,7 +1182,7 @@ function renderAccordionItem({
                   </sub>
                 </IonText>
               </IonContent>
-            </IonPopover>{" "}
+            </IonPopover>
             <IonCard>
               <IonCardHeader>
                 <IonCardTitle>Editor</IonCardTitle>

@@ -6,6 +6,12 @@ import { processFunctions } from "./bull-queue-function-dictionary.js";
 import { testBullMqJobProcessFailure } from "./testMethods.js";
 import { countTokens } from "./tokenTools.js";
 import { updateTokenUsageAfterJob } from "./subscriptionManager.js";
+
+
+
+
+
+
 const dataCallbacks = new Map();
 
 // Function to emit data
@@ -215,8 +221,8 @@ export function serverSideEvent(app, redisClient, queue) {
           for await (const delta of dataGenerator) {
             // Process each delta of data as it arrives
             finish_reason = delta.finish_reason ? true : false;
-            sendSSEMessage({ message: "Job stream", delta }); 
-             res.flush();
+            sendSSEMessage({ message: "Job stream", delta });
+            res.flush();
           }
         }
 
@@ -230,7 +236,6 @@ export function serverSideEvent(app, redisClient, queue) {
         res.write("event: close\n");
         res.write("data: Connection closed by the server\n\n");
         res.end();
-      
       });
 
       // Set up event listeners to send SSE messages to the client
@@ -334,7 +339,7 @@ async function* generateOpenAIMessages({
             countTokens(responseContentCompleteText) +
             promptTokenCountEstimate +
             estimateOverheadForStream;
-            console.log('total tokens used', totalResponseEstimate)
+          console.log("total tokens used", totalResponseEstimate);
           await updateTokenUsageAfterJob(shop, totalResponseEstimate);
           const storeData = await userStore.readJSONFromFileAsync(shop);
           storeData.documentType = documentType;

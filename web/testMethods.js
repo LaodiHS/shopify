@@ -4,6 +4,7 @@ import {Readable, pipeline} from "stream"
 
 
 const MockGptTurboResponse = true;
+export const max_tokens = 750; 
 let MockGptTurboPrompt=  false
 
 const TestBullMqJobProcessFailure = false;
@@ -13,7 +14,7 @@ const TestNonNetWorkErrorOnChatGptTurboFailure = false;
 
 
 const CheckRequiredProps = true;
-export const max_tokens = 750; 
+
 
 // ChatGpt Function Inline Error Triggers
 if(MockGptTurboPrompt){

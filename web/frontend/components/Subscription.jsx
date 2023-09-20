@@ -1,8 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Context } from "../utilities/data-context.js";
 import { useNavigate } from "react_router_dom";
-import facepaint from "facepaint";
-import { css } from "@emotion/react";
 import {
   IonCard,
   IonCardContent,
@@ -168,23 +166,23 @@ export const SubscriptionComponent = ({
       handleResize();
     }, 100);
     // Add event listener for window resize
-    window.addEventListener("resize", handleResize);
+   // window.addEventListener("resize", handleResize);
 
     // Cleanup: remove event listener when component is unmounted
     return () => {
-      window.removeEventListener("resize", handleResize);
+     // window.removeEventListener("resize", handleResize);
     };
   }, []);
 
-  const breakpoints = [300, 400, 472, 576, 768, 992, 1200];
-  const mq = facepaint(breakpoints.map((bp) => `@media (min-width: ${bp}px)`));
+
   return (
     <IonPage ref={animationRef}>
       <IonicHeaderComponent centerText={"neural nectar"} />
       <IonContent>
         <IonGrid>
           <IonRow>
-            <IonCol size="12"
+            <IonCol
+              size="12"
               style={{
                 backgroundImage: `url(${honeyCombGridDrop})`,
                 backgroundPosition: "center",
@@ -193,7 +191,6 @@ export const SubscriptionComponent = ({
                 height: "100px",
               }}
               className="ion-text-center ion-padding-bottom"
-              
             >
               <IonRow size="12">
                 <IonCol size="6">
@@ -263,50 +260,49 @@ export const SubscriptionComponent = ({
                 sourwood: sourwoodHoney,
               };
 
-
               return (
                 <IonCol size="12" size-md="4" key={index}>
                   <IonCard ref={cardWidthRef} color={current ? "dark" : ""}>
                     <IonCardHeader>
                       <IonCardTitle
-                        style={{  fontFamily: "Baloo, sans-serif" }}
+                        style={{ fontFamily: "Baloo, sans-serif" }}
                         className="ion-text-capitalize"
                       >
                         {subscription.title} Honey
                         <div
-                              style={{
-                                zIndex:"200",
-                                position: cardWidth > 503 ? "absolute": "relative" ,
-                                width:"100%"
-                              }}
-                            >
-                        <div
                           style={{
-                        
-                            backgroundPosition: "right",
-                            backgroundSize: "contain",
-                            backgroundRepeat: "no-repeat",
-                            height: "130px",
-
-                            backgroundImage: `url( ${
-                              honeyIcons[subscription.title]
-                            } )`,
+                            zIndex: "200",
+                            position: cardWidth > 503 ? "absolute" : "relative",
+                            width: "100%",
                           }}
                         >
-                          {(subscription.title === "acacia" ||
-                            subscription.title === "sourwood") && (
-                            <div
+                          <div
                             style={{
-                                backgroundPosition: `right`,
-                                backgroundSize: `contain`,
-                                backgroundRepeat: `no-repeat`,
-                                height: "130px",
-                                width: `${cardWidth-110}px`,
-                                backgroundImage: `url(${honeyStick})`,
-                              }}
-                            ></div>
-                          )}
-                        </div></div>
+                              backgroundPosition: "right",
+                              backgroundSize: "contain",
+                              backgroundRepeat: "no-repeat",
+                              height: "130px",
+
+                              backgroundImage: `url( ${
+                                honeyIcons[subscription.title]
+                              } )`,
+                            }}
+                          >
+                            {(subscription.title === "acacia" ||
+                              subscription.title === "sourwood") && (
+                              <div
+                                style={{
+                                  backgroundPosition: `right`,
+                                  backgroundSize: `contain`,
+                                  backgroundRepeat: `no-repeat`,
+                                  height: "130px",
+                                  width: `${cardWidth - 110}px`,
+                                  backgroundImage: `url(${honeyStick})`,
+                                }}
+                              ></div>
+                            )}
+                          </div>
+                        </div>
                       </IonCardTitle>
                     </IonCardHeader>
                     <IonCardContent

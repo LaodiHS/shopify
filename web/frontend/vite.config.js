@@ -76,12 +76,14 @@ export default defineConfig({
   plugins: [
     terser({ compress:true, mangle:true,  maxWorkers: 5}),
     // react({}),
-    react({
-      jsxImportSource: "@emotion/react",
-      babel: {
-        plugins: ["@emotion/babel-plugin"],
-      },
-    }),
+    react(
+    //   {
+    //   jsxImportSource: "@emotion/react",
+    //   babel: {
+    //     plugins: ["@emotion/babel-plugin"],
+    //   },
+    // }
+    ),
     // VitePWA({ registerType: 'autoUpdate' }),
     // vuePlugin(),
     // vue({

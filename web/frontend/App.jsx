@@ -147,11 +147,14 @@ export default function App() {
       const handleBeforeUnload = (event) => {
         // event.preventDefault();
         //  event.returnValue = "Are you sure you want to leave this page?";
+
         window.addEventListener("unload", clearLocalStorage);
       };
 
       const clearLocalStorage = () => {
-        localStorage.clear();
+        if (DEPLOYMENT_ENV) {
+          localStorage.clear();
+        }
       };
 
       window.addEventListener("beforeunload", handleBeforeUnload);
@@ -345,7 +348,10 @@ function LandingPage({ animationRef }) {
             <p className="ion-text-center ion-padding-top">
               Thank You For Becoming a
             </p>
-            <h2 style={{fontFamily: "Baloo, sans-serif"}}className="ion-text-center ion-text-capitalize">
+            <h2
+              style={{ fontFamily: "Baloo, sans-serif" }}
+              className="ion-text-center ion-text-capitalize"
+            >
               {subscriptions.join(" ")}
             </h2>
             <p className="ion-text-center">Member</p>
@@ -461,7 +467,6 @@ function Description() {
       />
 
       <IonContent>
-   
         <TokenUsageComponent tokenUsage={user} />
         <Accordion />
       </IonContent>
@@ -484,12 +489,11 @@ function Article() {
 
   return (
     <IonPage key="IonPage/article" ref={refDictionary["/article"]}>
-    
       <IonicHeaderComponent
         left={
           <IonButtons key={"12"} onClick={() => {}} slot="start">
             <IonButton
-            color="neural"
+              color="neural"
               key="Ionbuttons/article"
               disabled={serverSentEventLoading}
               onClick={() => {
@@ -791,7 +795,7 @@ function IonMenuNav() {
 
             return (
               <IonTabButton
-              size="large"
+                size="large"
                 id={buttonId}
                 disabled={serverSentEventLoading || tab.disabled}
                 key={index}
@@ -839,8 +843,8 @@ function IonPopovers() {
         <IonText>
           <p>
             Explore Advanced Language and Formatting Choices. Choose your
-            preferred categories from the acacia menu options, and they will
-            be displayed below.
+            preferred categories from the acacia menu options, and they will be
+            displayed below.
           </p>
         </IonText>
         <IonText color="secondary">

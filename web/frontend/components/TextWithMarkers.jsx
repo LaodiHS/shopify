@@ -1,17 +1,28 @@
-import React from "react";
-import { IonGrid, IonRow, IonCol } from "@ionic/react";
-import { L, Marker } from "../components";
+import React, { useEffect, useState, useRef } from "react";
+import { IonGrid, IonRow, IonCol, IonText } from "@ionic/react";
+import { L, Marker, useDataProvidersContext } from "../components";
 
 function TextWithMarkers({ markedText }) {
   if (!markedText || typeof markedText !== "string") {
     // Handle the case where markedText is missing or not a string
     return null;
   }
+
+  const {
+    checkFeatureAccess,
+    markupText,
+    serverSentEventLoading,
+    setMarkupText,
+    eventEmitter,
+    DataProviderNavigate,
+  } = useDataProvidersContext();
+
   // console.log('markedText', markedText);
   // Regular expression to match IDs surrounded by brackets
   const text = markedText.replace(/\)\,/g, ")");
 
-  const idWithBracketsRegex = /\(([^)]+)\s*-\s*#([0-9A-Fa-f]{6})\)|\{([^}]+)\s*-\s*#([0-9A-Fa-f]{6})\}|\[([^\]]+)\s*-\s*#([0-9A-Fa-f]{6})\]|#([0-9A-Fa-f]{6})/g;
+  const idWithBracketsRegex =
+    /\(([^)]+)\s*-\s*#([0-9A-Fa-f]{6})\)|\{([^}]+)\s*-\s*#([0-9A-Fa-f]{6})\}|\[([^\]]+)\s*-\s*#([0-9A-Fa-f]{6})\]|#([0-9A-Fa-f]{6})/g;
 
   const parseText = (text) => {
     const sentences = text.split(". ").map((sentence, index) => {
@@ -40,13 +51,19 @@ function TextWithMarkers({ markedText }) {
         }
 
         // Determine which label and ID to use
-        let label = roundLabel || curlyLabel || squareLabel || "";
+        const labelRaw = roundLabel || curlyLabel || squareLabel || "";
         const idValue = roundId || curlyId || squareId || id;
-        label = label.replace(/#/g, "");
+        const label = labelRaw.replace(/#/g, "").trim();
 
         // Add the anchor tag with the matched ID and label
 
-        parts.push(<Marker key={idValue} c={"#" + idValue} r={label} />);
+        parts.push(
+          <Marker
+            key={"#" + idValue}
+            requirementText={label}
+            color={"#" + idValue}
+          />
+        );
 
         lastIndex = idWithBracketsRegex.lastIndex;
       }
@@ -58,25 +75,70 @@ function TextWithMarkers({ markedText }) {
 
       return parts;
     });
+    useEffect(() => {
+      if (!serverSentEventLoading) {
+        let highlight = [];
+        const colorCodes = sentences
+          .flat(Infinity)
+          .reduce((acc, value, index) => {
+            if (typeof value === "string") {
+              highlight.push("color-" + index);
+            } else if (typeof value === "object" && value.key) {
+              acc[value.key] = highlight.slice();
+              highlight = [];
+            }
+            return acc;
+          }, {});
 
-    return sentences.map((sentence, index) => (
-       <IonCol key={index} size="12">
-        {sentence}
-       </IonCol>
-    ));
+        Object.entries(colorCodes).forEach(([key, elements]) => {
+          elements.forEach((elementId) => {
+             console.log('llll', document.getElementById(elementId))
+
+            Object.assign(document.getElementById(elementId).parentElement.style, {
+              backgroundColor: key,
+            });
+          });
+        });
+
+        console.log("colorCodes", Object.entries(colorCodes) );
+      }
+    }, [serverSentEventLoading]);
+
+    // assignSetPColor(colorCodes)
+    return (
+      <IonGrid key="Requirements-text">
+        <IonRow className="ion-align-items-center ion-justify-content-start">
+          {sentences.flat(Infinity).map((sentence, index) => {
+            return (
+              <IonCol
+                className="on-float-left"
+                size="12"
+                style={{ height: "55px" }}
+                key={"kkk" + index}
+              >
+                <p
+                  id={"color-" + index}
+                  key={index + "sss"}
+                  className="ion-text-start ion-text-wrap"
+                  style={{ overflowWrap: "break-word", textAlign: "justify" }}
+                >
+                  {sentence}
+                </p>{" "}
+              </IonCol>
+            );
+          })}
+        </IonRow>
+      </IonGrid>
+    );
   };
 
-  return (
-    <IonGrid>
-      <IonRow>{parseText(text).flat(Infinity).map((word, index)=> <IonCol key={index} size="12">{word}</IonCol>)}</IonRow>
-    </IonGrid>
-  );
+  return parseText(text);
 }
 
 const cleanText = (text) => {
   // Regular expression to match IDs surrounded by brackets
   text = text.replace(/\)\,/g, ")");
- 
+
   const idWithBracketsRegex =
     /\(([^)]+)\s*-\s*#([0-9A-Fa-f]{6})\)|\{([^}]+)\s*-\s*#([0-9A-Fa-f]{6})\}|\[([^\]]+)\s*-\s*#([0-9A-Fa-f]{6})\]|#([0-9A-Fa-f]{6})/g;
   const parseText = (text) => {

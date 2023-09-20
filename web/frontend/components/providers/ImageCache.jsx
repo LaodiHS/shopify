@@ -10,11 +10,10 @@ import {
 import { useDataProvidersContext } from "../../components";
 //navigator.hardwareConcurrency || 4; // Number of worker instances in the pool
 
-
 function getOptimalNumThreads(defaultNumThreads = 3) {
   if (navigator && navigator.hardwareConcurrency) {
     // If hardwareConcurrency is available, use it as the number of threads
-    const hardwareThreads = navigator.hardwareConcurrency-2;
+    const hardwareThreads = navigator.hardwareConcurrency - 2;
     return hardwareThreads > 0 ? hardwareThreads : defaultNumThreads;
   } else {
     // If hardwareConcurrency is not available, use the default number of threads
@@ -118,15 +117,20 @@ export function ImageCache({ src, alt, sliderImg, ...props }) {
   //  console.log('imageCache', imageCache)
   const [cachedSrc, setCachedSrc] = useState(src);
   const [imageLoading, setImageLoading] = useState(false);
-const [canLoad, setCanLoad] = useState(true)
+  const [canLoad, setCanLoad] = useState(true);
+  // const loading = false;
 
-useEffect(()=>{
-
-
-return ()=>{
-  setCanLoad(false)
-}
-},[])
+  function imageDidLoad() {
+  
+    if (imageLoading) {
+      setImageLoading(false);
+    }
+  }
+  useEffect(() => {
+    return () => {
+      setCanLoad(false);
+    };
+  }, []);
 
   useEffect(async () => {
     setImageLoading(true);
@@ -142,12 +146,14 @@ return ()=>{
         processTaskQueue();
       }).then((imageSrc) => {
         if (imageSrc) {
-
           imageCacheMap.set(imageSrc);
-          if(canLoad){
-          setCachedSrc(imageSrc);
+          if (canLoad) {
+            setCachedSrc(imageSrc);
           }
-          setImageLoading(false);
+       
+          if (imageLoading) {
+            setImageLoading(false);
+          }
         }
       });
     };
@@ -162,23 +168,36 @@ return ()=>{
       <IonSkeletonText
         key="animatedplace=holder"
         animated
-        style={{ width, height }}
+        style={{ width, height, display: !imageLoading ? "none" : "block" }}
       />
     );
   }
 
-  return imageLoading ? (
-    <SkeletonImage />
-  ) : (
-    <IonImg
-    style={{minHeight:"300px"}}
-      key={src}
-      src={cachedSrc || src}
-      rel="preload"
-      as="image"
-      alt={alt}
-      {...props}
-    />
+  return (
+    <>
+      <SkeletonImage />
+
+      <IonImg
+        onIonImgDidLoad={imageDidLoad()}
+        style={{
+          minHeight: "300px",
+          height,
+          width,
+          maxHeight: height,
+          display: imageLoading ? "none" : "block",
+        }}
+        key={src}
+        src={
+          cachedSrc ||
+          src ||
+          "https://placehold.co/300x200?text=No+Image+Available"
+        }
+        rel="preload"
+        as="image"
+        alt={alt}
+        {...props}
+      />
+    </>
   );
 }
 
@@ -186,7 +205,7 @@ export function ImageCachePre(src) {
   if (imageCacheMap.has(src)) {
     return;
   }
-   new Promise((resolve) => {
+  new Promise((resolve) => {
     taskQueue.push({ src, resolve });
     processTaskQueue();
   }).then((imageSrc) => {

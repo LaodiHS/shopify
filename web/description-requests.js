@@ -7,7 +7,7 @@ import {
 } from "./chat-gpt.js";
 import { enqueueApiRequest } from "./bull-queue.js";
 import { hasExceededUsageLimit } from "./subscriptionManager.js";
-import {countTokens} from "./tokenTools.js"
+import { countTokens } from "./tokenTools.js";
 
 // Common function to handle different types of endpoints
 async function handleEndpoints(app, endpointType, queue) {
@@ -68,20 +68,28 @@ async function handleEndpoints(app, endpointType, queue) {
         const exceedsLimit = await hasExceededUsageLimit(shop, tokenCount);
 
         if (exceedsLimit) {
-     
           return res
             .status(200)
-            .json({ exceedsLimit, message: "Your current selection exceeds the usage limit. Don't worry, we've saved it for you! To get even more amazing results, consider upgrading to a higher subscription to support our work. Thank you for being part of our community!", legend });
+            .json({
+              exceedsLimit,
+              message:
+                "Your current selection exceeds the usage limit. Don't worry, we've saved it for you! To get even more amazing results, consider upgrading to a higher subscription to support our work. Thank you for being part of our community!",
+              legend,
+            });
         } else {
           enqueueApiRequest({
             prompt,
             shop,
             documentType,
             queue,
-            api:"gpt-3.5-turbo",
+            api: "gpt-3.5-turbo",
             processFunction: "chatGptTurbo",
-            promptTokenCountEstimate: tokenCount
+            promptTokenCountEstimate: tokenCount,
           });
+
+          if (process.env.NODE_ENV === "production") {
+            prompt = "Service Request Received";
+          }
 
           return res
             .status(200)
@@ -106,4 +114,3 @@ export async function handleArticleEndpoints(app, queue) {
 export async function handlePostEndpoints(app, queue) {
   await handleEndpoints(app, "post", queue);
 }
-
