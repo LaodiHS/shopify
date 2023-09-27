@@ -209,7 +209,7 @@ export const SubscriptionComponent = ({
                       // textShadow: `4px 4px 2px rgba(150, 150, 150, 1)`,
                     }}
                   >
-                    Neural
+                    neural
                   </h1>
                 </IonCol>
                 <IonCol size="6">
@@ -229,7 +229,7 @@ export const SubscriptionComponent = ({
                       // textShadow: `4px 4px 2px rgba(150, 150, 150, 1)`,
                     }}
                   >
-                    Nectar
+                    nectar
                   </h1>
                 </IonCol>
               </IonRow>

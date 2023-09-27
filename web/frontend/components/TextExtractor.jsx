@@ -468,6 +468,7 @@ export function ReadabilityStats({ text }) {
   // console.log("text--->", text);
   useEffect(() => {
     // console.log("text", text);
+
     const doc = nlp.readDoc(extractTextFromHtml(text));
 
     const readabilityStats = doc.out(its.readabilityStats);

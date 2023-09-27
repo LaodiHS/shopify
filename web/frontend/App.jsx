@@ -223,7 +223,7 @@ function LandingPage({ animationRef }) {
     if (error === null) {
       setUser(data);
     } else {
-      DataProviderNavigate("/", {
+   await  DataProviderNavigate("/", {
         target: "host",
         relative: "path",
         state: "/welcome",
@@ -234,9 +234,6 @@ function LandingPage({ animationRef }) {
       DataProviderNavigate("/", { target: "host" });
     }, 2000); // Set the duration as needed
   };
-
-  console.log("subscriptions", subscriptions);
-  const navigate = useNavigate();
 
   return (
     <IonPage
@@ -304,7 +301,7 @@ function LandingPage({ animationRef }) {
                         // textShadow: `4px 4px 2px rgba(150, 150, 150, 1)`,
                       }}
                     >
-                      Neural
+                      neural
                     </h1>
                   </IonCol>
                   <IonCol>
@@ -324,7 +321,7 @@ function LandingPage({ animationRef }) {
                         // textShadow: `4px 4px 2px rgba(150, 150, 150, 1)`,
                       }}
                     >
-                      Nectar
+                      nectar
                     </h1>
                   </IonCol>
                 </IonRow>
@@ -406,6 +403,8 @@ function NoMatch() {
 }
 
 function Description() {
+
+
   const {
     assistRequest,
     clearAssistResult,
@@ -418,6 +417,9 @@ function Description() {
     contentSaved,
     user,
   } = useDataProvidersContext();
+
+
+
   return (
     <IonPage ref={refDictionary["/description"]}>
       <IonicHeaderComponent
@@ -427,8 +429,8 @@ function Description() {
             <IonButton
               color="neural"
               disabled={serverSentEventLoading}
-              onClick={() => {
-                DataProviderNavigate("/product-details");
+              onClick={async () => {
+               await DataProviderNavigate("/product-details");
               }}
               key={"13"}
             >
@@ -543,12 +545,12 @@ function Article() {
 }
 
 function IonMenuNav() {
-  const { checkFeatureAccess, freeOptions, navigateRoute } =
-    useDataProvidersContext();
+  const [currentRoute, setCurrentRoute] = useState("/");
   const location = useLocation();
-
+  const router = useIonRouter();
   const { aiWorkStationSetter, aiWorkStation } = useNavigationDataContext();
   const {
+    checkFeatureAccess,
     assistRequest,
     clearAssistResult,
     updateArticleMethod,
@@ -559,8 +561,6 @@ function IonMenuNav() {
     serverSentEventLoading,
     contentSaved,
   } = useDataProvidersContext();
-  const [currentRoute, setCurrentRoute] = useState("/");
-  const router = useIonRouter();
 
   useEffect(() => {
     // console.log("pathname", location.pathname);
@@ -574,8 +574,8 @@ function IonMenuNav() {
 
         label: "Home",
         icon: homeOutline,
-        clickHandler: (event, hasAccess, router) => {
-          DataProviderNavigate("/", { target: "host" });
+        clickHandler: async (event, hasAccess, router) => {
+        await  DataProviderNavigate("/", { target: "host" });
           //  router.push("/")
           // router.tab = "/home"
           // console.log('router', router)
@@ -591,7 +591,7 @@ function IonMenuNav() {
         label: "Description Selection",
 
         icon: pencilCase,
-        clickHandler: (event) => {
+        clickHandler: async (event) => {
           // AnimatedContent(refDictionary["/description"], "fadeOutRight", {
           //   onComplete: () => {
           //     navigate("/product-details", { target: "host" });
@@ -599,7 +599,7 @@ function IonMenuNav() {
           //   },
           // });
 
-          DataProviderNavigate("/product-details");
+        await  DataProviderNavigate("/product-details");
         },
       },
       {
@@ -693,8 +693,8 @@ function IonMenuNav() {
         label: "Products Pages",
 
         icon: bookshelf,
-        clickHandler: (event) => {
-          DataProviderNavigate("/", { target: "host" });
+        clickHandler: async (event) => {
+         await DataProviderNavigate("/", { target: "host" });
         },
       },
       {
@@ -703,14 +703,14 @@ function IonMenuNav() {
         label: "Description Workstation",
         icon: descriptionWorkStation,
 
-        clickHandler: (event, hasAccess) => {
+        clickHandler:async (event, hasAccess) => {
           if (!hasAccess) {
-            DataProviderNavigate("/subscriptions");
+          await  DataProviderNavigate("/subscriptions");
           } else {
             aiWorkStationSetter("description");
 
             // router.push("/description")
-            DataProviderNavigate("/description");
+           await DataProviderNavigate("/description");
           }
         },
       },
@@ -719,12 +719,12 @@ function IonMenuNav() {
         label: "Article Workstation",
 
         icon: newsPaperWorStation,
-        clickHandler: (event, hasAccess) => {
+        clickHandler: async(event, hasAccess) => {
           if (!hasAccess) {
-            DataProviderNavigate("/subscriptions");
+          await  DataProviderNavigate("/subscriptions");
           } else {
-            aiWorkStationSetter("article");
-            DataProviderNavigate("/article");
+           aiWorkStationSetter("article");
+           await DataProviderNavigate("/article");
           }
         },
       },

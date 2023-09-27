@@ -59,7 +59,7 @@ export function ProductDetails({ data }) {
     productDetailOptions,
 
     optionChange,
-
+    selectedImageMap,
     selectedImages,
 
     clearSelection,

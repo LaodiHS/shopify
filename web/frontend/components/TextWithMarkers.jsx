@@ -1,141 +1,409 @@
-import React, { useEffect, useState, useRef } from "react";
-import { IonGrid, IonRow, IonCol, IonText } from "@ionic/react";
-import { L, Marker, useDataProvidersContext } from "../components";
+import debounce from "lodash.debounce";
+import React, { useEffect, useState, useRef, useMemo } from "react";
+import {
+  IonGrid,
+  IonRow,
+  IonCol,
+  IonText,
+  IonItem,
+  IonList,
+  IonChip,
+} from "@ionic/react";
+import { VariableSizeList } from "react-window";
+import { Marker, useDataProvidersContext } from "../components";
 
-function TextWithMarkers({ markedText }) {
-  if (!markedText || typeof markedText !== "string") {
-    // Handle the case where markedText is missing or not a string
-    return null;
+function SentenceHighlight({ text, color }) {
+  return (
+    <IonChip
+      className="highlight"
+      key={"highlight" + text + color}
+      style={{
+        position: "relative",
+        borderRadius: "2px",
+        fontFamily: "'Baloo', sans-serif",
+
+        background: `${color}`,
+      }}
+    >
+      {text}
+    </IonChip>
+  );
+}
+function wrapSubstringInPTags({
+  mappedLegend,
+  mainString,
+  colorSet,
+  size,
+  parts,
+  sentenceEnd,
+}) {
+  if (mainString.length) {
+    for (const [subString, id] of mappedLegend) {
+      if (colorSet[subString + id]) {
+        continue;
+      }
+      const index = mainString.toLowerCase().indexOf(subString.toLowerCase());
+
+      if (index !== -1) {
+        const before = mainString.slice(0, index);
+        const after = mainString.slice(index + subString.length);
+        const wrappedString = (
+          <SentenceHighlight
+            key={"wordHighlight" + id}
+            text={mainString.slice(index, index + subString.length)}
+            color={id}
+          />
+        );
+        colorSet[subString + id] = true;
+        if (mainString.trim().length) {
+          parts.push({
+            size: size,
+            type: "content-highlight",
+            variant: (
+              <div>
+                {before}
+                {wrappedString}
+                {after}
+                {sentenceEnd}
+              </div>
+            ),
+          });
+          return null;
+        }
+      }
+    }
+    if (mainString.trim().length) {
+      parts.push({
+        size: size,
+        type: "content",
+        variant: mainString+ sentenceEnd,
+      });
+    }
   }
+}
 
-  const {
-    checkFeatureAccess,
-    markupText,
-    serverSentEventLoading,
-    setMarkupText,
-    eventEmitter,
-    DataProviderNavigate,
-  } = useDataProvidersContext();
-
-  // console.log('markedText', markedText);
-  // Regular expression to match IDs surrounded by brackets
-  const text = markedText.replace(/\)\,/g, ")");
-
+function parseText(
+  text,
+  mappedLegend,
+  variableListItemHeight,
+  variableListItemImageHeight,
+  selectedImageMap
+) {
   const idWithBracketsRegex =
     /\(([^)]+)\s*-\s*#([0-9A-Fa-f]{6})\)|\{([^}]+)\s*-\s*#([0-9A-Fa-f]{6})\}|\[([^\]]+)\s*-\s*#([0-9A-Fa-f]{6})\]|#([0-9A-Fa-f]{6})/g;
+  const remove_artifacts = text.replace(/\)\,/g, ")");
+  const colorSet = {};
 
-  const parseText = (text) => {
-    const sentences = text.split(". ").map((sentence, index) => {
-      // Removing trailing punctuation marks to avoid breaking links
-      const cleanedSentence = sentence.replace(/[.,!?]$/, "");
+  const sentences = remove_artifacts.split(". ").map((sentence, index) => {
+    // Removing trailing punctuation marks to avoid breaking links
+    let cleanedSentence = sentence.replace(/[.,!?]$/, "").trim();
+    const parts = [];
+    let lastIndex = 0;
+    let match;
 
-      // Replace IDs with anchor tags in the sentence
-      const parts = [];
-      let lastIndex = 0;
-      let match;
-      while ((match = idWithBracketsRegex.exec(cleanedSentence)) !== null) {
-        const [
-          ,
-          roundLabel,
-          roundId,
-          curlyLabel,
-          curlyId,
-          squareLabel,
-          squareId,
-          id,
-        ] = match;
+    while ((match = idWithBracketsRegex.exec(cleanedSentence)) !== null) {
+      const [
+        ,
+        roundLabel,
+        roundId,
+        curlyLabel,
+        curlyId,
+        squareLabel,
+        squareId,
+        id,
+      ] = match;
+      // Determine which label and ID to use
+      const labelRaw = roundLabel || curlyLabel || squareLabel || "";
+      const idValue = roundId || curlyId || squareId || id;
+      const label = labelRaw.replace(/#/g, "").trim();
 
-        if (match.index > lastIndex) {
-          // Add the text between the previous match and the current match
-          parts.push(cleanedSentence.slice(lastIndex, match.index));
-        }
+      if (match.index > lastIndex) {
+        let mainString = cleanedSentence.slice(lastIndex, match.index);
 
-        // Determine which label and ID to use
-        const labelRaw = roundLabel || curlyLabel || squareLabel || "";
-        const idValue = roundId || curlyId || squareId || id;
-        const label = labelRaw.replace(/#/g, "").trim();
+        mainString = wrapSubstringInPTags({
+          mappedLegend,
+          mainString,
+          colorSet,
+          parts,
+          size: variableListItemHeight,
+          sentenceEnd: "",
+        });
+      }
 
-        // Add the anchor tag with the matched ID and label
+      // Add the anchor tag with the matched ID and label
+      const markerSize = label.includes("_jpg")
+        ? variableListItemImageHeight
+        : variableListItemHeight;
+      const markerLabel = label.includes("_jpg") ? "img" : "label";
 
-        parts.push(
+      parts.push({
+        variant: (
           <Marker
-            key={"#" + idValue}
+            selectedImageMap={selectedImageMap}
+            size={markerSize}
             requirementText={label}
             color={"#" + idValue}
           />
-        );
+        ),
+        size: markerSize,
+        type: markerLabel,
+        color: "#" + idValue,
+      });
 
-        lastIndex = idWithBracketsRegex.lastIndex;
-      }
+      lastIndex = idWithBracketsRegex.lastIndex;
+    }
 
-      // Add any remaining text after the last match
+    if (cleanedSentence.length) {
       if (lastIndex < cleanedSentence.length) {
-        parts.push(cleanedSentence.slice(lastIndex));
-      }
-
-      return parts;
-    });
-    useEffect(() => {
-      if (!serverSentEventLoading) {
-        let highlight = [];
-        const colorCodes = sentences
-          .flat(Infinity)
-          .reduce((acc, value, index) => {
-            if (typeof value === "string") {
-              highlight.push("color-" + index);
-            } else if (typeof value === "object" && value.key) {
-              acc[value.key] = highlight.slice();
-              highlight = [];
-            }
-            return acc;
-          }, {});
-
-        Object.entries(colorCodes).forEach(([key, elements]) => {
-          elements.forEach((elementId) => {
-             console.log('llll', document.getElementById(elementId))
-
-            Object.assign(document.getElementById(elementId).parentElement.style, {
-              backgroundColor: key,
-            });
-          });
+        const lastSentence = cleanedSentence.slice(lastIndex);
+        let mainString = lastSentence;
+        wrapSubstringInPTags({
+          mappedLegend,
+          mainString,
+          colorSet,
+          parts,
+          size: variableListItemHeight,
+          sentenceEnd: ".",
         });
-
-        console.log("colorCodes", Object.entries(colorCodes) );
       }
-    }, [serverSentEventLoading]);
+    }
+    const part = parts.filter((val) => {
+      if (!val.variant) {
+        return false;
+      }
+      return true;
+    });
+    return part;
+  });
 
-    // assignSetPColor(colorCodes)
-    return (
-      <IonGrid key="Requirements-text">
-        <IonRow className="ion-align-items-center ion-justify-content-start">
-          {sentences.flat(Infinity).map((sentence, index) => {
-            return (
-              <IonCol
-                className="on-float-left"
-                size="12"
-                style={{ height: "55px" }}
-                key={"kkk" + index}
-              >
-                <p
-                  id={"color-" + index}
-                  key={index + "sss"}
-                  className="ion-text-start ion-text-wrap"
-                  style={{ overflowWrap: "break-word", textAlign: "justify" }}
-                >
-                  {sentence}
-                </p>{" "}
-              </IonCol>
-            );
-          })}
-        </IonRow>
-      </IonGrid>
-    );
-  };
+  return sentences.flat(Infinity);
+}
+function SentenceRow({ index, style, data, refs, length, elementStyles }) {
+  const [sentence, setSentence] = useState(data[index % length]);
 
-  return parseText(text);
+  //  style.height =   sentence.size + "px"
+
+  useEffect(() => {
+    if (!refs.has(index % length)) {
+      refs.set(index % length, React.createRef());
+    }
+    const colRef = refs.get(index % length);
+
+    return () => {};
+  }, [index, length, refs, elementStyles]);
+
+  return (
+    <IonItem
+      key={"item-key" + (index % length)}
+      lines="none"
+      ref={refs.get(index % length)}
+      className="ion-text-start ion-text-wrap"
+      style={{
+        ...style,
+      }}
+    >
+      {sentence.variant}
+    </IonItem>
+  );
 }
 
-const cleanText = (text) => {
+function TextWithMarkers({
+  eventEmitter,
+  assignClearAssistMethod,
+  mappedLegend,
+  selectedImageMap,
+}) {
+  const [variableListItemHeight, setVariableListItemHeight] = useState(45);
+
+  const [variableListItemImageHeight, setVariableListItemImageHeight] =
+    useState(160);
+  const colRefs = useRef(new Map());
+  const listRef = useRef({});
+  const [elementStyles, setElementStyles] = useState({});
+
+  const [streamData, setStreamData] = useState([]);
+
+  // const {
+  //   eventEmitter,
+  //   assignClearAssistMethod,
+
+  //   mappedLegend,
+  // } = useDataProvidersContext();
+
+  useEffect(() => {
+    const breakpoints = [
+      { width: 200, height: 110 },
+      { width: 1200, height: 44 },
+    ].reverse();
+
+    const handleResize = () => {
+      console.log("currentColWidth: ", window.innerWidth);
+      const width = window.innerWidth;
+      const matchedBreakpoint = breakpoints.find(
+        (breakpoint) => width > breakpoint.width
+      );
+
+      if (matchedBreakpoint) {
+        console.log("matcheBreakpoint.height", matchedBreakpoint.height);
+        setVariableListItemHeight(matchedBreakpoint.height);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    let incompleteBuffer = "";
+
+    function processIncomingData(incomingData) {
+      const words = incomingData.split(" ");
+
+      const completeWords = [];
+
+      if (incompleteBuffer) {
+        const firstWord = words.shift();
+        const completeWord = incompleteBuffer + firstWord;
+        completeWords.push(completeWord);
+        incompleteBuffer = "";
+      }
+
+      for (let i = 0; i < words.length - 1; i++) {
+        completeWords.push(words[i]);
+      }
+
+      const lastWord = words[words.length - 1];
+
+      if (lastWord) {
+        if (lastWord.endsWith(" ")) {
+          completeWords.push(lastWord.trim());
+        } else {
+          incompleteBuffer = lastWord;
+        }
+      }
+
+      return completeWords;
+    }
+
+    const streamDataHandler = (eventData) => {
+      const delta = eventData.delta;
+      const result = processIncomingData(delta.content);
+      if (result.length) {
+        setStreamData((prev) => [...prev, result.join(" ")]);
+      }
+      const finish_reason = delta.finish_reason;
+      if (finish_reason) {
+      }
+    };
+
+    eventEmitter.on("streamData", streamDataHandler);
+
+    return () => {
+      setStreamData([]);
+      eventEmitter.removeListener("someEvent", streamDataHandler);
+      // eventEmitter.off("streamData", streamDataHandler);
+      // Clearing streamData when component is unmounted
+    };
+  }, []);
+
+  const sentences = useMemo(
+    () =>
+      parseText(
+        streamData.join(""),
+        mappedLegend,
+        variableListItemHeight,
+        variableListItemImageHeight,
+        selectedImageMap
+      ) || [],
+    [streamData.join("")]
+  );
+
+  function clearSentences() {
+    setStreamData([]);
+  }
+  useEffect(() => {
+    assignClearAssistMethod("clearSentences", clearSentences);
+  }, []);
+
+  useEffect(() => {
+    listRef.current.scrollToItem(sentences.length - 1, "smooth");
+  }, [sentences]);
+
+  const getSize = (index, length) => {
+    const sentence = sentences[index % length];
+    if (!sentence) {
+      return 0;
+    }
+
+    const sentenceObject = sentence.variant;
+    if (typeof sentenceObject === "string") {
+      const length = sentenceObject.length;
+
+      if (sentenceObject.includes("jpg")) {
+        return variableListItemImageHeight ;
+      } else {
+        return variableListItemHeight + 20;
+      }
+    }
+    if (sentenceObject.type === "img") {
+      return variableListItemImageHeight;
+    } else {
+      return variableListItemHeight + 20;
+    }
+  };
+
+  return (
+    <IonGrid key="Requirements-text">
+      <IonRow
+        key="Requirements-text-row"
+        className="
+        // ion-align-items-center ion-justify-content-start
+        "
+      >
+        <IonCol key={"requirements-col"} size="12">
+          <IonList>
+            <VariableSizeList
+              key="FixedSizeList-Requirements-text"
+              height={500} // Set an appropriate height
+              width={"100%"}
+              ref={listRef}
+              overscanCount={20}
+              onItemsRendered={(index) => {
+                // console.log('index', index)
+              }}
+              itemSize={(index) => getSize(index, sentences.length)}
+              itemCount={sentences.length}
+              // rowHeight={(index) =>  Math.random() * (100 - 75) + 44
+              // } // Set an appropriate item size
+
+              itemData={{
+                sentences,
+                refs: colRefs.current,
+                length: sentences.length,
+                elementStyles,
+              }}
+              initialScrollOffset={sentences.length * 27}
+            >
+              {({ index, style }) => (
+                <SentenceRow
+                  key={index}
+                  index={index}
+                  style={style}
+                  data={sentences}
+                  refs={colRefs.current}
+                  length={sentences.length}
+                  elementStyles={elementStyles}
+                />
+              )}
+            </VariableSizeList>
+          </IonList>
+        </IonCol>
+      </IonRow>
+    </IonGrid>
+  );
+}
+
+const cleanText = (text, selectedImageMap) => {
   // Regular expression to match IDs surrounded by brackets
   text = text.replace(/\)\,/g, ")");
 
@@ -164,10 +432,25 @@ const cleanText = (text) => {
           // Add the text between the previous match and the current match
           parts.push(cleanedSentence.slice(lastIndex, match.index));
         }
+
+        const labelRaw = roundLabel || curlyLabel || squareLabel || "";
+        const idValue = roundId || curlyId || squareId || id;
+        const label = labelRaw.replace(/#/g, "").trim();
+
+        if (label.includes("_jpg")) {
+          parts.push(
+            `<img src=${
+              selectedImageMap[label]?.url ||
+              "https://placehold.co/300x200?text=No+Image+Available"
+            }  />`
+          );
+        }
+
         lastIndex = idWithBracketsRegex.lastIndex;
       }
+
       if (lastIndex < cleanedSentence.length) {
-        parts.push(cleanedSentence.slice(lastIndex));
+        parts.push(cleanedSentence.slice(lastIndex) + ". ");
       }
       return parts;
     });

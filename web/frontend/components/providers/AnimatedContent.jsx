@@ -4,7 +4,7 @@ import styler from 'stylefire';
 import { useInView } from 'react-intersection-observer';
 
 
-function AnimatedContent(ref, animation, options = {}) {
+async function AnimatedContent(ref, animation, options = {}) {
 console.log('options', animation)
   const {
     duration = 0.4,
@@ -18,7 +18,7 @@ console.log('options', animation)
     },
   } = options;
 
-  return new Promise((resolve, reject) => {
+  return await new Promise((resolve, reject) => {
     const animationName = `${prefix}${animation}`;
 
     ref.current.style.setProperty("--animate-duration", `${duration}s`);
@@ -30,7 +30,7 @@ console.log('options', animation)
     ref.current.classList.add(`${prefix}animated`, animationName);
 
 
-    function handleAnimationEnd(event) {
+    async function handleAnimationEnd(event) {
       event.stopPropagation();
       ref.current.classList.remove(`${prefix}animated`, animationName);
    

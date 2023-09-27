@@ -12,7 +12,7 @@ import {
   IonText,
   IonThumbnail,
 } from "@ionic/react";
-import { L } from "../../components";
+import { L, useDataProvidersContext } from "../../components";
 const shortenText = (text, maxLength) => {
   if (text && text.length > maxLength) {
     return text.substring(0, maxLength) + "...";
@@ -20,7 +20,7 @@ const shortenText = (text, maxLength) => {
   return text;
 };
 function camelToNormalCase(input) {
-  return input.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase();
+  return input.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
 }
 export function SelectedOptions({ productDescOptions, title, legend }) {
   if (legend) {
@@ -35,6 +35,8 @@ export function SelectedOptions({ productDescOptions, title, legend }) {
     legend = {};
   }
 
+  const { selectedImageMap } = useDataProvidersContext();
+  console.log("legend after", JSON.stringify(legend));
   const renderOption = (key, option, itemIndex) => {
     let optionValue, optionKey;
 
@@ -55,6 +57,7 @@ export function SelectedOptions({ productDescOptions, title, legend }) {
       optionKey = key;
       optionValue = option;
     }
+
     // console.log('color', legend[optionValue])
     return (
       <IonCol size="12" key={itemIndex + key}>
@@ -72,7 +75,10 @@ export function SelectedOptions({ productDescOptions, title, legend }) {
                 <IonRadio
                   color="success"
                   checked
-                  value={{ optionKey } + shortenText( camelToNormalCase(optionValue), 30)}
+                  value={
+                    { optionKey } +
+                    shortenText(camelToNormalCase(optionValue), 30)
+                  }
                   key={itemIndex}
                   justify="space-between"
                 >
@@ -81,13 +87,19 @@ export function SelectedOptions({ productDescOptions, title, legend }) {
                     stye={{ fontSize: "12px" }}
                     disabled={true}
                   >
-                    {key === "images" && (
+                    {selectedImageMap && key === "images" && (
                       <IonThumbnail>
                         {" "}
-                        <img src={optionValue} />
+                        <img
+                          src={
+                            selectedImageMap[optionValue] &&
+                            selectedImageMap[optionValue].url
+                          }
+                        />
                       </IonThumbnail>
                     )}
-                    {key !== "images" && shortenText( camelToNormalCase(optionValue), 30)}
+                    {key !== "images" &&
+                      shortenText(camelToNormalCase(optionValue), 30)}
                   </IonText>
                 </IonRadio>
               </IonRadioGroup>

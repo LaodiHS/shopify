@@ -54,7 +54,7 @@ export async function authentication() {
 
  
 
-  app.use(compression({ threshold: 0 }))
+  // app.use(compression({ threshold: 0 }))
   try {
     app.get(shopify.config.auth.path, shopify.auth.begin());
 

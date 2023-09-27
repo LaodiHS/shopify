@@ -40,30 +40,22 @@ import {
   useProductDataContext,
   useDataProvidersContext,
   ImageCache,
-  ImageCachePre,
   AnimatedContent,
 } from "../components";
 import { deskLamp, pictures } from "../assets";
-export function ListComponent({}) {
-  const { DataProviderNavigate } = useDataProvidersContext();
+export function ListComponent() {
   const { productsData, defineProductData } = useProductDataContext();
-
   const [products, setProducts] = useState([]);
-  const elementRefs = useRef([]);
   const [mainDisplayImages, setMainDisplayImages] = useState({});
-
-  const handleThumbnailClick = (productIndex, imageIndex) => {
-    setMainDisplayImages((prev) => {
-      return {
-        ...mainDisplayImages,
-        [productIndex]: {
-          img: products[productIndex].images[imageIndex].transformedSrc,
-          index: imageIndex,
-        },
-      };
-    });
-  };
-
+  const elementRefs = useRef([]);
+  const { DataProviderNavigate } = useDataProvidersContext();
+  const [cardTitleStyle, setCardTitleStyle] = useState({
+    fontSize: "1.2rem", // Use relative 'rem' unit for font size
+    fontWeight: "bold",
+    whiteSpace: "normal",
+    wordWrap: "break-word",
+  });
+  const parentKeyScope = "ListComponent";
   useEffect(() => {}, [products]);
 
   useEffect(() => {
@@ -87,14 +79,25 @@ export function ListComponent({}) {
       productsData.productsData.length
     );
   }, [productsData.productsData]);
+  function handleThumbnailClick(productIndex, imageIndex) {
+    setMainDisplayImages((prev) => {
+      return {
+        ...mainDisplayImages,
+        [productIndex]: {
+          img: products[productIndex].images[imageIndex].transformedSrc,
+          index: imageIndex,
+        },
+      };
+    });
+  }
 
-  const createNarrative = (e, item, index, ref) => {
+  async function createNarrative(e, item, index, ref) {
     AnimatedContent({ current: ref }, "fadeOutTopRight", {
       duration: 0.3,
-      onComplete: () => {
+      onComplete: async () => {
         ref.style.display = "none";
         defineProductData(index);
-        DataProviderNavigate(
+      await  DataProviderNavigate(
           "/product-details",
           { target: "host" },
           {
@@ -104,20 +107,12 @@ export function ListComponent({}) {
         );
       },
     });
-  };
-
-  const cardTitleStyle = {
-    fontSize: "1.2rem", // Use relative 'rem' unit for font size
-    fontWeight: "bold",
-    whiteSpace: "normal",
-    wordWrap: "break-word",
-  };
-  const parentKeyScope = "ListComponet";
+  }
 
   return (
-    <IonContent key={parentKeyScope + "ionContent----"}>
-      <IonGrid key={parentKeyScope + "iongrid----"}>
-        <IonRow key={parentKeyScope + "ionrow----"}>
+    <IonContent key={parentKeyScope + "ionContent"}>
+      <IonGrid key={parentKeyScope + "ionGrid"}>
+        <IonRow key={parentKeyScope + "ionRow"}>
           {products.map((product, productIndex) => {
             if (!mainDisplayImages[productIndex]?.img) {
               return (
@@ -131,7 +126,10 @@ export function ListComponent({}) {
                   <IonCard>
                     <IonCardHeader>
                       <IonCardTitle style={{ marginBottom: "16px" }}>
-                        <IonSkeletonText animated style={{height:"300px", width: "80%" }} />
+                        <IonSkeletonText
+                          animated
+                          style={{ height: "300px", width: "80%" }}
+                        />
                       </IonCardTitle>
                     </IonCardHeader>
                     <IonCardContent>
@@ -221,7 +219,7 @@ export function ListComponent({}) {
 
             return (
               <IonCol
-                key={productIndex + "ioncol126233"}
+                key={productIndex + "ionCol"}
                 size="12"
                 sizeMd="6"
                 sizeSm="12"
@@ -233,7 +231,7 @@ export function ListComponent({}) {
                 >
                   <IonCardHeader key={productIndex + "ionCardHeader"}>
                     <IonCardTitle
-                      key={productIndex + "ioncardtitle"}
+                      key={productIndex + "ionCardTitle"}
                       style={cardTitleStyle}
                       className="ion-padding"
                     >
@@ -385,9 +383,7 @@ export function ListComponent({}) {
                               justifyContent: "flex-end",
                             }}
                           >
-                            <IonButtons
-                              key={productIndex + "desklampIonButtons"}
-                            >
+                            <IonButtons key={productIndex + "IonButtons"}>
                               <IonButton
                                 fill="clear"
                                 disabled={true}

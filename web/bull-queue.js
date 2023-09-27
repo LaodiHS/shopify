@@ -222,7 +222,7 @@ export function serverSideEvent(app, redisClient, queue) {
             // Process each delta of data as it arrives
             finish_reason = delta.finish_reason ? true : false;
             sendSSEMessage({ message: "Job stream", delta });
-            res.flush();
+        
           }
         }
 
@@ -344,7 +344,7 @@ async function* generateOpenAIMessages({
           const storeData = await userStore.readJSONFromFileAsync(shop);
           storeData.documentType = documentType;
           storeData.shop = shop;
-          // storeData.gptText = responseContentCompleteText;
+           storeData.gptText = responseContentCompleteText;
           storeData.documentType = documentType;
           await userStore.writeJSONToFileAsync(shop, storeData);
           // console.log('wrote user data-===>', storeData);

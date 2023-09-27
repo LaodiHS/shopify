@@ -1,9 +1,10 @@
 export {ImageCache,ImageCacheWorker,ImageCachePre} from "./ImageCache";
-
+export { WordCloud } from './WordCloud';
+export { GetElementWidth } from './GetElementWidth';
 
 export { DataFetchingComponent} from "./DataServices";
 
-
+export {NavigationRefs} from "./NavigationRefs"
 export { AppBridgeProvider } from "./AppBridgeProvider";
 export { QueryProvider } from "./QueryProvider";
 export { PolarisProvider } from "./PolarisProvider";

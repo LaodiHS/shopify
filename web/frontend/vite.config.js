@@ -12,6 +12,7 @@ import { copy } from "vite-plugin-copy";
 import { chromeExtension } from "rollup-plugin-chrome-extension";
 import extension from "rollup-plugin-browser-extension";
 import htmlMinifier from 'vite-plugin-html-minifier'
+import mdx from '@mdx-js/rollup'
 // import 'dotenv/config'
 // import { jsx } from '@emotion/react'
 import { VitePWA } from 'vite-plugin-pwa';
@@ -26,12 +27,14 @@ if (
 }
 
 
+
 const proxyOptions = {
   target: `http://127.0.0.1:${process.env.BACKEND_PORT}`,
   changeOrigin: false,
   secure: true,
   ws: false,
 };
+
 
 const host = process.env.HOST
   ? process.env.HOST.replace(/https?:\/\//, "")
@@ -40,6 +43,7 @@ const host = process.env.HOST
 let hmrConfig;
 if (host === "localhost") {
   hmrConfig = {
+    overlay: true,
     protocol: "ws",
     host: "localhost",
     port: 64999,
@@ -74,24 +78,31 @@ export default defineConfig({
 
   root: dir_name,
   plugins: [
-    terser({ compress:true, mangle:true,  maxWorkers: 5}),
-    // react({}),
-    react(
-    //   {
-    //   jsxImportSource: "@emotion/react",
-    //   babel: {
-    //     plugins: ["@emotion/babel-plugin"],
-    //   },
-    // }
-    ),
-    // VitePWA({ registerType: 'autoUpdate' }),
+     
+     {enforce: 'pre', ...mdx() },
+    react({ 
+      babel: {
+       include: /\.(js|jsx)$/,
+        plugins: ['babel-plugin-macros'],
+         babelrc: true
+      },
+    }),
+    // react(
+    // //   {
+    // //   jsxImportSource: "@emotion/react",
+    // //   babel: {
+    // //     plugins: ["@emotion/babel-plugin"],
+    // //   },
+    // // }
+    // ),
+   // VitePWA({ registerType: 'autoUpdate' }),
     // vuePlugin(),
     // vue({
     //   template: {
     //     isProduction: true,
     //   },
     // }),
- 
+   // terser({ compress:true, mangle:true,  maxWorkers: 5})
   ,
 
     // copy({

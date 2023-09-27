@@ -148,6 +148,7 @@ ion-accordion.accordion-expanded ion-item[slot='header'] {
 ion-title.title-large {
   color: #ef8561;
    font-weight:bold;
+   font-family: "Baloo", sans-serif;
   /* font-size: 30px; */
 }
 
@@ -167,10 +168,39 @@ ion-title {
   /* border: 2px solid #333333;  */
   /* text-shadow: 1px 1px 2px rgb(255, 199, 78); */
 }
-
+ion-title div{
+  margin:10px;
+  
+    }
 ion-toolbar {
   /* --background: rgba(250, 208, 156, 0.5); */
 }
+/* Media query for screens narrower than 600px */
+@media screen and (max-width: 600px) {
+  ion-title {
+    font-size: 12px;
+    letter-spacing: 5px;
+  /* margin-right:20px; */
+  
+  }
+   ion-title div{
+margin:10px;
+
+  }
+}
+
+/* Media query for screens narrower than 400px */
+/* @media screen and (max-width: 400px) {
+  ion-title {
+    font-size: 18px;
+    letter-spacing: 2px;
+  }
+} */
+
+
+
+
+
 
 .container {
   display: grid;
@@ -235,3 +265,29 @@ ion-toolbar {
   grid-area: rotate;
   /* background: blue  */
 }
+
+
+
+
+/* .highlight-container, .highlight {
+  position: relative;
+}
+
+.highlight-container {
+  display: inline-block;
+}
+.highlight-container:before {
+  content: " ";
+  display: block;
+  height: 90%;
+  width: 100%;
+  margin-left: -3px;
+  margin-right: -3px;
+  position: absolute;
+ 
+  transform: rotate(2deg);
+  top: -1px;
+  left: -1px;
+  border-radius: 20% 25% 20% 24%;
+  padding: 10px 3px 3px 10px;
+} */

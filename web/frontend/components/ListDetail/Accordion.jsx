@@ -70,6 +70,7 @@ import {
   ChartComponent,
   ReadabilityStats,
   BarChartComponent,
+  WordCloud,
 } from "../../components";
 
 // const shortenText = (text) =>
@@ -92,37 +93,6 @@ export function Accordion({
   setAccordionLoadingState,
   //currentSession,
 }) {
-  const {
-    checkFeatureAccess,
-    subscriptions,
-    currentSession,
-    productDetailOptions,
-    languageOptions,
-    uncachedFetchData,
-
-    assignAssistRequest,
-    assignClearAssistMethod,
-    assignUpdateArticleMethod,
-    markupText,
-    setMarkupText,
-
-    setServerSentEventLoading,
-
-    setContentSaved,
-    eventEmitter,
-  } = useDataProvidersContext();
-
-  const Popover = () => (
-    <IonContent className="ion-padding">Hello World!</IonContent>
-  );
-  const [present, dismiss] = useIonPopover(Popover, {
-    onDismiss: (data, role) => dismiss(data, role),
-  });
-
-  let { productData, updateProductProperty } = useProductDataContext();
-
-  const accordionGroupRef = useRef(null);
-
   const [legend, setLegend] = useState([]);
 
   const [alertHeader, setAlertHeader] = useState();
@@ -130,11 +100,72 @@ export function Accordion({
   const [accordionOptions, setAccordionOptions] = useState({});
   const [currentAccordion, setCurrentAccordion] = useState(null);
   const scrollRef = useRef([]);
-  const [sessionToken, setSessionToken] = useState();
+  const [sessionToken, setSessionToken] = useState("");
   const [showModal, setShowModal] = useState(false); // Modal state
   const [showConfirmModal, setShowConfirmModal] = useState(false); // Confirm state
   const [hashedBlogName, setHashBlogName] = useState("");
   const { aiWorkStation, aiWorkStationSetter } = useNavigationDataContext();
+
+  const [words, setWords] = useState([]);
+  const [serverWords, setServerWords] = useState([]);
+  const [progress, setProgress] = useState(0);
+  const resolveWithConfirm = useRef(null);
+  const accordionGroupRef = useRef(null);
+  // Function to resolve the promise with confirmation
+
+  const [handlerMessage, setHandlerMessage] = useState("");
+  const [roleMessage, setRoleMessage] = useState("");
+  const [presentToast] = useIonToast();
+
+  const [displayDocument, setDisplayDocument] = useState({
+    article: "",
+    description: "",
+    post: "",
+  });
+  const accordionRefs = useRef({});
+
+  const [displayDocumentType, setDisplayDocumentType] = useState("text");
+  const blogSelectionRef = useRef(null);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const app = useAppBridge();
+  const fetch = useAuthenticatedFetch();
+  const shopifySession = useShopifyContext();
+ const { productData, updateProductProperty } = useProductDataContext();
+  
+ 
+ const {selectedImageMap,
+} = useDataProvidersContext();
+ const {
+    checkFeatureAccess,
+    subscriptions,
+    currentSession,
+    productDetailOptions,
+    languageOptions,
+    uncachedFetchData,
+    assignLegend,
+    assignAssistRequest,
+ 
+    assignUpdateArticleMethod,
+    markupText,
+    setMarkupText,
+    setServerSentEventLoading,
+
+    setContentSaved,
+    eventEmitter,  
+    assignClearAssistMethod,
+    mappedLegend,
+    // selectedImageMap,
+  } = useDataProvidersContext();
+
+ 
+
+  const Popover = () => (
+    <IonContent className="ion-padding">Hello World!</IonContent>
+  );
+  const [present, dismiss] = useIonPopover(Popover, {
+    onDismiss: (data, role) => dismiss(data, role),
+  });
 
   useEffect(() => {
     // console.log("aiworkstation", aiWorkStation);
@@ -148,19 +179,61 @@ export function Accordion({
     // const blogName = await generateHash(currentSession.shop);
     // setHashBlogName(blogName);
   }, []);
+  useEffect(() => {
+    if (!productData) {
+      location.pathname = "/";
+    }
+  }, [productData]);
 
-  const blogSelectionRef = useRef(null);
+  useEffect(() => {
+    assignUpdateArticleMethod(() => handleUpdateClick);
+  }, []);
+  useEffect(() => {
+    setWords([productData.description]);
+    setMarkupText(productData.description);
+  }, []);
 
-  const addArticleClick = () => {
+  useEffect(() => {
+    setMarkupText(addMarkup(words.join("")));
+  }, [words]);
+
+  useEffect(async () => {
+    const token = await getSessionToken(app);
+    setSessionToken(token);
+
+    let session = await app.getState();
+
+    return () => {};
+  }, [app]);
+  useEffect(() => {
+    assignAssistRequest(() => handleNonSelectedItems);
+  }, []);
+  useEffect(() => {
+    assignClearAssistMethod("handleClearClick", handleClearClick);
+  }, []);
+  function handleClearClick(id) {
+    setDisplayDocument((previous) => ({ ...previous, [id]: "" }));
+    setWords([]);
+    setServerWords([]);
+  }
+
+  function addToAccordionRefs(name, el) {
+    accordionRefs.current[name] = el;
+  }
+  function assignMarkupText(text) {
+    setMarkupText(text);
+  }
+
+  function addArticleClick() {
     // Access and trigger the handleChildAction function in the child component
 
     if (blogSelectionRef.current) {
       console.log("blogSelectionRef.current", blogSelectionRef.current);
       blogSelectionRef.current.handleAddArticle();
     }
-  };
+  }
 
-  const addPostClick = async (id) => {
+  async function addPostClick(id) {
     const { data, error } = await uncachedFetchData({
       url: "/api/blog/id",
       method: "POST",
@@ -168,18 +241,29 @@ export function Accordion({
     });
     console.log("error", error);
     console.log("data", data);
-  };
+  }
 
-  const navigate = useNavigate();
-  const app = useAppBridge();
+  function defineDisplayDocument(accordionId, documentType, document) {
+    // Clear the current display
+    // Set the display area
+    setDisplayDocumentType(documentType);
+    // Call the appropriate function from setDocuments
+    setDocuments[documentType](accordionId, document);
+  }
 
-  const [displayDocument, setDisplayDocument] = useState({
-    article: "",
-    description: "",
-    post: "",
-  });
+  function toggleOpenAccordion(selectedAccordion) {
+    console.log("current accordion", currentAccordion);
+    console.log("selected accordion", selectedAccordion);
+    console.log("accordionRefs-->", accordionRefs);
+    const accordion = accordionRefs.current[aiWorkStation];
 
-  const [displayDocumentType, setDisplayDocumentType] = useState("text");
+    if (!accordion) {
+      return;
+    }
+    const nativeEl = accordion;
+
+    nativeEl.value = selectedAccordion;
+  }
 
   // Define the setDocuments object outside the function
   const setDocuments = {
@@ -196,63 +280,6 @@ export function Accordion({
         [accordionId]: document,
       }));
     },
-  };
-
-  function defineDisplayDocument(accordionId, documentType, document) {
-    // Clear the current display
-    // Set the display area
-    setDisplayDocumentType(documentType);
-    // Call the appropriate function from setDocuments
-    setDocuments[documentType](accordionId, document);
-  }
-
-  // Function to get the value of a query parameter from the URL
-  // const getQueryParam = (name) => {
-  //   const params = new URLSearchParams(window.location.search);
-  //   return params.get(name);
-  // };
-
-  // // Get the value of the 'host' query parameter from the URL
-  // const host = getQueryParam("host");
-
-  // // Check if the 'host' parameter is present in the URL
-  // if (host) {
-  //   //console.log("host: " + host);
-  // }
-  const location = useLocation();
-  useEffect(() => {
-    if (!productData) {
-      location.pathname = "/";
-    }
-  }, []);
-
-  const [words, setWords] = useState([productData.description]);
-  const [serverWords, setServerWords] = useState([]);
-
-  function assignMarkupText(text) {
-    setMarkupText(text);
-  }
-  useEffect(() => {
-    setMarkupText(productData.description);
-  }, []);
-
-  const accordionRefs = useRef({});
-  const addToAccordionRefs = (name, el) => {
-    accordionRefs.current[name] = el;
-  };
-
-  const toggleOpenAccordion = (selectedAccordion) => {
-    console.log("current accordion", currentAccordion);
-    console.log("selected accordion", selectedAccordion);
-    console.log("accordionRefs-->", accordionRefs);
-    const accordion = accordionRefs.current[aiWorkStation];
-
-    if (!accordion) {
-      return;
-    }
-    const nativeEl = accordion;
-
-    nativeEl.value = selectedAccordion;
   };
 
   async function eventSource(accordionId, eventEmitter) {
@@ -355,6 +382,7 @@ export function Accordion({
       });
 
       let str = "";
+
       eventSource.addEventListener("message", (event) => {
         // Handle the received SSE message
 
@@ -371,14 +399,16 @@ export function Accordion({
           Debounce(scrollSmoothly(accordionId), 400);
           str += word;
           // console.log('word: ' , word);
-          setServerWords((prevWords) => [...prevWords, word]);
+          eventEmitter.emit("streamData", eventData);
+          //  setServerWords((prevWords) => [...prevWords, word]);
           // eventEmitter.emit("description_assist", cleanText(word));
 
           if (finish_reason) {
             console.log("finish_reason", finish_reason);
-            const pureText = cleanText(str);
+            const pureText = cleanText(str, selectedImageMap);
             setMarkupText((pre) => pre.concat(pureText));
-            eventEmitter.emit("description_assist", pureText);
+            str = "";
+            //  eventEmitter.emit("description_assist", pureText);
             //setWords((prevWords) => [...prevWords, cleanText(str)]);
             eventSource.close();
             setServerSentEventLoading(false);
@@ -464,23 +494,6 @@ export function Accordion({
     return eventSourcePromise;
   }
 
-  useEffect(() => {
-    setMarkupText(addMarkup(words.join("")));
-  }, [words]);
-
-  useEffect(async () => {
-    const token = await getSessionToken(app);
-    setSessionToken(token);
-
-    let session = await app.getState();
-
-    return () => {};
-  }, []);
-
-  const fetch = useAuthenticatedFetch();
-  const shopifySession = useShopifyContext();
-  const [progress, setProgress] = useState(0);
-
   async function aiRequest(
     { productData, focus, language, accordionId },
     route,
@@ -504,6 +517,7 @@ export function Accordion({
 
       if (response.ok) {
         const generatedPrompt = await response.json();
+        assignLegend(generatedPrompt.legend);
         console.log(generatedPrompt.message);
         return generatedPrompt;
       } else {
@@ -518,13 +532,6 @@ export function Accordion({
       throw new Error(error.message);
     }
   }
-
-  const resolveWithConfirm = useRef(null);
-  // Function to resolve the promise with confirmation
-
-  const [handlerMessage, setHandlerMessage] = useState("");
-  const [roleMessage, setRoleMessage] = useState("");
-  const [presentToast] = useIonToast();
 
   async function setDataListener(accordionId, template, language) {
     const listenerSet = await eventSource(accordionId, eventEmitter);
@@ -668,21 +675,7 @@ export function Accordion({
     setDataListener(accordionId, "focus-language-options", languageOptions);
   }
 
-  useEffect(() => {
-    assignAssistRequest(() => handleNonSelectedItems);
-  }, []);
-
-  function handleClearClick(id) {
-    setDisplayDocument((previous) => ({ ...previous, [id]: "" }));
-    setWords([]);
-    setServerWords([]);
-  }
-
-  useEffect(() => {
-    assignClearAssistMethod(() => handleClearClick);
-  }, []);
-
-  const handleUpdateClick = async (type, markupText) => {
+  async function handleUpdateClick(type, markupText) {
     console.log("type", type);
     console.log("markup Text", markupText);
     const descriptionHtml = markupText;
@@ -718,13 +711,9 @@ export function Accordion({
     } else if (type === "post" && markupText.length) {
       addPostClick(hashedBlogName);
     }
-  };
+  }
 
-  useEffect(() => {
-    assignUpdateArticleMethod(() => handleUpdateClick);
-  }, []);
-
-  const showConfirmAlert = async (header, message) => {
+  async function showConfirmAlert(header, message) {
     if (!header || !message) {
       throw new Error("Please select a header and a message");
     }
@@ -734,17 +723,17 @@ export function Accordion({
       setShowConfirmModal(true);
       resolveWithConfirm.current = resolve;
     });
-  };
+  }
 
-  const handleConfirmModalDismiss = () => {
+  function handleConfirmModalDismiss() {
     setShowConfirmModal(false);
     resolveWithConfirm.current(false); // Resolve the promise with false to indicate cancellation
-  };
+  }
 
-  const handleConfirmModalConfirm = () => {
+  function handleConfirmModalConfirm() {
     setShowConfirmModal(false);
     resolveWithConfirm.current(true); // Resolve the promise with true to indicate confirmation
-  };
+  }
 
   const accordions = [
     {
@@ -820,7 +809,13 @@ export function Accordion({
       },
       productData,
     },
-  ].filter((acc) => acc.accordionId === aiWorkStation);
+  ].map(accordion => Object.assign(accordion, {
+    eventEmitter,  
+    assignClearAssistMethod,
+    mappedLegend,
+    selectedImageMap
+  }
+  )).filter((acc) => acc.accordionId === aiWorkStation);
 
   return (
     <IonRow key="IonRow">
@@ -890,6 +885,7 @@ export function Accordion({
   );
 }
 
+
 function renderAccordionItem({
   index,
   accordionId,
@@ -900,29 +896,39 @@ function renderAccordionItem({
   addToAccordionRefs,
   blogSelectionRef,
   serverWords,
+  eventEmitter,  
+  assignClearAssistMethod,
+  mappedLegend,
+  selectedImageMap
+  
 }) {
+  const [markupViewLock, setMarkupViewLock] = useState(null);
+
   const {
     checkFeatureAccess,
     markupText,
     serverSentEventLoading,
     setMarkupText,
-    eventEmitter,
+    // eventEmitter,
     DataProviderNavigate,
+    // assignClearAssistMethod,
+    // mappedLegend,
+    // selectedImageMap,
   } = useDataProvidersContext();
 
-  const [markupViewLock, setMarkupViewLock] = useState(
-    checkFeatureAccess(["sourwood"])
-  );
+  useEffect(() => {
+    setMarkupViewLock(checkFeatureAccess(["sourwood"]));
+  }, [checkFeatureAccess]);
+
+  if (!markupViewLock) {
+    return null;
+  }
 
   function autosaveContent(editor) {
     const content = editor.getContent();
     localStorage.setItem("autosaveContent", content);
     console.log(" Editor Content autosaved to localStorage:");
   }
-
-  useEffect(() => {}, []);
-
-  // Restore content from localStorage on page load
 
   return (
     <div
@@ -961,7 +967,8 @@ function renderAccordionItem({
                 />
 
                 <div className="ion-padding" slot="content">
-                  <TextWithMarkers markedText={serverWords.join("") }  />
+                  <TextWithMarkers eventEmitter={eventEmitter} assignClearAssistMethod={assignClearAssistMethod} mappedLegend={mappedLegend} selectedImageMap={selectedImageMap} 
+                  />
                 </div>
               </IonAccordion>
 
@@ -1011,10 +1018,10 @@ function renderAccordionItem({
                 // disabled={!markupViewLock.hasAccess}
                 value="present"
                 readonly={!markupViewLock.hasAccess}
-                onClick={(e) => {
+                onClick={ async(e) => {
                   if (!markupViewLock.hasAccess) {
                     console.log("e=---->", e);
-                    DataProviderNavigate("/subscriptions");
+                   await DataProviderNavigate("/subscriptions");
                   }
                 }}
               >
@@ -1065,10 +1072,10 @@ function renderAccordionItem({
                 key={index + 11}
                 value="seo"
                 readonly={!markupViewLock.hasAccess}
-                onClick={(e) => {
+                onClick={async (e) => {
                   if (!markupViewLock.hasAccess) {
                     console.log("e=---->", e);
-                    DataProviderNavigate("/subscriptions");
+                    await DataProviderNavigate("/subscriptions");
                   }
                 }}
               >
@@ -1099,7 +1106,20 @@ function renderAccordionItem({
                       </IonRow>
                     </IonCol>
                     <IonCol size="6" key={index + 20}>
-                      <ReadabilityStats key={index + 21} text={markupText} />
+                      <IonRow><IonCol size="12">
+                        <WordCloud words={ [
+  { text: 'hello', size: 20 },
+  { text: 'world', size: 30 },
+  // Add more words with their sizes as needed
+]} />
+                        
+                        
+                        </IonCol>
+                        <IonCol size="12">
+                                 <ReadabilityStats key={index + 21} text={markupText} />
+                        </IonCol>
+                        </IonRow>
+               
                     </IonCol>
                   </IonRow>
                 </IonGrid>
@@ -1131,9 +1151,7 @@ function renderAccordionItem({
               <IonContent className="ion-padding">
                 <IonText>
                   <p>
-                  <sub>
-                      Edit Your Content Using Our In Context Editor.        
-                    </sub>
+                    <sub>Edit Your Content Using Our In Context Editor.</sub>
                     {/* <sub>
                       We Support your favorite Markdown syntax.
                       <br /> Html :{" "}

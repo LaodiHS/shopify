@@ -15,11 +15,20 @@ export function useNavigationDataContext() {
   return useContext(NavigationDataContext);
 }
 
+function modifyState(setter, updateOptions) {
+  return setter((prevState) => {
+    if (typeof updateOptions === "function") {
+      return updateOptions(prevState);
+    } else {
+      return updateOptions;
+    }
+  });
+}
 export function NavigationDataProvider({ children }) {
   const [aiWorkStation, setAiWorkStation] = useState(null);
 
   function aiWorkStationSetter(category) {
-    setAiWorkStation(category);
+    modifyState(setAiWorkStation,category);
   }
 
   const value = {

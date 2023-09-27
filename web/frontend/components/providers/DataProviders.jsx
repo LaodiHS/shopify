@@ -1,3 +1,8 @@
+import "@tensorflow/tfjs-backend-cpu";
+import "@tensorflow/tfjs-backend-webgl";
+import * as cocoSsd from "@tensorflow-models/coco-ssd";
+import * as tf from "@tensorflow/tfjs";
+import { loadGraphModel } from "@tensorflow/tfjs-converter";
 import React, {
   createContext,
   useContext,
@@ -27,6 +32,97 @@ import { Redirect } from "@shopify/app-bridge/actions";
 import { SessionToken, TitleBar } from "@shopify/app-bridge/actions";
 import { useIonToast, useIonRouter } from "@ionic/react";
 import { AnimatedContent } from "./";
+import { NavigationRefs } from "./";
+
+// import {TRAINING_DATA} from 'https://storage.googleapis.com/jmstore/TensorFlowJS/EdX/TrainingData/fashion-mnist.js';
+// async function loadYOLOModel() {
+//   const model = await loadGraphModel('path_to_yolo_model/model.json');
+//   return model;
+// }
+
+// async function detectObjects(imageElement, yoloModel) {
+//   // Convert the image to a tensor
+//   const imageTensor = tf.browser.fromPixels(imageElement);
+//   const expandedDims = imageTensor.expandDims(0);
+
+//   // Normalize the image data
+//   const normalized = tf.div(expandedDims, 255.0);
+
+//   // Make predictions
+//   const predictions = await yoloModel.predict(normalized);
+
+//   // Process predictions
+//   const boxes = await predictions[0].array();
+//   const scores = await predictions[1].array();
+//   const classes = await predictions[2].array();
+
+//   // Release the tensors
+//   imageTensor.dispose();
+//   expandedDims.dispose();
+//   normalized.dispose();
+//   predictions.forEach(tensor => tensor.dispose());
+
+//   return { boxes, scores, classes };
+// }
+
+// async function LoadModel(){
+
+//   const model = await loadGraphModel('https://example.com/fashion-mnist/model.json');
+
+//   const imageUrl = 'https://example.com/image.jpg';
+//   const imageElement = document.createElement('img');
+
+//   imageElement.onload = async () => {
+//     const tensor = tf.browser.fromPixels(imageElement).toFloat();
+//     const normalizedTensor = tensor.div(255);
+//     const inputTensor = normalizedTensor.reshape([1, 28, 28, 1]);
+
+//     const predictions = await model.executeAsync(inputTensor);
+//     const outputTensor = predictions[0];
+//     const predictionScores = outputTensor.dataSync();
+
+//     // Process the prediction scores as needed for your specific use case
+//     // For example, identify the class with the highest score to determine the predicted clothing item.
+
+//     tensor.dispose();
+//     normalizedTensor.dispose();
+//     inputTensor.dispose();
+//     outputTensor.dispose();
+//     predictions.forEach(prediction => prediction.dispose());
+//   };
+
+//   imageElement.src = imageUrl;
+
+// }
+
+// async function ObjectImageDetectionData(imgUrl) {
+//   const response = await fetch(imgUrl);
+//   const blob = await response.blob();
+
+//   // Convert blob to a data URL
+//   const reader = new FileReader();
+//   reader.onload = () => {
+//     const dataUrl = reader.result;
+
+//     // Create an image element
+//     const img = new Image();
+//     img.onload = async () => {
+//       // Load the model.
+//       const model = await cocoSsd.load();
+
+//       // Classify the image.
+//       const predictions = await model.detect(img);
+
+//       console.log("Predictions: ");
+//       console.log(predictions);
+//     };
+
+//     // Set the data URL as the source of the image
+//     img.src = dataUrl;
+//   };
+//   reader.readAsDataURL(blob);
+// }
+
 const DataProvidersContext = createContext(null);
 
 export function useDataProvidersContext() {
@@ -60,8 +156,16 @@ function createEventEmitter() {
       });
     }
   }
-
-  return { on, emit };
+  function removeListener(eventType, callback) {
+    const eventListeners = listeners[eventType];
+    if (eventListeners) {
+      const index = eventListeners.indexOf(callback);
+      if (index !== -1) {
+        eventListeners.splice(index, 1);
+      }
+    }
+  }
+  return { on, emit, removeListener };
 }
 const eventEmitter = createEventEmitter();
 export function DataProvidersProvider({ children }) {
@@ -70,21 +174,25 @@ export function DataProvidersProvider({ children }) {
   const [plans, setPlans] = useState({});
   const app = useAppBridge();
   const context = useShopifyContext();
+
+
+
   useEffect(async () => {
-    console.log("context", context);
+   
     const token = await getSessionToken(app);
-console.log("token", token);
+
     let session = await app.getState();
-    //   console.log('app---->',app)
-    // console.log('session---->', session)
+ 
     return () => {};
   }, []);
 
   const [user, setUser] = useState({});
   const [subscriptions, setSubscriptions] = useState(["free"]);
   const [currentSession, setCurrentSession] = useState({});
-  const [subscriptionRetrievalLoading, setSubscriptionRetrievalLoading] =
-    useState(false);
+  const [subscriptionRetrievalLoading, setSubscriptionRetrievalLoading] = useState(false);
+
+
+  
   const setRouteSubscriptions = (activeSubscriptions, activeSession) => {
     setSubscriptions(activeSubscriptions);
     setCurrentSession(activeSession);
@@ -106,13 +214,11 @@ console.log("token", token);
         );
 
         if (!subscriptionsResponse.ok) {
-        
-
           // If the response status is not ok (e.g., 401 Unauthorized or 403 Forbidden),
           // it means the user is not authenticated or doesn't have access.
           // Redirect the user to the login page or show an error message.
           // navigation("/login");
-          
+
           setSubscriptionRetrievalLoading(false);
           return;
         }
@@ -123,13 +229,25 @@ console.log("token", token);
         console.log("subscription redirectUri: ", redirectUri);
         redirect.dispatch(Redirect.Action.REMOTE, { url: redirectUri });
         setPlans(data.plans);
-        console.log('user', user)
+        console.log("user", user);
         assignUser(user);
         setRouteSubscriptions(activeSubscriptions, session);
 
         if (user && user.seen === false) {
           navigate("/welcome");
         }
+
+        if (!DEPLOYMENT_ENV) {
+          localStorage.setItem("plans", JSON.stringify(data.plans));
+          localStorage.setItem("user", JSON.stringify(user));
+       
+          localStorage.setItem(
+            "activeSubscriptions",
+            JSON.stringify(activeSubscriptions)
+          );
+          localStorage.setItem("session", JSON.stringify(session));
+        }
+
       } catch (err) {
         // Handle network errors or other unexpected errors here.
         setPlans(err.plans);
@@ -139,8 +257,31 @@ console.log("token", token);
       }
       setSubscriptionRetrievalLoading(false);
     };
-
-    fetchDataSession();
+    if (!DEPLOYMENT_ENV) {
+        const activeSubscriptions = localStorage.getItem("activeSubscriptions");
+        const session = localStorage.getItem("session");
+        const plans = localStorage.getItem("plans");
+        const user = localStorage.getItem("user");
+        if (plans && user && activeSubscriptions && session) {
+          try {
+            setPlans(JSON.parse(plans));
+            assignUser(JSON.parse(user));
+            setRouteSubscriptions(
+              JSON.parse(activeSubscriptions),
+              JSON.parse(session)
+            );
+          } catch (error) {
+            console.log("error", error);
+            fetchDataSession();
+          }
+        } else {
+          fetchDataSession();
+        }
+      } else {
+        fetchDataSession();
+      }
+    
+   // fetchDataSession();
   }, []);
 
   const freeOptions = ["free", "chestnut", "sourwood", "acacia", "premiere"];
@@ -388,9 +529,10 @@ console.log("token", token);
 
   const [selectedImageText, setSelectedImageText] = useState("0 Items");
   const [selectedImages, setSelectedImages] = useState([]);
+  const [selectedImageMap, setSelectedImageMap] = useState({});
   const [languageOptions, setLanguageOptions] = useState([]);
   const handleSelectChange = async (event, category) => {
-    console.log('select_change',event, category)
+    console.log("select_change", event, category);
     category = category.trim();
     setLanguageOptions((previous) => {
       const map = {};
@@ -405,8 +547,8 @@ console.log("token", token);
         map[category] = [category, categoryValues];
       }
 
-      const toneOptions =  Object.values(map);
-      console.log('Tone options', toneOptions);
+      const toneOptions = Object.values(map);
+      console.log("Tone options", toneOptions);
       return toneOptions;
     });
   };
@@ -414,6 +556,7 @@ console.log("token", token);
   const [productDetailOptions, setProductDetailOptions] = useState([]);
 
   const optionChange = (propName, data) => {
+    console.log("data", data);
     propName = propName.trim().toLowerCase();
     setProductDetailOptions((previous) => {
       const map = {};
@@ -425,9 +568,9 @@ console.log("token", token);
       if (categoryValues.length && !categoryValues.includes("none")) {
         map[propName] = [propName, categoryValues];
       }
-       const objectValues = Object.values(map);
-       console.log('objectValue',objectValues)
-      return objectValues
+      const objectValues = Object.values(map);
+      console.log("objectValue", objectValues);
+      return objectValues;
     });
   };
 
@@ -468,12 +611,89 @@ console.log("token", token);
 
   const [imageSelectionModalIsOpen, setImageSelectionModalIsOpen] =
     useState(false);
+
   function assignImageSelectionModalIsOpen(bool_value) {
     modifyState(setImageSelectionModalIsOpen, bool_value);
   }
 
-  const imageSelectionChanged = (selected_images, all_product_images) => {
-    optionChange("images", selected_images);
+    const [wordList, setWordList] = useState( [
+    "Reliable",
+    "Innovative",
+    "Stylish",
+    "Durable",
+    "Efficient",
+    "High-quality",
+    "Versatile",
+    "User-friendly",
+    "Affordable",
+    "Sleek",
+    "Cutting-edge",
+    "Compact",
+    "Eco-friendly",
+    "Elegant",
+    "Powerful",
+    "Convenient",
+    "Modern",
+    "Safe",
+    "Customizable",
+    "Premium",
+    "Lightweight",
+    "Trendy",
+    "Practical",
+    "Functional",
+    "Sophisticated",
+    "Trustworthy",
+    "Eco-conscious",
+    "Luxurious",
+    "Ergonomic",
+    "Sleek"
+  ]);
+
+  
+
+  
+  // const permutations = generatePermutations(wordList);
+  
+  // Example usage:
+  // console.log(permutations);
+
+
+  
+
+  function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1) + min);
+  }
+
+function compressString(input,all_product_images) {
+
+
+
+
+ const word = wordList[getRandomInt(0, wordList.length)].toLowerCase();
+ return word +'_'+ all_product_images.findIndex(image => image.transformedSrc === input )
+    
+  }
+
+  const imageSelectionChanged = async (selected_images, all_product_images) => {
+    const sel_images = [];
+    setSelectedImageMap((prev) => {
+      const selImages = { ...prev };
+      sel_images.length = 0;
+      selected_images.forEach((image) => {
+        const symbol_name =  compressString(image, all_product_images) + "_jpg";
+
+        sel_images.push(symbol_name);
+        selImages[symbol_name] = {
+          name: symbol_name,
+          url: image,
+        };
+      });
+
+      return selImages;
+    });
+
+    optionChange("images", sel_images);
+
     setSelectedImages(selected_images);
     setSelectedImageText(formatData(selected_images, all_product_images));
     assignImageSelectionModalIsOpen(false);
@@ -500,14 +720,19 @@ console.log("token", token);
     }
   }
 
-  const [clearAssistResultMethod, setClearAssistResultMethod] = useState(null);
+  const [clearAssistResultMethod, setClearAssistResultMethod] = useState(new Map());
 
-  function assignClearAssistMethod(updateOption) {
-    modifyState(setClearAssistResultMethod, updateOption);
+  function assignClearAssistMethod(key, updateOption) {
+    modifyState(setClearAssistResultMethod, (prevState) => {
+      const newMap = new Map(prevState);
+      newMap.set(key, updateOption);
+      return newMap;
+    });
   }
 
   async function clearAssistResult(id) {
-    clearAssistResultMethod(id);
+    clearAssistResultMethod.get('handleClearClick')(id);
+    clearAssistResultMethod.get('clearSentences')();
   }
 
   const [updateArticleMethod, setUpdateArticleMethod] = useState(null);
@@ -521,35 +746,30 @@ console.log("token", token);
     modifyState(setMarkupText, text);
   }
 
-  const ArticleRefAnimate = useRef(null);
-  const ProductRefAnimate = useRef(null);
 
-  const [refDictionary, setRefDictionary] = useState({});
 
-  // Create refs and add them to the dictionary
-  useEffect(() => {
-    const createRefs = () => {
-      const newRefDictionary = {};
-      [
-        "/",
-        "/product-details",
-        "/description",
-        "/article",
-        "/subscriptions",
-        "/welcome",
-        "/search",
-      ].forEach((key) => {
-        newRefDictionary[key] = createRef(null);
-      });
-      return newRefDictionary;
-    };
 
-    // Update the refDictionary state
-    setRefDictionary(createRefs());
-  }, []);
 
-  function DataProviderNavigate(route, options = {}, pa= {initialViewAnimation: "fadeOutRight", endingViewAnimation: "fadeInRight"}) {
-    AnimatedContent(refDictionary[location.pathname], pa.initialViewAnimation, {
+
+  const [refDictionary, setRefDictionary] = useState(NavigationRefs);
+
+
+  // useEffect(() => {
+ 
+
+  //   // Update the refDictionary state
+  //   setRefDictionary(routeRefs);
+  // }, []);
+
+
+ async function DataProviderNavigate(
+    route,options = {},
+    pa = {
+      initialViewAnimation: "fadeOutRight",
+      endingViewAnimation: "fadeInRight",
+    }
+  ) {
+  await  AnimatedContent(refDictionary[location.pathname], pa.initialViewAnimation, {
       //timingFunction:"ease",
       onComplete: () => {
         navigate(route, options);
@@ -567,25 +787,40 @@ console.log("token", token);
     modifyState(setServerSentEventLoading, updateOption);
   }
 
+  const [contentSaved, setContentSaved] = useState(false);
 
-  const [contentSaved, setContentSaved] = useState(false)
+  function assignContentSaved(updateOptions) {
+    modifyState(setContentSaved, updateOptions);
+    setTimeout(() => {
+      setContentSaved(false);
+    }, 5000);
+  }
+const [mappedLegend, setMappedLegend] = useState([[]]);
+  const [legendReversed, setLegendReversed] = useState({});
+  const [legend, setLegend] = useState({});
 
-  function assignContentSaved(updateOptions){
-     modifyState(setContentSaved, updateOptions);
-    setTimeout(()=>{
-    setContentSaved(false)
-    },5000)
+  function assignLegend(rawLegend){
+    setMappedLegend(rawLegend);
+    const formattedLegend ={};
+    const formattedReversedLegend ={};
+    rawLegend.forEach(([key, value])=>{
+      formattedLegend[value] = key;
+      formattedReversedLegend[key] = value;;
+    })
+    setLegend(formattedLegend)
+    setLegendReversed(formattedReversedLegend);
+    console.log('formattedLegend:  ',formattedLegend);
   }
 
-
-
-
-
-
   const value = {
+    mappedLegend,
+    legend,
+    legendReversed,
+    assignLegend,
+    selectedImageMap,
     eventEmitter,
     contentSaved,
-    setContentSaved:assignContentSaved,
+    setContentSaved: assignContentSaved,
     setServerSentEventLoading: assignServerSentEventLoading,
     serverSentEventLoading,
     languageOptions,

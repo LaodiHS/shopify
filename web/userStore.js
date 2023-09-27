@@ -159,7 +159,7 @@ async function writeJSONToFileAsync(storeName, jsonObject) {
   if (jsonObject.last_payment_date instanceof Date) {
     jsonObject.last_payment_date = jsonObject.last_payment_date.toISOString();
   }
-  console.log("jsob-->", jsonObject);
+  // console.log("jsob-->", jsonObject);
   const ajv = new Ajv();
   const valid = ajv.validate(userSchema, jsonObject);
 
@@ -248,7 +248,7 @@ async function getRedisUserSchema(shop) {
       console.error("Validation errors:", validate.errors);
     } else {
       console.log("Data is valid");
-      console.log("Processed data:", userSchema); // This is the coerced object
+      // console.log("Processed data:", userSchema); // This is the coerced object
     }
     const user = sanitizeObjectForJS(userSchema);
 

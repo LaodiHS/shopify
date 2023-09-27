@@ -833,21 +833,7 @@ export async function generateReport({
 
 const colors = generateComplementaryScheme("#A66F2E", 200);
 
-function imageId(url) {
-  if (!url) {
-    "report this error imageId:" + Math.random().toString();
-  }
-  let indexOfLastPeriod = url.lastIndexOf(".");
-  if (indexOfLastPeriod === -1) {
-    indexOfLastPeriod = url.length;
-  }
-  let lastBackSlash = url.lastIndexOf("/");
-  if (lastBackSlash === -1) {
-    lastBackSlash = -5 + indexOfLastPeriod;
-  }
 
-  return url.slice(-lastBackSlash + indexOfLastPeriod, indexOfLastPeriod);
-}
 
 function toSingular(word) {
   if (!word) {
@@ -944,11 +930,9 @@ function focusRequirements(productData, details, requirements) {
               line = `\n\t${index + 1}. (${element.title}: ${id}).`;
             } else if (key === "images") {
               legend.push([element, color]);
-              exampleDetails.push([imageId(element), id]);
+              exampleDetails.push([element, id]);
               console.log("element---->", element);
-              line = `\n\t${index + 1}. ${element}\n\t${imageId(element).slice(
-                -9
-              )} : ${id}.\n`;
+              line = `\n\t${index + 1}. ${element}\n\t(${element} - ${id})\n`;
             } else if (key === "description") {
               exampleDetails.push(["description", id]);
               line = `\n\t${index + 1}. ${element}\n\tdescription : ${id}.`;

@@ -29,6 +29,15 @@ import {handleDescriptionEndpoints, handleArticleEndpoints, handlePostEndpoints,
 } from "./description-requests.js";
 
 
+
+
+
+
+
+
+
+
+
 import * as userStore from "./userStore.js";
 
 
@@ -47,7 +56,6 @@ const log = (message, obj) =>
     })
   );
 
-  
 
   
 
@@ -82,6 +90,7 @@ async function startServer() {
     // const csp = "frame-ancestors 'self' vibefenwei.fly.dev";
 
     
+    
     serverSideEvent(app, redisClient, queue);
     handleDescriptionEndpoints(app, queue);
     handleArticleEndpoints(app, queue);
@@ -89,6 +98,7 @@ async function startServer() {
 
     app.get("/api/current/subscription/status", async (req, res) => {
       try {
+
 
 
         const session = res.locals.shopify.session;
@@ -111,7 +121,10 @@ async function startServer() {
         }
 
 
+
+
         
+      
 
         const activeSubscriptions = subscriptions.activeSubscriptions.map(
           (sub) => sub.name
@@ -147,6 +160,9 @@ async function startServer() {
     });
 
  
+
+
+
 
     app.post(
       "/api/subscription/selection",
@@ -245,6 +261,7 @@ async function startServer() {
             }
           }
 
+
           if (plans.includes(plan)) {
             const redirectUrl = await shopify.api.billing.request({
               session,
@@ -307,8 +324,6 @@ async function startServer() {
     //   })
     // );
 
-
-
     
     contentGenerator(app);
     app.get("/api/user", async (_req, res) => {
@@ -324,6 +339,7 @@ async function startServer() {
 
       let status = 200;
       let error = null;
+
 
 
       try {
