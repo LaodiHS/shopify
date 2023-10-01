@@ -813,7 +813,8 @@ export function Accordion({
     eventEmitter,  
     assignClearAssistMethod,
     mappedLegend,
-    selectedImageMap
+    selectedImageMap,
+    checkFeatureAccess
   }
   )).filter((acc) => acc.accordionId === aiWorkStation);
 
@@ -899,7 +900,7 @@ function renderAccordionItem({
   eventEmitter,  
   assignClearAssistMethod,
   mappedLegend,
-  selectedImageMap
+  selectedImageMap,
   
 }) {
   const [markupViewLock, setMarkupViewLock] = useState(null);
@@ -1092,7 +1093,9 @@ function renderAccordionItem({
 
                 <IonGrid key={index + 12} slot="content">
                   <IonRow key={index + 13}>
-                    <IonCol key={index + 15} size="6">
+                    <IonCol key={index + 15} size-sm="12" 
+                    size-md="6" 
+                    size="auto">
                       <IonRow key={index + 16}>
                         <IonCol size="12" key={index + 17}>
                           <ChartComponent key={index + 18} text={markupText} />
@@ -1105,21 +1108,14 @@ function renderAccordionItem({
                         </IonCol>
                       </IonRow>
                     </IonCol>
-                    <IonCol size="6" key={index + 20}>
-                      <IonRow><IonCol size="12">
-                        <WordCloud words={ [
-  { text: 'hello', size: 20 },
-  { text: 'world', size: 30 },
-  // Add more words with their sizes as needed
-]} />
-                        
-                        
-                        </IonCol>
+                    <IonCol size-sm="12" 
+                    size-md="6"
+                     size="6" key={index + 20}>
+                    
                         <IonCol size="12">
-                                 <ReadabilityStats key={index + 21} text={markupText} />
+                                 <ReadabilityStats key={index + 21} checkFeatureAccess={checkFeatureAccess} text={markupText} />
                         </IonCol>
-                        </IonRow>
-               
+                      
                     </IonCol>
                   </IonRow>
                 </IonGrid>

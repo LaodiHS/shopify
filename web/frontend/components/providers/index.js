@@ -1,4 +1,5 @@
 export {ImageCache,ImageCacheWorker,ImageCachePre} from "./ImageCache";
+export { DocumentImagery } from './DocumentImagery';
 export { WordCloud } from './WordCloud';
 export { GetElementWidth } from './GetElementWidth';
 

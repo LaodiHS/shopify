@@ -34,3 +34,4 @@ export { default as sourwoodHoney } from "./a-honey-gooie-jar.svg";
 export { default as acaciaHoney } from "./a-honey-container.svg";
 export { default as honeyPot } from "./a-honey-pot.svg";
 export { default as honeyStick } from "./a-beehive-stick-honey.svg";
+export { default as beehive } from "./beehive.svg";

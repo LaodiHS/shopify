@@ -2,7 +2,7 @@
 
 name = "test-vibefenwei"
 client_id = "b2919712bc4555c05f978c56eb4f5750"
-application_url = "https://yards-girlfriend-accessing-starting.trycloudflare.com"
+application_url = "https://lauren-pipeline-nextel-allowance.trycloudflare.com"
 embedded = true
 
 [access_scopes]
@@ -11,9 +11,9 @@ scopes = "write_products,read_content,write_content"
 
 [auth]
 redirect_urls = [
-  "https://yards-girlfriend-accessing-starting.trycloudflare.com/auth/callback",
-  "https://yards-girlfriend-accessing-starting.trycloudflare.com/auth/shopify/callback",
-  "https://yards-girlfriend-accessing-starting.trycloudflare.com/api/auth/callback"
+  "https://lauren-pipeline-nextel-allowance.trycloudflare.com/auth/callback",
+  "https://lauren-pipeline-nextel-allowance.trycloudflare.com/auth/shopify/callback",
+  "https://lauren-pipeline-nextel-allowance.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

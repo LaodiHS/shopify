@@ -9,10 +9,25 @@ import {
 import {
   informationCircleOutline,
   exitOutline,
-  informationCircle,lockClosed
+  informationCircle,
+  lockClosed
 } from "ionicons/icons";
+import {
+  descriptionWorkStation,
+  clear,
+  bookshelf,
+  save,
+  aiIcon,
+  pencilCase,
+  newsPaperWorStation,
+  halfMoon,
+  readingTree,
+  honeyCombGridDrop,
+  beehive,
+} from "../../assets";
 
 export function AccordionInformationHeader({ lock, accordionName, boxName, note }) {
+  
   return (
     <IonItem slot="header" color="light">
       <IonLabel size="small" slot="">{accordionName}</IonLabel>
@@ -30,7 +45,7 @@ export function AccordionInformationHeader({ lock, accordionName, boxName, note 
         slot="end"
         size=""
         id={boxName + accordionName+ "lock"}
-        icon={lockClosed}
+        icon={beehive}
         >   {lock}
 
         </IonIcon>

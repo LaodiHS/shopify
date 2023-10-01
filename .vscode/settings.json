@@ -3,6 +3,7 @@
     "aligncenter",
     "bullmq",
     "metafields",
+    "tinycolor",
     "uuidv"
   ],
   "sqltools.connections": [

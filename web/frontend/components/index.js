@@ -1,5 +1,6 @@
 export { ProductsCard } from "./ProductsCard";
-
+import { DocumentImagery } from './providers/DocumentImagery';
+export { InformationIcon } from './providers/InformationIcon';
 
 
 export { AppTypeahead } from "./ListDetail/AppTypeahead";
@@ -24,6 +25,7 @@ export { R } from "./R";
 export { L } from "./L";
 export { Marker } from "./Marker";
 export { TextWithMarkers, cleanText } from "./TextWithMarkers";
+
 
 export * from "./providers";
 

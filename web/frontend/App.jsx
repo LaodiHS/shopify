@@ -53,6 +53,7 @@ import {
   halfMoon,
   readingTree,
   honeyCombGridDrop,
+  beehive,
 } from "./assets";
 import { IonReactRouter } from "@ionic/react-router";
 
@@ -809,7 +810,7 @@ function IonMenuNav() {
                   key={"icon" + index}
                   src={tab.access.hasAccess && tab.src}
                   icon={
-                    !tab.src && tab.access.hasAccess ? tab.icon : lockClosed
+                    !tab.src && tab.access.hasAccess ? tab.icon : beehive
                   }
                   // className="custom-icon"
                 />

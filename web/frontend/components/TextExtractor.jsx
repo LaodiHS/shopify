@@ -12,12 +12,21 @@ import {
   IonList,
   IonItem,
   IonText,
+  IonChip,
 } from "@ionic/react";
 
 import "chartist/dist/index.css";
-import { LineChart, BarChart, Svg, getMultiValue } from "chartist";
+import {
+  LineChart,
+  BarChart,
+  Svg,
+  getMultiValue,
+  extend,
+  normalizePadding,
+} from "chartist";
 import winkNLP from "wink-nlp";
 import model from "wink-eng-lite-web-model";
+import { WordCloud, InformationIcon } from "../components";
 import { extractTextFromHtml } from "./providers/ReactRenderingComponent";
 const nlp = winkNLP(model);
 // Obtain "its" helper to extract item properties.
@@ -27,127 +36,400 @@ const as = nlp.as;
 
 // doc.entities().each((e) => e.markup());
 
+function LinePlugin() {
+  /**
+   * Chartist.js plugin to display a data label on top of the points in a line chart.
+   *
+   */
+  /* global Chartist */
+
+  function createMasks(data, options) {
+    // Select the defs element within the chart or create a new one
+    let defs = data.svg.querySelector("defs") || data.svg.elem("defs");
+    // Project the threshold value on the chart Y axis
+    let projectedThreshold =
+      data.chartRect.height() -
+      data.axisY.projectValue(options.threshold) +
+      data.chartRect.y2;
+    let width = data.svg.width();
+    let height = data.svg.height();
+
+    // Create mask for upper part above threshold
+    defs
+      .elem("mask", {
+        x: 0,
+        y: 0,
+        width: width,
+        height: height,
+        id: options.maskNames.aboveThreshold,
+      })
+      .elem("rect", {
+        x: 0,
+        y: 0,
+        width: width,
+        height: projectedThreshold,
+        fill: "white",
+      });
+
+    // Create mask for lower part below threshold
+    defs
+      .elem("mask", {
+        x: 0,
+        y: 0,
+        width: width,
+        height: height,
+        id: options.maskNames.belowThreshold,
+      })
+      .elem("rect", {
+        x: 0,
+        y: projectedThreshold,
+        width: width,
+        height: height - projectedThreshold,
+        fill: "white",
+      });
+
+    return defs;
+  }
+
+  function Threshold(options, chart) {
+    options = extend(
+      {},
+      {
+        threshold: 0,
+        classNames: {
+          aboveThreshold: "ct-threshold-above",
+          belowThreshold: "ct-threshold-below",
+        },
+        maskNames: {
+          aboveThreshold: "ct-threshold-mask-above",
+          belowThreshold: "ct-threshold-mask-below",
+        },
+      },
+      options
+    );
+
+    if (chart instanceof LineChart || chart instanceof BarChart) {
+      chart.on("draw", function (data) {
+        if (chart instanceof BarChart) {
+          console.log("data-bar", data);
+        }
+        if (data.type === "point") {
+          // For points we can just use the data value and compare against the threshold in order to determine
+          // the appropriate class
+          data.element.addClass(
+            data.value.y >= options.threshold
+              ? options.classNames.aboveThreshold
+              : options.classNames.belowThreshold
+          );
+        } else if (
+          data.type === "line" ||
+          data.type === "bar" ||
+          data.type === "area"
+        ) {
+          // Cloning the original line path, mask it with the upper mask rect above the threshold and add the
+          // class for above threshold
+          data.element
+            .parent()
+            .elem(data.element._node.cloneNode(true))
+            .attr({
+              mask: "url(#" + options.maskNames.aboveThreshold + ")",
+            })
+            .addClass(options.classNames.aboveThreshold);
+
+          // Use the original line path, mask it with the lower mask rect below the threshold and add the class
+          // for blow threshold
+          data.element
+            .attr({
+              mask: "url(#" + options.maskNames.belowThreshold + ")",
+            })
+            .addClass(options.classNames.belowThreshold);
+        }
+      });
+
+      // On the created event, create the two mask definitions used to mask the line graphs
+      chart.on("created", (data) => {
+        createMasks(data, options);
+      });
+    }
+  }
+  return { Threshold };
+}
+
+function LabelPlugin() {
+  let axisDefaults = {
+    axisTitle: "",
+    axisClass: "ct-axis-title",
+    offset: {
+      x: 0,
+      y: 0,
+    },
+    textAnchor: "middle",
+    flipTitle: false,
+  };
+
+  let defaultOptions = {
+    axisX: axisDefaults,
+    axisY: axisDefaults,
+  };
+
+  let getTitle = function (title) {
+    if (title instanceof Function) {
+      return title();
+    }
+    return title;
+  };
+
+  let getClasses = function (classes) {
+    if (classes instanceof Function) {
+      return classes();
+    }
+    return classes;
+  };
+
+  function ctAxisTitle(options, chart) {
+    options = extend({}, defaultOptions, options);
+
+    chart.on("created", function (data) {
+      if (!options.axisX.axisTitle && !options.axisY.axisTitle) {
+        throw new Error(
+          "ctAxisTitle plugin - You must provide at least one axis title"
+        );
+      } else if (!data.axisX && !data.axisY) {
+        throw new Error(
+          "ctAxisTitle plugin can only be used on charts that have at least one axis"
+        );
+      }
+
+      let xPos,
+        yPos,
+        title,
+        chartPadding = normalizePadding(data.options.chartPadding); // normalize the padding in case the full padding object was not passed into the options
+
+      //position axis X title
+      if (options.axisX.axisTitle && data.axisX) {
+        xPos =
+          data.axisX.axisLength / 2 +
+          data.options.axisY.offset +
+          chartPadding.left;
+
+        yPos = chartPadding.top;
+
+        if (data.options.axisY.position === "end") {
+          xPos -= data.options.axisY.offset;
+        }
+
+        if (data.options.axisX.position === "end") {
+          yPos += data.axisY.axisLength;
+        }
+
+        title = new Svg("text");
+        data.svg.append(title, true);
+        title.addClass(getClasses(options.axisX.axisClass));
+        title.text(getTitle(options.axisX.axisTitle));
+        title.attr({
+          x: xPos + options.axisX.offset.x,
+          y: yPos + options.axisX.offset.y,
+          "text-anchor": options.axisX.textAnchor,
+        });
+      }
+
+      //position axis Y title
+      if (options.axisY.axisTitle && data.axisY) {
+        xPos = 0;
+
+        yPos = data.axisY.axisLength / 2 + chartPadding.top;
+
+        if (data.options.axisX.position === "start") {
+          yPos += data.options.axisX.offset;
+        }
+
+        if (data.options.axisY.position === "end") {
+          xPos = data.axisX.axisLength;
+        }
+
+        var transform =
+          "rotate(" +
+          (options.axisY.flipTitle ? -90 : 90) +
+          ", " +
+          xPos +
+          ", " +
+          yPos +
+          ")";
+
+        title = new Svg("text");
+        title.addClass(getClasses(options.axisY.axisClass));
+        title.text(getTitle(options.axisY.axisTitle));
+        title.attr({
+          x: xPos + options.axisY.offset.x,
+          y: yPos + options.axisY.offset.y,
+          transform: transform,
+          "text-anchor": options.axisY.textAnchor,
+        });
+        data.svg.append(title, true);
+      }
+    });
+  }
+
+  return { ctAxisTitle };
+}
+
 export function BarChartComponent({ text }) {
   const chartRef = useRef(null);
   const legendRef = useRef(null);
 
   useEffect(() => {
     if (text) {
+      function createBarChart() {
+        let doc = nlp.readDoc(extractTextFromHtml(text));
 
-      function createBarChart(){
-      let doc = nlp.readDoc(extractTextFromHtml(text));
+        const sentenceSentiment = doc.sentences().out(its.sentiment);
 
-      const sentenceSentiment = doc.sentences().out(its.sentiment);
-
-      const chart = new BarChart(
-        chartRef.current,
-        {
-      
-          series: [sentenceSentiment],
-        },
-        {
-          hight: 1,
-          low: -1,
-          axisX: {
-            labelInterpolationFnc: (value, index) => {
-          
-          return index;
-              // return index % 2 === 0 ? value : null;
-              // Return the label you want for the x-axis
-              // console.log("value", value);
-          
-            },
+        const chart = new BarChart(
+          chartRef.current,
+          {
+            series: [sentenceSentiment],
           },
-          // stackBars: true,
-          axisY: {
-            labelInterpolationFnc: (value) => {
-              // Return the label you want for the y-axis
-              return +value;
-            },
-          },
-        }
-      );
-
-      let seq = 0;
-      const delays = 80;
-      const durations = 500;
-
-      chart.on("draw", (data) => {
-        seq++;
-
-        if (data.type === "label" && data.axis.counterUnits.pos === "x") {
-          data.element.animate({
-            y: {
-              begin: seq * delays,
-              dur: durations,
-              from: data.y + 100,
-              to: data.y,
-              easing: "easeOutQuart",
-            },
-          });
-        } else if (
-          data.type === "label" &&
-          data.axis.counterUnits.pos === "y"
-        ) {
-          data.element.animate({
-            x: {
-              begin: seq * delays,
-              dur: durations,
-              from: data.x - 100,
-              to: data.x,
-              easing: "easeOutQuart",
-            },
-          });
-        } else if (data.type === "point") {
-          data.element.animate({
-            x1: {
-              begin: seq * delays,
-              dur: durations,
-              from: data.x - 10,
-              to: data.x,
-              easing: "easeOutQuart",
-            },
-            x2: {
-              begin: seq * delays,
-              dur: durations,
-              from: data.x - 10,
-              to: data.x,
-              easing: "easeOutQuart",
-            },
-            opacity: {
-              begin: seq * delays,
-              dur: durations,
-              from: 0,
-              to: 1,
-              easing: "easeOutQuart",
-            },
-          });
-
-        
-        }
-
-        // If this draw event is of type bar we can use the data to create additional content
-        if (data.type === "bar") {
-          data.element.attr({
-            // style: 'stroke-width: 30px'
-          });
-
-          // We use the group element of the current series to append a simple circle with the bar peek coordinates and a circle radius that is depending on the value
-          data.group.append(
-            new Svg(
-              "circle",
-              {
-                cx: data.x2,
-                cy: data.y2,
-                r: Math.abs(Number(getMultiValue(data.value))) * 9 + 5,
+          {
+            hight: 1,
+            low: -1,
+            axisX: {
+              labelInterpolationFnc: (value, index) => {
+                return index;
+                // return index % 2 === 0 ? value : null;
+                // Return the label you want for the x-axis
+                // console.log("value", value);
               },
-              "ct-slice-pie"
-            )
-          );
-        }
-      });
-      return chart;
-    }
+            },
+            // stackBars: true,
+            axisY: {
+              labelInterpolationFnc: (value) => {
+                // Return the label you want for the y-axis
+                return +value;
+              },
+            },
+          }
+        );
+        const linePlugin = LinePlugin();
+        const labelPlugin = LabelPlugin();
+
+        labelPlugin.ctAxisTitle(
+          {
+            axisX: {
+              axisTitle: "Sentence",
+              axisClass: "ct-axis-title",
+              offset: {
+                x: 0,
+                y: 35,
+              },
+              textAnchor: "middle",
+              flipTitle: false,
+            },
+            axisY: {
+              axisTitle: "Sentiment",
+              axisClass: "ct-axis-title",
+              offset: {
+                x: 0,
+                y: -8,
+              },
+              textAnchor: "middle",
+              flipTitle: false,
+            },
+          },
+          chart
+        );
+
+        //  linePlugin.Threshold({ threshold: 0 }, chart);
+        let seq = 0;
+        const delays = 80;
+        const durations = 500;
+
+        chart.on("draw", (data) => {
+          seq++;
+
+          if (data.type === "label" && data.axis.counterUnits.pos === "x") {
+            // data.element.animate({
+            //   y: {
+            //     begin: seq * delays,
+            //     dur: durations,
+            //     from: data.y + 100,
+            //     to: data.y,
+            //     easing: "easeOutQuart",
+            //   },
+            // });
+          } else if (
+            data.type === "label" &&
+            data.axis.counterUnits.pos === "y"
+          ) {
+            // data.element.animate({
+            //   x: {
+            //     begin: seq * delays,
+            //     dur: durations,
+            //     from: data.x - 100,
+            //     to: data.x,
+            //     easing: "easeOutQuart",
+            //   },
+            // });
+          } else if (data.type === "point") {
+            // data.element.animate({
+            //   x1: {
+            //     begin: seq * delays,
+            //     dur: durations,
+            //     from: data.x - 10,
+            //     to: data.x,
+            //     easing: "easeOutQuart",
+            //   },
+            //   x2: {
+            //     begin: seq * delays,
+            //     dur: durations,
+            //     from: data.x - 10,
+            //     to: data.x,
+            //     easing: "easeOutQuart",
+            //   },
+            //   opacity: {
+            //     begin: seq * delays,
+            //     dur: durations,
+            //     from: 0,
+            //     to: 1,
+            //     easing: "easeOutQuart",
+            //   },
+            // });
+          }
+          // If this draw event is of type bar we can use the data to create additional content
+          if (data.type === "bar") {
+            data.element.removeClass("ct-bar");
+
+            // We use the group element of the current series to append a simple circle with the bar peek coordinates and a circle radius that is depending on the value
+            const winWidth = window.innerWidth;
+
+            let val = Number(getMultiValue(data.value));
+
+            let className = "ct-slice-pie-above";
+
+            if (val < 0) {
+              data.element.addClass("ct-bar-below");
+              className = "ct-slice-pie-below";
+            } else {
+              data.element.addClass("ct-bar-above");
+            }
+
+            data.group.append(
+              new Svg(
+                "circle",
+                {
+                  cx: data.x2,
+                  cy: data.y2,
+                  r:
+                    Math.abs(Number(getMultiValue(data.value))) * winWidth > 600
+                      ? 9
+                      : 0.5 + 5,
+                },
+                className
+              )
+            );
+          }
+        });
+        return chart;
+      }
       let chart;
       const observer = new IntersectionObserver((entries) => {
         entries.forEach((entry) => {
@@ -177,38 +459,7 @@ export function BarChartComponent({ text }) {
 
   useEffect(() => {
     // Define legend data
-    const legendData = [
-      {
-        name: "How the sentiment appears as you read the document.",
-        className: "ct-series-a",
-      },
-      {
-        name: "X axis: readability score from 0 to 1",
-        className: "ct-series-a",
-      },
-
-      { name: "Y axis: Sentence", className: "ct-series-d" },
-    ];
-
     // Create legend element
-    const legend = document.createElement("ul");
-    Object.assign(legend.style,{listStyleType:'none'} )
-    legend.classList.add("ct-legend");
-
-    // Populate legend items
-    legendData.forEach((data) => {
-      const legendItem = document.createElement("li");
-      legendItem.classList.add("ct-series", data.className);
-
-      const legendLabel = document.createElement("span");
-      legendLabel.innerText = data.name;
-
-      legendItem.appendChild(legendLabel);
-      legend.appendChild(legendItem);
-    });
-
-    // Append legend to the ref element
-    legendRef.current.appendChild(legend);
   }, []);
 
   return (
@@ -218,6 +469,30 @@ export function BarChartComponent({ text }) {
           <IonTitle>Sentiment Flow</IonTitle>
         </IonToolbar>
       </IonHeader> */}
+
+      <IonCol className="ion-padding-start" size="12">
+        <InformationIcon
+          label={"Sentiment Across Your Document"}
+          id="information-sentiment-across-document"
+          content={"How the sentiment reads across your document on a sentence by sentence basis"}
+        />
+      </IonCol>
+
+      <IonCol size="12">
+        <IonRow
+          style={{ alignItems: "center", display: "flex", padding: "10px" }}
+          size="6"
+        >
+          <IonCol className="legend-item">
+            <div className="color-box color-1"></div>
+            <IonText className="legend-text">High Sentiment</IonText>
+          </IonCol>
+          <IonCol className="legend-item" size="6">
+            <div className="color-box color-2"></div>
+            <IonText className="legend-text">Low Sentiment</IonText>
+          </IonCol>
+        </IonRow>
+      </IonCol>
       <div>
         <div key="barChartLegend" ref={legendRef}></div>{" "}
         <div key="barChart" ref={chartRef} />
@@ -235,14 +510,11 @@ export function ChartComponent({ text }) {
       function createLineChart(text) {
         let doc = nlp.readDoc(extractTextFromHtml(text));
         const readability = doc.out(its.readabilityStats);
-
         // console.log("readability stats", readability);
-
         const importance = doc
-
           .out(its.sentenceWiseImportance)
           .map((e) => e.importance);
-        console.log("importance: ", importance);
+
         //  console.log('markup: ', doc.out(its.markedUpText));
         doc.entities().each((e) => {
           if (e.out(its.type) === "DATE") console.log(e.out());
@@ -251,27 +523,60 @@ export function ChartComponent({ text }) {
         const chart = new LineChart(
           chartRef.current,
           {
-            // labels: ["0", "0.1", "0.3", "0.4", "0.5", "0.9", "0.7", "0.8", "0.9", "1"],
             series: [importance],
           },
           {
-            low: 0,
             hight: 1,
+            low: 0,
+
             axisX: {
+              showLabel: true,
               labelInterpolationFnc: (value, index) => {
                 // Return the label you want for the x-axis
 
                 return index;
               },
             },
+            showArea: true,
             axisY: {
               labelInterpolationFnc: (value) => {
                 // Return the label you want for the y-axis
                 return +value;
               },
+              plugins: [],
             },
           }
         );
+        const linePlugin = LinePlugin();
+        const labelPlugin = LabelPlugin();
+
+        labelPlugin.ctAxisTitle(
+          {
+            axisX: {
+              axisTitle: "Sentence",
+              axisClass: "ct-axis-title",
+              offset: {
+                x: 0,
+                y: 35,
+              },
+              textAnchor: "middle",
+              flipTitle: false,
+            },
+            axisY: {
+              axisTitle: "Density",
+              axisClass: "ct-axis-title",
+              offset: {
+                x: 0,
+                y: -5,
+              },
+              textAnchor: "middle",
+              flipTitle: false,
+            },
+          },
+          chart
+        );
+
+        linePlugin.Threshold({ threshold: 0.35 }, chart);
 
         let seq = 0;
         const delays = 80;
@@ -285,18 +590,19 @@ export function ChartComponent({ text }) {
           seq++;
 
           if (data.type === "line") {
-            data.element.animate({
-              opacity: {
-                begin: seq * delays + 1000,
-                dur: durations,
-                from: 0,
-                to: 1,
-              },
-            });
+            // data.element.animate({
+            //   opacity: {
+            //     begin: seq * delays + 1000,
+            //     dur: durations,
+            //     from: 0,
+            //     to: 1,
+            //   },
+            // });
           } else if (
             data.type === "label" &&
             data.axis.counterUnits.pos === "x"
           ) {
+            // console.log("data", data);
             // data.element.animate({
             //   y: {
             //     begin: seq * delays,
@@ -320,29 +626,29 @@ export function ChartComponent({ text }) {
             //   },
             // });
           } else if (data.type === "point") {
-            data.element.animate({
-              x1: {
-                begin: seq * delays,
-                dur: durations,
-                from: data.x - 10,
-                to: data.x,
-                easing: "easeOutQuart",
-              },
-              x2: {
-                begin: seq * delays,
-                dur: durations,
-                from: data.x - 10,
-                to: data.x,
-                easing: "easeOutQuart",
-              },
-              opacity: {
-                begin: seq * delays,
-                dur: durations,
-                from: 0,
-                to: 1,
-                easing: "easeOutQuart",
-              },
-            });
+            // data.element.animate({
+            //   x1: {
+            //     begin: seq * delays,
+            //     dur: durations,
+            //     from: data.x - 10,
+            //     to: data.x,
+            //     easing: "easeOutQuart",
+            //   },
+            //   x2: {
+            //     begin: seq * delays,
+            //     dur: durations,
+            //     from: data.x - 10,
+            //     to: data.x,
+            //     easing: "easeOutQuart",
+            //   },
+            //   opacity: {
+            //     begin: seq * delays,
+            //     dur: durations,
+            //     from: 0,
+            //     to: 1,
+            //     easing: "easeOutQuart",
+            //   },
+            // });
           } else if (data.type === "grid") {
             // const pos1Key = data.axis.units.pos + "1";
             // const pos1Value = data[pos1Key];
@@ -376,6 +682,7 @@ export function ChartComponent({ text }) {
             // data.element.animate(animations);
           }
         });
+
         return chart;
       }
       let chart;
@@ -407,60 +714,53 @@ export function ChartComponent({ text }) {
 
   useEffect(() => {
     // Define legend data
-    const legendData = [
-      {
-        name: "Measures the amount of information in the document.",
-        className: "ct-series-a",
-      },
-      {
-        name: "X: Sentences",
-        className: "ct-series-a",
-      },
-
-      { name: "Y: Information Density Score", className: "ct-series-d" },
-    ];
-
-    // Create legend element
-    const legend = document.createElement("ul");
-    Object.assign(legend.style,{listStyleType:'none'} )
-    legend.classList.add("ct-legend");
-
-    // Populate legend items
-    legendData.forEach((data) => {
-      const legendItem = document.createElement("li");
-      legendItem.classList.add("ct-series", data.className);
-
-      const legendLabel = document.createElement("span");
-      legendLabel.innerText = data.name;
-
-      legendItem.appendChild(legendLabel);
-      legend.appendChild(legendItem);
-    });
-
-    // Append legend to the ref element
-    legendRef.current.appendChild(legend);
   }, []);
 
   return (
-    <IonGrid>
+    <IonGrid key="legend-line-chart">
       {/* <IonHeader>
         <IonToolbar>
           <IonTitle>Information Density</IonTitle>
         </IonToolbar>
       </IonHeader> */}
 
-      <div key="legendRefLineChart" ref={legendRef}></div>
+      <IonCol className="ion-padding-start" size="12">
+        <InformationIcon
+          label={"Information Density"}
+          id="information-density"
+          content={"The amount of information packed into each of your sentences."}
+        />
+      </IonCol>
+
+      <IonCol size="12">
+        <IonRow
+          style={{ alignItems: "center", display: "flex", padding: "10px" }}
+          size="6"
+        >
+          <IonCol className="legend-item">
+            <div className="color-box color-1"></div>
+            <IonText className="legend-text">High Density</IonText>
+          </IonCol>
+          <IonCol className="legend-item" size="6">
+            <div className="color-box color-2"></div>
+            <IonText className="legend-text">Low Density</IonText>
+          </IonCol>
+        </IonRow>
+      </IonCol>
+
+      <div key="legendRefLineChart"></div>
       <div key="lineChartRef" ref={chartRef} />
     </IonGrid>
   );
 }
 
-export function ReadabilityStats({ text }) {
+export function ReadabilityStats({ checkFeatureAccess, text }) {
   const [readabilityStats, setReadabilityStats] = useState(null);
   const [readabilityScore, setReadabilityScore] = useState(null);
-
+  const [cleanText, setCleanText] = useState("");
+  const [doc, setDoc] = useState(null);
+  const [Its, setIts] = useState(its);
   // Example usage:
-
 
   // console.log(`Score: ${score}`);
   // console.log(`Grade: ${grade}`);
@@ -469,18 +769,20 @@ export function ReadabilityStats({ text }) {
   useEffect(() => {
     // console.log("text", text);
 
-    const doc = nlp.readDoc(extractTextFromHtml(text));
+    const pristineText = extractTextFromHtml(text);
+    console.log("raw text  ", pristineText);
+    setCleanText(pristineText);
+    const doc = nlp.readDoc(pristineText);
+    setDoc(doc);
 
     const readabilityStats = doc.out(its.readabilityStats);
 
     setReadabilityScore(getGradeAndSummary(readabilityStats.fres));
     setReadabilityStats(readabilityStats);
-
-    // console.log(readabilityStats.complexWords);
   }, [text]);
 
   if (!text || !readabilityStats) {
-    return <IonRow className="ion-text-center">no data</IonRow> 
+    return <IonCol className="ion-text-center">no data</IonCol>;
     //<IonSkeletonText animated={true} style={{ height: "300px" }} />;
   }
 
@@ -491,22 +793,53 @@ export function ReadabilityStats({ text }) {
           <IonTitle>SEO Stats</IonTitle>
         </IonToolbar>
       </IonHeader> */}
-      <IonRow>
-        <IonCol>
-          <IonLabel>SEO Readability Score</IonLabel>
+      <IonRow className="ion-justify-content-start">
+        <IonCol className="ion-float-left" size="12">
+          <WordCloud
+         
+            text={cleanText}
+            checkFeatureAccess={checkFeatureAccess}
+            its={Its}
+            doc={doc}
+          />
         </IonCol>
-        <IonCol className="ion-text-capitalize">
-          {readabilityScore.summary}
-          {/* <IonList><IonItem>Score:{readabilityStats.fres}</IonItem><IonItem>Reading Level: {readabilityScore.grade}  </IonItem><IonItem>Summary  {readabilityScore.summary} </IonItem></IonList> */}
-        </IonCol>
-      </IonRow>
-      <IonRow>
+</IonRow>
+
+
+
+
+     
+          <InformationIcon
+            label="SEO Reachability Score"
+            id="seo-score-tools"
+            content="A SEO And Readability BreakDown Of Your Document."
+          />
+ 
+
+
+
+
+
+        <IonRow className="ion-padding-start" >
+          <IonCol size="6"> Readability: </IonCol>
+          <IonCol size="6" className="ion-text-capitalize">
+            {readabilityScore.summary}
+            {/* <IonList><IonItem>Score:{readabilityStats.fres}</IonItem><IonItem>Reading Level: {readabilityScore.grade}  </IonItem><IonItem>Summary  {readabilityScore.summary} </IonItem></IonList> */}
+          </IonCol>
+        </IonRow>
+
+
+
+
+      
+      <IonRow className="ion-padding-start">
         <IonCol>
           <IonLabel>Sentiment</IonLabel>
         </IonCol>
         <IonCol>{getSentimentSummary(readabilityStats.sentiment)}</IonCol>
       </IonRow>
-      <IonRow>
+
+      <IonRow className="ion-padding-start" >
         <IonCol>
           <IonLabel>Reading Time</IonLabel>
         </IonCol>
@@ -516,44 +849,50 @@ export function ReadabilityStats({ text }) {
         </IonCol>
       </IonRow>
 
-      <IonRow>
+      <IonRow className="ion-padding-start">
         <IonCol>
           <IonLabel>Number of Complex Words</IonLabel>
         </IonCol>
         <IonCol>{readabilityStats.numOfComplexWords}</IonCol>
       </IonRow>
-      <IonRow>
-        <IonCol>
-          <IonLabel>Complex Words</IonLabel>
-        </IonCol>
-        <IonCol>
-          <IonList>
-            {Object.keys(readabilityStats.complexWords).map((word, index) => (
-              <IonItem key={index}>
-                {word}: {readabilityStats.complexWords[word]}
-              </IonItem>
-            ))}
-          </IonList>
-        </IonCol>
-      </IonRow>
-      <IonRow>
+
+      <IonRow className="ion-padding-start">
         <IonCol>
           <IonLabel>Number of Sentences</IonLabel>
         </IonCol>
         <IonCol>{readabilityStats.numOfSentences}</IonCol>
       </IonRow>
-      <IonRow>
+
+      <IonRow className="ion-padding-start">
         <IonCol>
           <IonLabel>Number of Tokens</IonLabel>
         </IonCol>
         <IonCol>{readabilityStats.numOfTokens}</IonCol>
       </IonRow>
-      <IonRow>
+
+      <IonRow className="ion-padding-start">
         <IonCol>
           <IonLabel>Number of Words</IonLabel>
         </IonCol>
         <IonCol>{readabilityStats.numOfWords}</IonCol>
       </IonRow>
+
+      <IonRow className="ion-padding-start">
+        <IonCol>
+          <IonLabel>Complex Words:</IonLabel>
+        </IonCol>
+        <IonCol size="12">
+          {Object.keys(readabilityStats.complexWords).map((word, index) => (
+            <IonChip key={index}>
+              {word}: {readabilityStats.complexWords[word]}
+            </IonChip>
+          ))}
+        </IonCol>
+      </IonRow>
+
+
+
+
     </IonGrid>
   );
 }
@@ -562,29 +901,14 @@ export function ReadabilityStats({ text }) {
 
 function getGradeAndSummary(score) {
   const ranges = [
-    { min: 90, max: 100, grade: "5th grade", summary: "Very easy to read" },
-    { min: 80, max: 89, grade: "6th grade", summary: "Easy to read" },
-    { min: 70, max: 79, grade: "7th grade", summary: "Fairly easy to read" },
-    { min: 60, max: 69, grade: "8th & 9th grade", summary: "Plain English" },
-    {
-      min: 50,
-      max: 59,
-      grade: "10th to 12th grade",
-      summary: "Fairly difficult to read",
-    },
-    { min: 30, max: 49, grade: "College", summary: "Difficult to read" },
-    {
-      min: 10,
-      max: 29,
-      grade: "College graduate",
-      summary: "Very difficult to read",
-    },
-    {
-      min: 0,
-      max: 9,
-      grade: "Professional",
-      summary: "Extremely difficult to read",
-    },
+    { min: 90, max: 100, grade: "5th grade", summary: "Very easy to read", ageRange: "Ages 10 and above", tip: "Ideal for reaching a broad audience, including young readers and those with lower reading levels. Use this content to introduce your product or service to a wide range of potential customers." },
+    { min: 80, max: 89, grade: "6th grade", summary: "Easy to read", ageRange: "Ages 11 and above",tip: "Well-suited for general audiences. Consider using this content for blog posts, informative articles, and introductory marketing materials to effectively promote your product, goods, or services." },
+    { min: 70, max: 79, grade: "7th grade", summary: "Fairly easy to read", ageRange: "Ages 12 and above",tip: "Great for reaching a slightly older audience. This level of content is suitable for blog posts, informative articles, and marketing materials targeting teenagers and young adults, helping you connect with your target market." },
+    { min: 60, max: 69, grade: "8th & 9th grade", summary: "Plain English", ageRange: "Ages 13 and above",tip: "Provides clear and straightforward communication. Use this content for in-depth articles, reports, and materials targeting a more mature audience, enabling you to convey the value of your product, goods, or services effectively." },
+    { min: 50, max: 59, grade: "10th to 12th grade", summary: "Fairly difficult to read", ageRange: "Ages 15 and above" ,tip: "Best suited for content aimed at high school students and above. Consider using this level for technical articles, advanced educational materials, and specialized marketing campaigns to showcase the unique features and benefits of your offering."},
+    { min: 30, max: 49, grade: "College", summary: "Difficult to read", ageRange: "Ages 18 and above", tip: "Targeting a college-educated audience is recommended for this level. Use this content for whitepapers, research reports, and specialized marketing materials to highlight the expertise and quality of your product, goods, or services." },
+    { min: 10, max: 29, grade: "College graduate", summary: "Very difficult to read", ageRange: "Ages 22 and above",tip: "Content at this level is best suited for professionals and academics. Utilize this for highly technical reports, industry-specific materials, and expert-level content to establish your product, goods, or services as a trusted authority in the field." },
+    { min: 0, max: 9, grade: "Professional", summary: "Extremely difficult to read", ageRange: "Ages 25 and above", tip: "Reserved for expert-level content and specialized industries. Ensure your audience has a high level of expertise in the subject matter before using this level of content for marketing purposes. This content can serve to reinforce your product, goods, or services' position as a top-tier solution in your industry."}
   ];
 
   for (const range of ranges) {

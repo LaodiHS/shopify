@@ -95,13 +95,13 @@ export default defineConfig({
     // //   },
     // // }
     // ),
-   // VitePWA({ registerType: 'autoUpdate' }),
-    // vuePlugin(),
-    // vue({
-    //   template: {
-    //     isProduction: true,
-    //   },
-    // }),
+   VitePWA({ registerType: 'autoUpdate' }),
+    vuePlugin(),
+    vue({
+      template: {
+        isProduction: true,
+      },
+    }),
    // terser({ compress:true, mangle:true,  maxWorkers: 5})
   ,
 

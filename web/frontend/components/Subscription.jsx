@@ -126,7 +126,11 @@ export const SubscriptionComponent = ({
           "Thank Your For Your Subscription",
           "You will be taken to the Shopify subscription page to approve your purchase..."
         );
-
+        if (!DEPLOYMENT_ENV) {
+          localStorage.removeItem("plans");
+          localStorage.removeItem("user");
+          localStorage.removeItem("activeSubscription");
+        }
         handleRedirect(data.redirectUrl);
       } else if (response.ok && data.message) {
         setAlertMessage(data.message.header, data.message.body);
@@ -166,14 +170,13 @@ export const SubscriptionComponent = ({
       handleResize();
     }, 100);
     // Add event listener for window resize
-   // window.addEventListener("resize", handleResize);
+    // window.addEventListener("resize", handleResize);
 
     // Cleanup: remove event listener when component is unmounted
     return () => {
-     // window.removeEventListener("resize", handleResize);
+      // window.removeEventListener("resize", handleResize);
     };
   }, []);
-
 
   return (
     <IonPage ref={animationRef}>
@@ -323,7 +326,7 @@ export const SubscriptionComponent = ({
                             alignment="center"
                             triggerAction="click"
                           >
-                            <IonContent class="ion-padding">
+                            <IonContent className="ion-padding">
                               {feature.description}
                             </IonContent>
                           </IonPopover>

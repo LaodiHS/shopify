@@ -175,24 +175,20 @@ export function DataProvidersProvider({ children }) {
   const app = useAppBridge();
   const context = useShopifyContext();
 
-
-
   useEffect(async () => {
-   
     const token = await getSessionToken(app);
 
     let session = await app.getState();
- 
+
     return () => {};
   }, []);
 
   const [user, setUser] = useState({});
   const [subscriptions, setSubscriptions] = useState(["free"]);
   const [currentSession, setCurrentSession] = useState({});
-  const [subscriptionRetrievalLoading, setSubscriptionRetrievalLoading] = useState(false);
+  const [subscriptionRetrievalLoading, setSubscriptionRetrievalLoading] =
+    useState(false);
 
-
-  
   const setRouteSubscriptions = (activeSubscriptions, activeSession) => {
     setSubscriptions(activeSubscriptions);
     setCurrentSession(activeSession);
@@ -227,7 +223,7 @@ export function DataProvidersProvider({ children }) {
         const { activeSubscriptions, session, user, redirectUri } = data;
         const redirect = Redirect.create(app);
         console.log("subscription redirectUri: ", redirectUri);
-        redirect.dispatch(Redirect.Action.REMOTE, { url: redirectUri });
+
         setPlans(data.plans);
         console.log("user", user);
         assignUser(user);
@@ -238,16 +234,20 @@ export function DataProvidersProvider({ children }) {
         }
 
         if (!DEPLOYMENT_ENV) {
-          localStorage.setItem("plans", JSON.stringify(data.plans));
-          localStorage.setItem("user", JSON.stringify(user));
-       
-          localStorage.setItem(
-            "activeSubscriptions",
-            JSON.stringify(activeSubscriptions)
-          );
-          localStorage.setItem("session", JSON.stringify(session));
-        }
+          if (redirectUri) {
+            localStorage.clear();
+          } else {
+            localStorage.setItem("plans", JSON.stringify(data.plans));
+            localStorage.setItem("user", JSON.stringify(user));
 
+            localStorage.setItem(
+              "activeSubscriptions",
+              JSON.stringify(activeSubscriptions)
+            );
+            localStorage.setItem("session", JSON.stringify(session));
+          }
+        }
+        redirect.dispatch(Redirect.Action.REMOTE, { url: redirectUri });
       } catch (err) {
         // Handle network errors or other unexpected errors here.
         setPlans(err.plans);
@@ -258,30 +258,30 @@ export function DataProvidersProvider({ children }) {
       setSubscriptionRetrievalLoading(false);
     };
     if (!DEPLOYMENT_ENV) {
-        const activeSubscriptions = localStorage.getItem("activeSubscriptions");
-        const session = localStorage.getItem("session");
-        const plans = localStorage.getItem("plans");
-        const user = localStorage.getItem("user");
-        if (plans && user && activeSubscriptions && session) {
-          try {
-            setPlans(JSON.parse(plans));
-            assignUser(JSON.parse(user));
-            setRouteSubscriptions(
-              JSON.parse(activeSubscriptions),
-              JSON.parse(session)
-            );
-          } catch (error) {
-            console.log("error", error);
-            fetchDataSession();
-          }
-        } else {
+      const activeSubscriptions = localStorage.getItem("activeSubscriptions");
+      const session = localStorage.getItem("session");
+      const plans = localStorage.getItem("plans");
+      const user = localStorage.getItem("user");
+      if (plans && user && activeSubscriptions && session) {
+        try {
+          setPlans(JSON.parse(plans));
+          assignUser(JSON.parse(user));
+          setRouteSubscriptions(
+            JSON.parse(activeSubscriptions),
+            JSON.parse(session)
+          );
+        } catch (error) {
+          console.log("error", error);
           fetchDataSession();
         }
       } else {
         fetchDataSession();
       }
-    
-   // fetchDataSession();
+    } else {
+      fetchDataSession();
+    }
+
+    // fetchDataSession();
   }, []);
 
   const freeOptions = ["free", "chestnut", "sourwood", "acacia", "premiere"];
@@ -616,7 +616,7 @@ export function DataProvidersProvider({ children }) {
     modifyState(setImageSelectionModalIsOpen, bool_value);
   }
 
-    const [wordList, setWordList] = useState( [
+  const [wordList, setWordList] = useState([
     "Reliable",
     "Innovative",
     "Stylish",
@@ -646,32 +646,25 @@ export function DataProvidersProvider({ children }) {
     "Eco-conscious",
     "Luxurious",
     "Ergonomic",
-    "Sleek"
+    "Sleek",
   ]);
 
-  
-
-  
   // const permutations = generatePermutations(wordList);
-  
+
   // Example usage:
   // console.log(permutations);
-
-
-  
 
   function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1) + min);
   }
 
-function compressString(input,all_product_images) {
-
-
-
-
- const word = wordList[getRandomInt(0, wordList.length)].toLowerCase();
- return word +'_'+ all_product_images.findIndex(image => image.transformedSrc === input )
-    
+  function compressString(input, all_product_images) {
+    const word = wordList[getRandomInt(0, wordList.length)].toLowerCase();
+    return (
+      word +
+      "_" +
+      all_product_images.findIndex((image) => image.transformedSrc === input)
+    );
   }
 
   const imageSelectionChanged = async (selected_images, all_product_images) => {
@@ -680,7 +673,7 @@ function compressString(input,all_product_images) {
       const selImages = { ...prev };
       sel_images.length = 0;
       selected_images.forEach((image) => {
-        const symbol_name =  compressString(image, all_product_images) + "_jpg";
+        const symbol_name = compressString(image, all_product_images) + "_jpg";
 
         sel_images.push(symbol_name);
         selImages[symbol_name] = {
@@ -720,7 +713,9 @@ function compressString(input,all_product_images) {
     }
   }
 
-  const [clearAssistResultMethod, setClearAssistResultMethod] = useState(new Map());
+  const [clearAssistResultMethod, setClearAssistResultMethod] = useState(
+    new Map()
+  );
 
   function assignClearAssistMethod(key, updateOption) {
     modifyState(setClearAssistResultMethod, (prevState) => {
@@ -731,8 +726,8 @@ function compressString(input,all_product_images) {
   }
 
   async function clearAssistResult(id) {
-    clearAssistResultMethod.get('handleClearClick')(id);
-    clearAssistResultMethod.get('clearSentences')();
+    clearAssistResultMethod.get("handleClearClick")(id);
+    clearAssistResultMethod.get("clearSentences")();
   }
 
   const [updateArticleMethod, setUpdateArticleMethod] = useState(null);
@@ -746,39 +741,36 @@ function compressString(input,all_product_images) {
     modifyState(setMarkupText, text);
   }
 
-
-
-
-
-
   const [refDictionary, setRefDictionary] = useState(NavigationRefs);
 
-
   // useEffect(() => {
- 
 
   //   // Update the refDictionary state
   //   setRefDictionary(routeRefs);
   // }, []);
 
-
- async function DataProviderNavigate(
-    route,options = {},
+  async function DataProviderNavigate(
+    route,
+    options = { host: true, replace: true },
     pa = {
       initialViewAnimation: "fadeOutRight",
       endingViewAnimation: "fadeInRight",
     }
   ) {
-  await  AnimatedContent(refDictionary[location.pathname], pa.initialViewAnimation, {
-      //timingFunction:"ease",
-      onComplete: () => {
-        navigate(route, options);
-        AnimatedContent(refDictionary[route], pa.endingViewAnimation, {
-          //  timingFunction
-          duration: 0.09,
-        });
-      },
-    });
+    await AnimatedContent(
+      refDictionary[location.pathname],
+      pa.initialViewAnimation,
+      {
+        //timingFunction:"ease",
+        onComplete: () => {
+          navigate(route, options);
+          AnimatedContent(refDictionary[route], pa.endingViewAnimation, {
+            //  timingFunction
+            duration: 0.09,
+          });
+        },
+      }
+    );
   }
 
   const [serverSentEventLoading, setServerSentEventLoading] = useState(false);
@@ -795,21 +787,21 @@ function compressString(input,all_product_images) {
       setContentSaved(false);
     }, 5000);
   }
-const [mappedLegend, setMappedLegend] = useState([[]]);
+  const [mappedLegend, setMappedLegend] = useState([[]]);
   const [legendReversed, setLegendReversed] = useState({});
   const [legend, setLegend] = useState({});
 
-  function assignLegend(rawLegend){
+  function assignLegend(rawLegend) {
     setMappedLegend(rawLegend);
-    const formattedLegend ={};
-    const formattedReversedLegend ={};
-    rawLegend.forEach(([key, value])=>{
+    const formattedLegend = {};
+    const formattedReversedLegend = {};
+    rawLegend.forEach(([key, value]) => {
       formattedLegend[value] = key;
-      formattedReversedLegend[key] = value;;
-    })
-    setLegend(formattedLegend)
+      formattedReversedLegend[key] = value;
+    });
+    setLegend(formattedLegend);
     setLegendReversed(formattedReversedLegend);
-    console.log('formattedLegend:  ',formattedLegend);
+    console.log("formattedLegend:  ", formattedLegend);
   }
 
   const value = {
