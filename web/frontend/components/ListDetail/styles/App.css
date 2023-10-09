@@ -101,7 +101,7 @@ ion-accordion.accordion-expanded ion-item[slot='header'] {
 }
 
 .background-item {
-  background-image: url("../../../assets/half-moon.svg");
+  /* background-image: url("../../../assets/half-moon.svg"); */
   background-size: contain;
   background-repeat: no-repeat;
   background-position: top left;
@@ -124,7 +124,7 @@ ion-accordion.accordion-expanded ion-item[slot='header'] {
   left: 0;
   width: 200%; /* Adjust width to cover two columns */
   height: 100%;
-  background-image: url("../../../assets/milkyway.svg");
+  /* background-image: url("../../../assets/milkyway.svg"); */
   background-size: cover;
   background-repeat: no-repeat;
 }
@@ -159,20 +159,12 @@ ion-title {
   /* word-spacing: 29px; */
   font-family: "Baloo", sans-serif;
   letter-spacing: 5px;
-
-  /* text-align:center; */
-  /* text-align-last:center; */
-  /* text-align-last:right; */
-  /* text-shadow: 4px 4px 2px rgb(255, 199, 78, 0.3); */
-  /* border: 2px solid #333333;  */
-  /* text-shadow: 1px 1px 2px rgb(255, 199, 78); */
 }
+
 ion-title div {
   margin: 10px;
 }
-ion-toolbar {
-  /* --background: rgba(250, 208, 156, 0.5); */
-}
+
 /* Media query for screens narrower than 600px */
 @media screen and (max-width: 600px) {
   ion-title {
@@ -200,18 +192,13 @@ ion-toolbar {
   grid-template-columns: repeat(5, 1fr);
   grid-template-rows: 40vh 30vh 30vh;
   grid-gap: 10px;
-  background-image: url("../../../assets/milkyway.svg");
+
   background-size: cover;
   background-repeat: no-repeat;
   grid-template-areas:
     "info    photo photo photo   photo"
     "comment photo photo photo   photo"
     "comment tag     tag   album rotate";
-}
-
-.photo {
-  /* grid-area: photo; */
-  /* background: yellow; */
 }
 
 .photo > img {
@@ -335,7 +322,6 @@ mark {
   grid-template-columns: 19% auto;
   display: grid;
 
-
   /* margin-right: 20px; */
 }
 
@@ -364,26 +350,37 @@ mark {
 
 /*  */
 
-.ct-series-a .ct-bar, .ct-series-a .ct-line, .ct-series-a .ct-point, .ct-series-a .ct-slice-donut {
+.ct-series-a .ct-bar,
+.ct-series-a .ct-line,
+.ct-series-a .ct-point,
+.ct-series-a .ct-slice-donut {
   stroke: #d70206;
 }
 
-
 .ct-line.ct-threshold-above,
 .ct-point.ct-threshold-above,
-.ct-bar.ct-threshold-above {
+.ct-bar.ct-threshold-a2ove {
   stroke: #f05b4f;
+  stroke-dasharray: 2px;
+  animation: dash 3s linear infinite;
+  opacity: 0.8;
 }
 
 .ct-line.ct-threshold-below,
 .ct-point.ct-threshold-below,
 .ct-bar.ct-threshold-below {
   stroke: #59922b;
+
+  stroke-dasharray: 2px;
+  animation: dash 3s linear infinite;
+  opacity: 0.8;
 }
 
+.ct-point {
+  stroke-width: 0;
+}
 .ct-area.ct-threshold-above {
   fill: #f05b4f;
- 
 }
 
 .ct-area.ct-threshold-below {
@@ -402,7 +399,7 @@ mark {
   overflow: visible;
 }
 
-#ct-threshold-mask-above{
+#ct-threshold-mask-above {
   stroke: #59922b;
 }
 
@@ -412,27 +409,33 @@ mark {
   }
 }
 
-.ct-slice-pie-above{
-fill: red;
+.ct-slice-pie-above {
+  fill: red;
+  opacity: 0.5;
 }
 .ct-slice-pie-below {
-fill: green;
+  fill: green;
+  opacity:0.5
 }
 
-.ct-bar-above{
+.ct-bar-above {
   stroke: red;
-  stroke-width : 5px;
-
+  stroke-dasharray: 2px;
+  stroke-width: 5px;
+  animation: dash 3s linear infinite;
+  opacity: 0.8;
 }
 
-.ct-bar-below{
-
-stroke: green;
- stroke-width : 5px;
+.ct-bar-below {
+  stroke: green;
+  stroke-width: 5px;
+  stroke-dasharray: 2px;
+  animation: dash 3s linear infinite;
+  opacity: 0.8;
 }
 
-.ct-axis-title{
-  font-size:13px;
+.ct-axis-title {
+  font-size: 13px;
 }
 
 /* 
@@ -484,8 +487,31 @@ stroke: green;
 }
 
 }
+}
+
+*/
 @keyframes dash {
   to {
     stroke-dashoffset: 50;
   }
-} */
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

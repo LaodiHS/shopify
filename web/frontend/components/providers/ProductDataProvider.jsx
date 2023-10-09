@@ -6,7 +6,8 @@ import {
   History,
   formatProducts,
 } from "../../utilities/store";
-import { useAuthenticatedFetch } from "../../hooks";
+import { useAuthenticatedFetch} from "../../hooks";
+import { useDataProvidersContext } from '../../components';
 
 const ProductDataContext = createContext(null);
 
@@ -15,6 +16,30 @@ export function useProductDataContext() {
 }
 
 export function ProductDataProvider({ children }) {
+  const {
+    selectedImageMap,
+    uncachedFetchData, 
+    sessionLoaded, 
+    IntroLoadingPage,  
+    subscriptions,
+    currentSession,
+    user,
+    handleSelectChange,
+    DataProviderNavigate,
+    checkFeatureAccess,
+    productDetailOptions,
+    languageOptions,
+    assignLegend,
+    assignAssistRequest,
+    assignUpdateArticleMethod,
+    markupText,
+    setMarkupText,
+    setServerSentEventLoading,
+    setContentSaved,
+    eventEmitter,  
+    assignClearAssistMethod,
+    mappedLegend
+  } = useDataProvidersContext();
   const pagingHistory = History;
   const fetch = useAuthenticatedFetch();
   const location = useLocation();
@@ -25,7 +50,7 @@ export function ProductDataProvider({ children }) {
     pagingHistory.getCurrentIndex()
   );
   const [hasNextIndexPage, setNextIndexPage] = useState(false);
-  const productsPerPage = 20;
+  const productsPerPage = 3;
 
   function defineCurrentIndexPage(currentIndexPage) {
     setCurrentIndexPage(currentIndexPage);
@@ -43,7 +68,7 @@ export function ProductDataProvider({ children }) {
 
   const setPaging = (formattedData) => {
     const { startCursor } = formattedData.pageInfo;
-    pageIngCache.setPage(startCursor, formattedData);
+    pageIngCache.setPage(startCursor, formattedData, true);
 
 
 
@@ -82,20 +107,19 @@ export function ProductDataProvider({ children }) {
     }
 
     try {
-      const response = await fetch("/api/products/paging", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const response = await uncachedFetchData({url:"/api/products/paging",method: "POST" , body:{
           first: productsPerPage,
           after: null,
-        }),
+        },
       });
-console.log('response', response)
-      const data = await response.json();
+      console.log('response', response)
+      const data = response;
       const format = formatProducts(data);
+
       setPaging(format);
+      console.log('format next page', format.pageInfo.hasNextPage)
+     
+
       setProductsLoading(false);
     } catch (error) {
       console.log('error', error)
@@ -104,9 +128,7 @@ console.log('response', response)
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+
 
   const [productData, setProductData] = useState(null);
 
@@ -186,6 +208,28 @@ console.log('response', response)
   }
 
   const value = {
+    checkFeatureAccess,
+    productDetailOptions,
+    languageOptions,
+    assignLegend,
+    assignAssistRequest,
+    assignUpdateArticleMethod,
+    markupText,
+    setMarkupText,
+    setServerSentEventLoading,
+    setContentSaved,
+    eventEmitter,  
+    assignClearAssistMethod,
+    mappedLegend,
+    uncachedFetchData,
+    sessionLoaded,
+     IntroLoadingPage,
+     subscriptions,
+     currentSession,
+     user,
+     productsPerPage ,
+     handleSelectChange,
+     DataProviderNavigate,
     isProductsLoading,
     setProductsLoading,
     currentIndexPage,
@@ -198,6 +242,7 @@ console.log('response', response)
     defineProductsData,
     updateProductProperty,
     setPaging,
+    fetchData,
   };
 
   return (

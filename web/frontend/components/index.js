@@ -1,7 +1,8 @@
 export { ProductsCard } from "./ProductsCard";
-import { DocumentImagery } from './providers/DocumentImagery';
-export { InformationIcon } from './providers/InformationIcon';
-
+export { LoadingPageComponent } from "./LoadingPageComponent";
+export { LockBackgroundElement } from "./LockBackgroundElement";
+export { DocumentImagery } from "./providers/DocumentImagery";
+export { InformationIcon } from "./providers/InformationIcon";
 
 export { AppTypeahead } from "./ListDetail/AppTypeahead";
 export { SelectedOptions } from "./ListDetail/SelectedOptions";
@@ -17,7 +18,11 @@ export { Toggles } from "./ListDetail/Toggles";
 export { ListComponent } from "./ListComponent";
 export { ListDetailComponent } from "./ListDetailComponent";
 export { LayoutSection } from "./LayoutSection";
-export {ChartComponent, ReadabilityStats,BarChartComponent} from "./TextExtractor";
+export {
+  ChartComponent,
+  ReadabilityStats,
+  BarChartComponent,
+} from "./TextExtractor";
 export { StoreForm } from "./StoreForm";
 export { Search } from "./Search";
 export { SubscriptionComponent } from "./Subscription";
@@ -26,14 +31,16 @@ export { L } from "./L";
 export { Marker } from "./Marker";
 export { TextWithMarkers, cleanText } from "./TextWithMarkers";
 
-
 export * from "./providers";
 
 export { PaidFeature } from "./PaidFeature";
 
 export { IonButtonInformation } from "./ListDetail/IonButtonInformation";
 
-export { tinymceCustomPlugins, quicksBarConfig } from "../utilities/TinymcePlugins";
+export {
+  tinymceCustomPlugins,
+  quicksBarConfig,
+} from "../utilities/TinymcePlugins";
 // export {extractKeywords} from './TextExtractor';
 export { IonicHeaderComponent } from "./IonicHeaderComponent";
-export {CurrentScreenWidth} from "./CurrentScreenWidth";
+export { CurrentScreenWidth } from "./CurrentScreenWidth";

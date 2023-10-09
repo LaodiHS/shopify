@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useTheme } from '@emotion/react';
+
 
 
 export function CurrentScreenWidth () {

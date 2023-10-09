@@ -2,7 +2,9 @@ import React, { useEffect, useRef, useState } from "react";
 import cloud from "d3-cloud";
 import * as d3 from "d3";
 import winkNLP from "wink-nlp";
+import ner from 'wink-ner';
 import model from "wink-eng-lite-web-model";
+// import {winkTokenixer} from "wink-tokenizer";
 import { IonRow, IonCol, IonButton, IonText } from "@ionic/react";
 
 import debounce from "lodash.debounce";
@@ -10,13 +12,17 @@ import debounce from "lodash.debounce";
 import { beehive } from "../../assets";
 
 import { useDataProvidersContext, InformationIcon } from "..";
+// var tokenize = winkTokenizer().tokenize;
+
+
+
 
 const nlp = winkNLP(model);
 // Obtain "its" helper to extract item properties.
 const its = nlp.its;
 // Obtain "as" reducer helper to reduce a collection.
 const as = nlp.as;
-
+// var myNER = ner();
 const patterns = [
   {
     name: "nounPhrase",
@@ -50,10 +56,7 @@ const patterns = [
     name: "colorfulDescription",
     patterns: ["[ADJ] and [ADJ] [NOUN]"],
   },
-  {
-    name: "numericDescriptor",
-    patterns: ["[CARDINAL] [NOUN]"],
-  },
+
   {
     name: "uniqueIdentifier",
     patterns: ["[NOUN] [CARDINAL]"],
@@ -79,9 +82,17 @@ const patterns = [
     patterns: ["[ADJ] [NOUN] with [NOUN] [|NOUN]"],
   },
   {
-    name: "productPart",
-    patterns: ["[ADJ] [NOUN]"],
+    name: "productName",
+    patterns: ["[NOUN] [PROPN]"],
   },
+
+   {
+    name: "productName",
+    patterns: ["[PROPN]"],
+  }
+
+
+  
 ];
 
 const patternCount = nlp.learnCustomEntities(patterns, {
@@ -137,7 +148,7 @@ function rankResults(results, term) {
     const term = e.out(its.normal);
     const termRegex = new RegExp(term, "i");
   
-    // Extract a snippet of text around the matched term for contextual analysis
+   // Extract a snippet of text around the matched term for contextual analysis
     const termIndex = text.toLowerCase().indexOf(term.toLowerCase());
     const snippetStart = Math.max(termIndex - 50, 0); // Start 50 characters before the term
     const snippetEnd = Math.min(termIndex + term.length + 50, text.length); // End 50 characters after the term
@@ -197,10 +208,12 @@ async function search(term) {
 }
 
 async function imageCloud(text) {
+
   const doc = nlp.readDoc(text);
 
+
   const potentialEntities = doc.customEntities().out();
-  console.log("potentialEntities: ", potentialEntities);
+
   const results = await searchAllTerms(potentialEntities); // return results;
   let images = [];
 

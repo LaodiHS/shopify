@@ -1,7 +1,4 @@
 import React, { useRef, useState, useEffect } from "react";
-
-import { Editor } from "@tinymce/tinymce-react";
-
 import {
   IonItem,
   IonList,
@@ -47,7 +44,7 @@ import {
   ReactRenderingComponent,
   addMarkup,
 } from "../providers";
-import bcrypt from "bcryptjs";
+import { productViewCache } from "../../utilities/store";
 import { useLocation, useNavigate } from "react_router_dom";
 import { useAuthenticatedFetch, useAppBridge } from "@shopify/app-bridge-react";
 
@@ -71,21 +68,10 @@ import {
   ReadabilityStats,
   BarChartComponent,
   WordCloud,
+  useTinyMCEDataContext,
 } from "../../components";
 
-// const shortenText = (text) =>
-//   text && text.length > 20 ? text.substring(0, 30) + "..." : text;
 
-// const generateHash = async (id) => {
-//   const saltRounds = 10;
-//   try {
-//     // const salt = await bcrypt.genSalt(saltRounds);
-//     const hash = await bcrypt.hash(id, "$2a$10$agg0ld9ZpiH/fVKYZDq/Tu");
-//     return hash;
-//   } catch (error) {
-//     console.log("hash error", error);
-//   }
-// };
 
 export function Accordion({
   setAccordionModalPopUp,
@@ -93,6 +79,7 @@ export function Accordion({
   setAccordionLoadingState,
   //currentSession,
 }) {
+
   const [legend, setLegend] = useState([]);
 
   const [alertHeader, setAlertHeader] = useState();
@@ -131,12 +118,11 @@ export function Accordion({
   const app = useAppBridge();
   const fetch = useAuthenticatedFetch();
   const shopifySession = useShopifyContext();
- const { productData, updateProductProperty } = useProductDataContext();
-  
- 
- const {selectedImageMap,
-} = useDataProvidersContext();
- const {
+
+  const {
+    productData,
+    updateProductProperty, 
+    selectedImageMap,
     checkFeatureAccess,
     subscriptions,
     currentSession,
@@ -145,20 +131,18 @@ export function Accordion({
     uncachedFetchData,
     assignLegend,
     assignAssistRequest,
- 
     assignUpdateArticleMethod,
     markupText,
     setMarkupText,
     setServerSentEventLoading,
-
     setContentSaved,
     eventEmitter,  
     assignClearAssistMethod,
-    mappedLegend,
-    // selectedImageMap,
-  } = useDataProvidersContext();
+    mappedLegend
+   } = useProductDataContext();
+  
 
- 
+
 
   const Popover = () => (
     <IonContent className="ion-padding">Hello World!</IonContent>
@@ -364,7 +348,7 @@ export function Accordion({
       }, 20000);
 
       eventEmitter.on("error", (error) => {
-        console.log("error recived", error);
+     
         clearTimeout(activityTimeoutId);
         eventSource.close();
         setServerSentEventLoading(false);
@@ -702,7 +686,7 @@ export function Accordion({
         updateProductProperty("description", descriptionHtml);
         setMarkupText(descriptionHtml);
         console.log("current Cursor", productData.currentCursor);
-        pageIngCache.clearKey(productData.currentCursor);
+        pageIngCache.clearCursorKey(productData.currentCursor);
         console.log("product updated");
       }
     } else if (type === "article" && markupText.length) {
@@ -904,7 +888,7 @@ function renderAccordionItem({
   
 }) {
   const [markupViewLock, setMarkupViewLock] = useState(null);
-
+ const {Editor} = useTinyMCEDataContext()
   const {
     checkFeatureAccess,
     markupText,
@@ -926,8 +910,9 @@ function renderAccordionItem({
   }
 
   function autosaveContent(editor) {
+   
     const content = editor.getContent();
-    localStorage.setItem("autosaveContent", content);
+    productViewCache.set("autosaveContent", content);
     console.log(" Editor Content autosaved to localStorage:");
   }
 

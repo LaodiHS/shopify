@@ -7,9 +7,9 @@ import {
   IonRow,
   IonThumbnail,
 } from "@ionic/react";
-import { useDataProvidersContext } from "../../components";
+import { useDataProvidersContext, NoImagePlaceHolder, useProductDataContext } from "../../components";
 //navigator.hardwareConcurrency || 4; // Number of worker instances in the pool
-
+import { imagePlaceHolder } from "../../assets";
 function getOptimalNumThreads(defaultNumThreads = 3) {
   if (navigator && navigator.hardwareConcurrency) {
     // If hardwareConcurrency is available, use it as the number of threads
@@ -21,8 +21,7 @@ function getOptimalNumThreads(defaultNumThreads = 3) {
   }
 }
 // Worker code as a string literal
-const workerCode = `
-  self.addEventListener('message', async (event) => {
+const workerCode = `self.addEventListener('message', async (event) => {
     const { srcList } = event.data;
 
     try {
@@ -66,16 +65,22 @@ let imageCacheMap;
 const taskQueue = [];
 
 export function ImageCacheWorker() {
+  const {
+  sessionLoaded,
+  } = useProductDataContext();
   useEffect(() => {
+    if(sessionLoaded){
     workerPool = new Array(getOptimalNumThreads())
       .fill(null)
       .map(createImageCacheWorker);
     imageCacheMap = new Map();
+    
     return () => {
       workerPool.forEach((worker) => worker.terminate());
       imageCacheMap.clear();
-    };
-  }, []);
+  }
+  };
+  }, [sessionLoaded]);
 
   return null;
 }
@@ -86,13 +91,17 @@ function getNextAvailableWorker() {
 function processTaskQueue() {
   const worker = getNextAvailableWorker();
   if (worker && taskQueue.length > 0) {
+  
     const { src, resolve } = taskQueue.shift();
     worker.isProcessing = true;
     worker.postMessage({ srcList: [src] });
 
     // Handle worker response
     worker.onmessage = (event) => {
+     
       const data = event.data;
+
+      
       if (Array.isArray(data)) {
         for (const item of data) {
           if (item.blob) {
@@ -112,16 +121,27 @@ function processTaskQueue() {
   }
 }
 
+function setImageMap(key, obj) {
+
+  if (!key) {
+    throw new Error("image requires key");
+  }
+  if (!obj) {
+    throw new Error("image requires blob");
+  }
+
+  imageCacheMap.set(key, obj);
+
+}
 export function ImageCache({ src, alt, sliderImg, ...props }) {
   //  const { imageCache, setImageCache } = useDataProvidersContext()
   //  console.log('imageCache', imageCache)
-  const [cachedSrc, setCachedSrc] = useState(src);
+  const [cachedSrc, setCachedSrc] = useState(null);
   const [imageLoading, setImageLoading] = useState(false);
   const [canLoad, setCanLoad] = useState(true);
   // const loading = false;
 
   function imageDidLoad() {
-  
     if (imageLoading) {
       setImageLoading(false);
     }
@@ -134,31 +154,38 @@ export function ImageCache({ src, alt, sliderImg, ...props }) {
 
   useEffect(async () => {
     setImageLoading(true);
-    const preloadImages = async () => {
+    const preloadImages = async (src) => {
+
       if (imageCacheMap.has(src)) {
+
         setCachedSrc(imageCacheMap.get(src));
         setImageLoading(false);
         return;
       }
 
-      return new Promise((resolve) => {
+      return new Promise((resolve) => {  
+      
         taskQueue.push({ src, resolve });
         processTaskQueue();
       }).then((imageSrc) => {
+
         if (imageSrc) {
-          imageCacheMap.set(imageSrc);
+          setImageMap(src, imageSrc);
+       
           if (canLoad) {
             setCachedSrc(imageSrc);
           }
-       
+
           if (imageLoading) {
             setImageLoading(false);
           }
         }
       });
     };
+src !== imagePlaceHolder ?
+  await  preloadImages(src) :
+  setCachedSrc(imagePlaceHolder);
 
-    preloadImages();
   }, [src]);
 
   const height = sliderImg ? "60px" : "300px";
@@ -166,7 +193,7 @@ export function ImageCache({ src, alt, sliderImg, ...props }) {
   function SkeletonImage() {
     return (
       <IonSkeletonText
-        key="animatedplace=holder"
+        key="animatedPlace=holder"
         animated
         style={{ width, height, display: !imageLoading ? "none" : "block" }}
       />
@@ -175,8 +202,8 @@ export function ImageCache({ src, alt, sliderImg, ...props }) {
 
   return (
     <>
+ 
       <SkeletonImage />
-
       <IonImg
         onIonImgDidLoad={imageDidLoad()}
         style={{
@@ -187,12 +214,8 @@ export function ImageCache({ src, alt, sliderImg, ...props }) {
           display: imageLoading ? "none" : "block",
         }}
         key={src}
-        src={
-          cachedSrc ||
-          src ||
-          "https://placehold.co/300x200?text=No+Image+Available"
-        }
-        rel="preload"
+        src={cachedSrc || src || imagePlaceHolder}
+        // rel="preload"
         as="image"
         alt={alt}
         {...props}

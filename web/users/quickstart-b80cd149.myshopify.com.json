@@ -1,16 +1,16 @@
 {
-  "created_at": "2023-09-30T11:00:06-04:00",
+  "created_at": "2023-10-08T09:53:30-04:00",
   "current_usage": 0,
   "capped_amount": 0,
   "capped_usage": 328732,
-  "updated_at": "2023-09-30T11:02:03-04:00",
+  "updated_at": "2023-10-08T09:53:42-04:00",
   "shop": "quickstart-b80cd149.myshopify.com",
   "last_payment_date": "2023-09-24T19:51:13.741Z",
   "currency": "USD",
   "documentType": "text",
   "seen": true,
   "gptText": "",
-  "subscription_name": "acacia",
-  "status": "CANCELLED",
+  "subscription_name": "chestnut",
+  "status": "ACTIVE",
   "usage_limit": 0
 }

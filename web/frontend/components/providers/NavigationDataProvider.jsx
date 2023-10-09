@@ -6,7 +6,7 @@ import {
   History,
   formatProducts,
 } from "../../utilities/store";
-import { useAuthenticatedFetch } from "../../hooks";
+
 import { navigate } from "ionicons/icons";
 
 const NavigationDataContext = createContext(null);

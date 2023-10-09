@@ -38,23 +38,20 @@ import { pageIngCache, History, formatProducts } from "../utilities/store";
 import { ListComponent } from "./ListComponent";
 import { useProductDataContext, IonicHeaderComponent } from "../components";
 export function ProductsCard({ animationRef }) {
-  const pagingHistory = History;
-  const fetch = useAuthenticatedFetch();
+  const [products, setProducts] = useState([]);
 
-  const productsPerPage = 20;
+  const pagingHistory = History;
 
   const {
+    uncachedFetchData,
     isProductsLoading,
     setProductsLoading,
     currentIndexPage,
-    defineCurrentIndexPage,
+    productsPerPage,
     hasNextIndexPage,
-    defineNextIndexPage,
     productsData,
-    defineProductsData,
     setPaging,
   } = useProductDataContext();
-  const [products, setProducts] = useState([]);
 
   useEffect(() => {
     setProducts(productsData.productsData || []);
@@ -67,26 +64,26 @@ export function ProductsCard({ animationRef }) {
       if (pagingHistory.hasNextPage()) {
         const cached = pageIngCache.getPage(pagingHistory.getNextPage());
         const formattedData = cached;
+        console.log('formatedData: ',formattedData)
         setPaging(formattedData);
         setProductsLoading(false);
         return;
       }
 
       try {
-        const response = await fetch("/api/products/paging", {
+        const response = await uncachedFetchData({
+          url: "/api/products/paging",
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
+          body: {
             first: productsPerPage,
             after: endCursor,
-          }),
+          },
         });
         console.log("data", response);
-        const data = await response.json();
+        const data = await response;
         const format = formatProducts(data);
         setPaging(format);
+
         setProductsLoading(false);
       } catch (error) {
         console.error("There was an Error getting the Data:", error);
@@ -124,11 +121,13 @@ export function ProductsCard({ animationRef }) {
 
   return (
     <IonPage ref={animationRef}>
+    
       <IonicHeaderComponent
+      type={isProductsLoading ? 'indeterminate' : 'determinate'}
         left={
           <IonButtons slot="secondary">
             <IonButton
-            color="neural"
+              color="neural"
               fill="clear"
               size="small"
               className="ion-padding-end"
@@ -146,7 +145,7 @@ export function ProductsCard({ animationRef }) {
         right={
           <IonButtons slot="primary">
             <IonButton
-             color="neural"
+              color="neural"
               fill="clear"
               size="small"
               className="ion-padding-start"
@@ -156,7 +155,7 @@ export function ProductsCard({ animationRef }) {
               }
             >
               Next
-              <IonIcon icon={chevronForward}  />
+              <IonIcon icon={chevronForward} />
             </IonButton>
           </IonButtons>
         }
@@ -170,14 +169,7 @@ export function ProductsCard({ animationRef }) {
 function DisplayContents({}) {
   const {
     isProductsLoading,
-    setProductsLoading,
-    currentIndexPage,
-    defineCurrentIndexPage,
-    hasNextIndexPage,
-    defineNextIndexPage,
     productsData,
-    defineProductsData,
-    setPaging,
   } = useProductDataContext();
   const [products, setProducts] = useState([]);
 
@@ -193,7 +185,7 @@ function DisplayContents({}) {
     return <ListComponent />;
   }
 
-  if (products.lengthen == 0) {
+  if (products.length === 0) {
     return (
       <div className="ion-padding ion-text-center">
         <IonText color="medium" className="ion-text-center">

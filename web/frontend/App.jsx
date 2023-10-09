@@ -1,7 +1,21 @@
 import "typeface-baloo";
 import "typeface-roboto";
-import tinymce from "tinymce/tinymce";
-tinymce._setBaseUrl("/tinymce");
+import "@ionic/react/css/core.css";
+import "@ionic/react/css/normalize.css";
+import "@ionic/react/css/structure.css";
+import "@ionic/react/css/typography.css";
+import "@ionic/react/css/padding.css";
+import "@ionic/react/css/float-elements.css";
+import "@ionic/react/css/text-alignment.css";
+import "@ionic/react/css/text-transformation.css";
+import "@ionic/react/css/flex-utils.css";
+import "@ionic/react/css/display.css";
+import "./components/ListDetail/styles/Chartist.css";
+import "./components/ListDetail/styles/App.css";
+import "animate.css";
+import "./themes/variables.css";
+import { productViewCache } from "./utilities/store";
+// import "./components/ListDetail/styles/GridStack.css";
 import { Page, Layout, Image, Text } from "@shopify/polaris";
 import {
   useEffect,
@@ -13,23 +27,6 @@ import {
   forwardRef,
   useImperativeHandle,
 } from "react";
-import "@ionic/react/css/core.css";
-import "@ionic/react/css/normalize.css";
-import "@ionic/react/css/structure.css";
-import "@ionic/react/css/typography.css";
-import "@ionic/react/css/padding.css";
-import "@ionic/react/css/float-elements.css";
-import "@ionic/react/css/text-alignment.css";
-import "@ionic/react/css/text-transformation.css";
-import "@ionic/react/css/flex-utils.css";
-import "@ionic/react/css/display.css";
-
-import "typeface-lato";
-import "typeface-roboto";
-import "./components/ListDetail/styles/GridStack.css";
-import "./components/ListDetail/styles/App.css";
-import "./themes/variables.css";
-import "animate.css";
 
 import {
   newspaperOutline,
@@ -54,6 +51,7 @@ import {
   readingTree,
   honeyCombGridDrop,
   beehive,
+  honeyPot,
 } from "./assets";
 import { IonReactRouter } from "@ionic/react-router";
 
@@ -107,6 +105,11 @@ import {
   ImageCacheWorker,
   TokenUsageComponent,
   IonicHeaderComponent,
+  useWinkDataContext,
+  WinkDataProvider,
+  TinyMCEDataProvider,
+  useProductDataContext,
+  LoadingPageComponent,
 } from "./components";
 import { useAuthenticatedFetch } from "./hooks";
 import { NavigationMenu } from "@shopify/app-bridge-react";
@@ -118,31 +121,32 @@ import {
   useNavigate,
   useLocation,
 } from "react_router_dom";
+
 tinymceCustomPlugins(tinymce);
 
 export default function App() {
+  // productViewCache.clear();
   const pages = import.meta.globEager("./pages/**/!(*.test.[jt]sx)*.([jt]sx)");
-  const navigationPanel =
-    true || !DEPLOYMENT_ENV
-      ? [
-          {
-            label: "Products Page",
-            destination: "/",
-          },
-          {
-            label: "Subscription",
-            destination: "/subscriptions",
-          },
-          {
-            label: "welcome",
-            destination: "/welcome",
-          },
-          {
-            label: "search",
-            destination: "/search",
-          },
-        ]
-      : [];
+  const navigationPanel = !DEPLOYMENT_ENV
+    ? [
+        {
+          label: "Products Page",
+          destination: "/",
+        },
+        {
+          label: "Subscription",
+          destination: "/subscriptions",
+        },
+        {
+          label: "welcome",
+          destination: "/welcome",
+        },
+        {
+          label: "search",
+          destination: "/search",
+        },
+      ]
+    : [];
   useEffect(() => {
     return () => {
       const handleBeforeUnload = (event) => {
@@ -154,7 +158,7 @@ export default function App() {
 
       const clearLocalStorage = () => {
         if (DEPLOYMENT_ENV) {
-          localStorage.clear();
+         productViewCache.clear();
         }
       };
 
@@ -172,15 +176,19 @@ export default function App() {
         <BrowserRouter>
           <AppBridgeProvider>
             <QueryProvider>
-              <ImageCacheWorker />
               <NavigationDataProvider>
                 <NavigationMenu navigationLinks={navigationPanel} />
-
-                <ProductDataProvider>
-                  <DataProvidersProvider>
-                    <IonMenuNav />
-                  </DataProvidersProvider>
-                </ProductDataProvider>
+                <TinyMCEDataProvider>
+                  <WinkDataProvider>
+                    <DataProvidersProvider>
+                   
+                      <ProductDataProvider>  
+                         <ImageCacheWorker />
+                        <IonMenuNav />
+                      </ProductDataProvider>
+                    </DataProvidersProvider>
+                  </WinkDataProvider>
+                </TinyMCEDataProvider>
               </NavigationDataProvider>
             </QueryProvider>
           </AppBridgeProvider>
@@ -200,6 +208,7 @@ function LandingPage({ animationRef }) {
     uncachedFetchData,
     DataProviderNavigate,
   } = useDataProvidersContext();
+
   useIonViewDidEnter(() => {
     arrowRef.current?.addEventListener("animationend", () => {
       setArrowAnimation("animate__tada"); // Apply another animation after the bounce
@@ -224,7 +233,7 @@ function LandingPage({ animationRef }) {
     if (error === null) {
       setUser(data);
     } else {
-   await  DataProviderNavigate("/", {
+      await DataProviderNavigate("/", {
         target: "host",
         relative: "path",
         state: "/welcome",
@@ -299,7 +308,6 @@ function LandingPage({ animationRef }) {
                         whiteSpace: "nowrap" /* Prevents wrapping */,
                         // overflow: "hidden", /* Clips content that overflows */
                         // textOverflow: "ellipsis"
-                        // textShadow: `4px 4px 2px rgba(150, 150, 150, 1)`,
                       }}
                     >
                       neural
@@ -319,7 +327,6 @@ function LandingPage({ animationRef }) {
                         whiteSpace: "nowrap" /* Prevents wrapping */,
                         // overflow: "hidden", /* Clips content that overflows */
                         // textOverflow: "ellipsis"
-                        // textShadow: `4px 4px 2px rgba(150, 150, 150, 1)`,
                       }}
                     >
                       nectar
@@ -343,16 +350,29 @@ function LandingPage({ animationRef }) {
             Experience a seamless journey with our amazing features.
           </p>
           <IonText color="dark">
-            <p className="ion-text-center ion-padding-top">
+            <h3
+              style={{ fontFamily: "Baloo, san serif" }}
+              className="ion-text-center ion-padding-top"
+            >
               Thank You For Becoming a
-            </p>
+            </h3>
             <h2
               style={{ fontFamily: "Baloo, sans-serif" }}
               className="ion-text-center ion-text-capitalize"
             >
-              {subscriptions.join(" ")}
+              <IonText
+                style={{ fontFamily: "Baloo, sans-serif" }}
+                color="neural"
+              >
+                {subscriptions.join(" ")} Honey
+              </IonText>
             </h2>
-            <p className="ion-text-center">Member</p>
+            <p
+              style={{ fontFamily: "Baloo, sans-serif" }}
+              className="ion-text-center"
+            >
+              Member
+            </p>
           </IonText>
         </IonText>
         <div className="ion-text-center">
@@ -370,9 +390,10 @@ function LandingPage({ animationRef }) {
         </div>
         <div className="ion-text-center animate__animated animate__fadeInUp">
           <IonButton
+            style={{ letterSpacing: "3px", fontFamily: "Baloo, sans-serif" }}
             fill="clear"
             expand="block"
-            color="primary"
+            color="shoe"
             onClick={handleGetStarted}
           >
             Get Started
@@ -384,9 +405,56 @@ function LandingPage({ animationRef }) {
 }
 
 function Home({ animationRef }) {
-  return <ProductsCard animationRef={animationRef} />;
+  const [releaseLoadingState, setReleaseLoadingState] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [fetchedData, setFetchedData] = useState(false);
+
+  const {
+    productsData: data,
+    defineProductData: defineData,
+    fetchData,
+    sessionLoaded,
+  } = useProductDataContext();
+
+useEffect(() => {
+if(data.productsData) {
+  setReleaseLoadingState(true)
 }
 
+
+
+},[])
+
+
+
+  useEffect(async () => {
+    console.log('sessionLoaded', sessionLoaded)
+    if (sessionLoaded) {
+      await fetchData();
+      setFetchedData(true);
+    }
+  }, [sessionLoaded]);
+
+  useEffect(() => {
+    let id;
+    if (sessionLoaded && fetchData) {
+      id = setTimeout(() => {
+        setReleaseLoadingState(true);
+      }, 10000);
+    }
+    return () => {
+      clearTimeout(id);
+    };
+  }, [sessionLoaded, fetchData]);
+
+  //  return  <LoadingPageComponent  type="indeterminate" progress={progress} />
+
+  return !releaseLoadingState ? (
+    <LoadingPageComponent type="indeterminate" progress={progress} />
+  ) : (
+    <ProductsCard animationRef={animationRef} />
+  );
+}
 function ProductDetails({ animationRef }) {
   return <ListDetailComponent animationRef={animationRef} />;
 }
@@ -404,22 +472,18 @@ function NoMatch() {
 }
 
 function Description() {
-
-
   const {
-    assistRequest,
-    clearAssistResult,
-    updateArticleMethod,
-    markupText,
-    AnimatedContent,
+    // assistRequest,
+    // clearAssistResult,
+    // updateArticleMethod,
+    // markupText,
+    // AnimatedContent,
     refDictionary,
     DataProviderNavigate,
     serverSentEventLoading,
     contentSaved,
     user,
   } = useDataProvidersContext();
-
-
 
   return (
     <IonPage ref={refDictionary["/description"]}>
@@ -431,7 +495,7 @@ function Description() {
               color="neural"
               disabled={serverSentEventLoading}
               onClick={async () => {
-               await DataProviderNavigate("/product-details");
+                await DataProviderNavigate("/product-details");
               }}
               key={"13"}
             >
@@ -479,11 +543,11 @@ function Description() {
 
 function Article() {
   const {
-    assistRequest,
-    clearAssistResult,
-    updateArticleMethod,
-    markupText,
-    AnimatedContent,
+    // assistRequest,
+    // clearAssistResult,
+    // updateArticleMethod,
+    // markupText,
+    // AnimatedContent,
     refDictionary,
     DataProviderNavigate,
     serverSentEventLoading,
@@ -549,20 +613,20 @@ function IonMenuNav() {
   const [currentRoute, setCurrentRoute] = useState("/");
   const location = useLocation();
   const router = useIonRouter();
-  const { aiWorkStationSetter, aiWorkStation } = useNavigationDataContext();
+
   const {
     checkFeatureAccess,
     assistRequest,
     clearAssistResult,
     updateArticleMethod,
     markupText,
-    AnimatedContent,
+    // AnimatedContent,
     refDictionary,
     DataProviderNavigate,
     serverSentEventLoading,
     contentSaved,
   } = useDataProvidersContext();
-
+  const { aiWorkStationSetter, aiWorkStation } = useNavigationDataContext();
   useEffect(() => {
     // console.log("pathname", location.pathname);
     setCurrentRoute(location.pathname);
@@ -576,7 +640,7 @@ function IonMenuNav() {
         label: "Home",
         icon: homeOutline,
         clickHandler: async (event, hasAccess, router) => {
-        await  DataProviderNavigate("/", { target: "host" });
+          await DataProviderNavigate("/", { target: "host" });
           //  router.push("/")
           // router.tab = "/home"
           // console.log('router', router)
@@ -600,7 +664,7 @@ function IonMenuNav() {
           //   },
           // });
 
-        await  DataProviderNavigate("/product-details");
+          await DataProviderNavigate("/product-details");
         },
       },
       {
@@ -695,7 +759,7 @@ function IonMenuNav() {
 
         icon: bookshelf,
         clickHandler: async (event) => {
-         await DataProviderNavigate("/", { target: "host" });
+          await DataProviderNavigate("/", { target: "host" });
         },
       },
       {
@@ -704,14 +768,14 @@ function IonMenuNav() {
         label: "Description Workstation",
         icon: descriptionWorkStation,
 
-        clickHandler:async (event, hasAccess) => {
+        clickHandler: async (event, hasAccess) => {
           if (!hasAccess) {
-          await  DataProviderNavigate("/subscriptions");
+            await DataProviderNavigate("/subscriptions");
           } else {
             aiWorkStationSetter("description");
 
             // router.push("/description")
-           await DataProviderNavigate("/description");
+            await DataProviderNavigate("/description");
           }
         },
       },
@@ -720,12 +784,12 @@ function IonMenuNav() {
         label: "Article Workstation",
 
         icon: newsPaperWorStation,
-        clickHandler: async(event, hasAccess) => {
+        clickHandler: async (event, hasAccess) => {
           if (!hasAccess) {
-          await  DataProviderNavigate("/subscriptions");
+            await DataProviderNavigate("/subscriptions");
           } else {
-           aiWorkStationSetter("article");
-           await DataProviderNavigate("/article");
+            aiWorkStationSetter("article");
+            await DataProviderNavigate("/article");
           }
         },
       },
@@ -790,7 +854,12 @@ function IonMenuNav() {
             <Route key="noMatch" path="*" element={<NoMatch />} />
           </Routes>
         </IonRouterOutlet>
-        <IonTabBar key="iontabbar" slot="bottom">
+        <IonTabBar
+          translucent={true}
+          style={{ "--background": "none" }}
+          key="iontabbar"
+          slot="bottom"
+        >
           {tabs[currentRoute]?.map((tab, index) => {
             const buttonId = "tabButtonId" + index;
 
@@ -806,13 +875,11 @@ function IonMenuNav() {
                 }
               >
                 <IonIcon
-                  color={tab.saveSignal ? contentSaved && "success" : "shoe"}
+                  color={contentSaved && tab.saveSignal ? "success" : "neural"}
                   key={"icon" + index}
                   src={tab.access.hasAccess && tab.src}
-                  icon={
-                    !tab.src && tab.access.hasAccess ? tab.icon : beehive
-                  }
-                  // className="custom-icon"
+                  icon={!tab.src && tab.access.hasAccess ? tab.icon : honeyPot}
+                  className="custom-icon"
                 />
                 <IonLabel
                   key={index}

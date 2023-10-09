@@ -33,28 +33,21 @@ import {
   IonNav,
 } from "@ionic/react";
 import {
-  chatbubbleOutline,
   chevronBack,
-  documentTextOutline,
-  newspaperOutline,
   informationCircleOutline,
   exitOutline,
 } from "ionicons/icons";
 import { pencilCase, microphone } from "../assets";
-import { useLocation, useNavigate } from "react_router_dom";
-import { useAuthenticatedFetch } from "../hooks/useAuthenticatedFetch";
-import { Context, SharedData } from "../utilities/data-context.js";
+import { SharedData } from "../utilities/data-context.js";
 import {
   useProductDataContext,
-  PaidFeature,
   CamelToKebabCase,
   useDataProvidersContext,
   TokenUsageComponent,
   IonicHeaderComponent,
 } from "../components";
 import { audienceModel } from "../utilities/language-model";
-import { updateObject } from "../utilities/utility-methods";
-import { Accordion } from "./ListDetail/Accordion";
+
 import { ProductDetails } from "./ListDetail/ProductDetails";
 import { Toggles } from "./ListDetail/Toggles";
 
@@ -74,17 +67,20 @@ const toggles = {
 };
 
 export function ListDetailComponent({ animationRef }) {
+  const menuRef = useRef(null);
+  const contentRef = useRef(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [hiddenElements, setHiddenElements] = useState(toggles);
+  const [composeTextModalLoading, setComposeTextModalLoading] = useState(false);
+  const { sections } = audienceModel;
   const {
+    productData,
     subscriptions,
     currentSession,
     user,
-
     handleSelectChange,
-
     DataProviderNavigate,
-  } = useDataProvidersContext();
-
-  const { productData } = useProductDataContext();
+  } = useProductDataContext();
 
   if (!subscriptions) {
     return <div> no subscription found</div>;
@@ -97,18 +93,6 @@ export function ListDetailComponent({ animationRef }) {
   if (!currentSession) {
     throw new Error("no session prop on ListDetailComponent: ", currentSession);
   }
-
-  const fetch = useAuthenticatedFetch();
-
-  const navigate = useNavigate();
-  // const [productData, setData] = useState(null);
-  const [composeTextModalLoading, setComposeTextModalLoading] = useState(false);
-
-  const { sections } = audienceModel;
-
-  const [hiddenElements, setHiddenElements] = useState(toggles);
-
-  const [isOpen, setIsOpen] = useState(false);
 
   function onToggleChange(selectElementId) {
     setHiddenElements((prevHiddenElements) => ({
@@ -134,9 +118,6 @@ export function ListDetailComponent({ animationRef }) {
   };
 
   // console.log("ListDetailComponentData", ListDetailComponent);
-
-  const menuRef = useRef(null);
-  const contentRef = useRef(null);
 
   function scrollToBottom() {
     contentRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -186,14 +167,8 @@ export function ListDetailComponent({ animationRef }) {
         <IonicHeaderComponent
           centerText="Tailor Selections"
           left={
-            <IonButtons
-              key={"12"}
-              onClick={navigateBack}
-             
-              slot="start"
-            >
-              <IonButton key={"13"} color="neural"
-              >
+            <IonButtons key={"12"} onClick={navigateBack} slot="start">
+              <IonButton key={"13"} color="neural">
                 <IonIcon key={"14"} icon={chevronBack} />
               </IonButton>
             </IonButtons>
@@ -237,7 +212,6 @@ export function ListDetailComponent({ animationRef }) {
                       onClick={() => openMenu()}
                       slot="end"
                       fill="clear"
-                     
                       expand="block"
                       color="primary"
                       area-label="Advanced Tone Options"
@@ -275,8 +249,8 @@ export function ListDetailComponent({ animationRef }) {
                     <IonText>
                       <p>
                         Explore Advanced Language and Formatting Choices. Choose
-                        your preferred categories from the acacia menu
-                        options, and they will be displayed below.
+                        your preferred categories from the acacia menu options,
+                        and they will be displayed below.
                       </p>
                     </IonText>
                     <IonText color="secondary">

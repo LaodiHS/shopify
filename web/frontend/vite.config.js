@@ -3,19 +3,10 @@ import { dirname } from "path";
 import { fileURLToPath } from "url";
 import https from "https";
 import react from "@vitejs/plugin-react";
-import vuePlugin from "rollup-plugin-vue";
-// import legacy from "@vitejs/plugin-legacy";
-import vue from "@vitejs/plugin-vue";
-import viteCompression from "vite-plugin-compression";
-import terser from '@rollup/plugin-terser';
-import { copy } from "vite-plugin-copy";
-import { chromeExtension } from "rollup-plugin-chrome-extension";
-import extension from "rollup-plugin-browser-extension";
-import htmlMinifier from 'vite-plugin-html-minifier'
-import mdx from '@mdx-js/rollup'
-// import 'dotenv/config'
-// import { jsx } from '@emotion/react'
-import { VitePWA } from 'vite-plugin-pwa';
+// import react from "@vitejs/plugin-react-swc";
+// import vue from "@vitejs/plugin-vue";
+
+
 if (
   process.env.npm_lifecycle_event === "build" &&
   !process.env.CI &&
@@ -26,15 +17,12 @@ if (
   );
 }
 
-
-
 const proxyOptions = {
   target: `http://127.0.0.1:${process.env.BACKEND_PORT}`,
   changeOrigin: false,
   secure: true,
   ws: false,
 };
-
 
 const host = process.env.HOST
   ? process.env.HOST.replace(/https?:\/\//, "")
@@ -78,15 +66,15 @@ export default defineConfig({
 
   root: dir_name,
   plugins: [
-     
-     {enforce: 'pre', ...mdx() },
-    react({ 
-      babel: {
-       include: /\.(js|jsx)$/,
-        plugins: ['babel-plugin-macros'],
-         babelrc: true
-      },
-    }),
+    react(),
+    {
+    babel: {
+     include: /\.(js|jsx)$/,
+      plugins: ['babel-plugin-macros'],
+       babelrc: true
+    },
+
+    //}
     // react(
     // //   {
     // //   jsxImportSource: "@emotion/react",
@@ -95,20 +83,9 @@ export default defineConfig({
     // //   },
     // // }
     // ),
-   VitePWA({ registerType: 'autoUpdate' }),
-    vuePlugin(),
-    vue({
-      template: {
-        isProduction: true,
-      },
-    }),
-   // terser({ compress:true, mangle:true,  maxWorkers: 5})
-  ,
+  }
+  
 
-    // copy({
-    //   targets: [{ src: "node_modules/tinymce/**/*", dest: "tinymce" }],
-    //   verbose: true,
-    // }),
   ],
   // optimizeDeps: {
   //   //include: ["tinymce"], // Expose tinymce as a module
@@ -122,37 +99,30 @@ export default defineConfig({
   },
   resolve: {
     preserveSymlinks: true,
- 
   },
   // esbuild: {
-  //   // ...
-  //   //  drop: ['console', 'debugger'],
-  //   //  minifyIdentifiers: true,
-  //   // minifySyntax: true,
-  //   // minify: true,
-  //   // mangleCaches: true,
-  //   // mangleProps:true,
-  //   // mangleQuoted:true,
 
-  //   // splitting: {
-  //   //   // Specify the maximum size for a single chunk (in bytes)
-  //   //   maxChunkSize: 500000, // 500KB in this example
-  //   // },
+  //    minifyIdentifiers: true,
+  //   minifySyntax: true,
+  //   minify: true,
+
+  //   drop: ['console', 'debugger'],
+
   // },
 
+  
   build: {
-    brotliSize: true, // Enables Brotli compression
-    chunkSizeWarningLimit: 4000, 
-
-    // minify: "terser", // <-- add
-    // terserOptions: {
-    //   compress: {
-    //     drop_console: true,
-    //     drop_debugger: true,
-     
-    //   },
-    //   mangle :true,
-    // },
+    // brotliSize: true, // Enables Brotli compression
+    // chunkSizeWarningLimit: 4000,
+    minify: false,
+     //minify: "terser", // <-- add
+    terserOptions: {
+      compress: {
+         drop_console: false,
+        drop_debugger: false,
+      },
+      mangle: false,
+    },
   },
   server: {
     host: "localhost",

@@ -9,7 +9,7 @@ import {
   IonImg,
   IonChip,
 } from "@ionic/react";
-import { useDataProvidersContext } from "../components";
+import { useDataProvidersContext, NoImagePlaceHolder } from "../components";
 import { darkenHexColor } from "../utilities/darkenHexColor";
 
 
@@ -42,7 +42,7 @@ const Marker = ({ requirementText, color, size, selectedImageMap}) => {
               alt="Image Requirement"
               src={
                 selectedImageMap[requirementText]?.url ||
-                "https://placehold.co/300x200?text=No+Image+Available"
+                <NoImagePlaceHolder />
               }
             />
           </IonThumbnail>

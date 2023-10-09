@@ -1,38 +1,27 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
-  IonContent,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
+
   IonGrid,
-  IonSkeletonText,
+
   IonRow,
   IonCol,
   IonLabel,
-  IonList,
-  IonItem,
+
   IonText,
   IonChip,
 } from "@ionic/react";
-
-import "chartist/dist/index.css";
 import {
   LineChart,
   BarChart,
   Svg,
   getMultiValue,
   extend,
+  
   normalizePadding,
 } from "chartist";
-import winkNLP from "wink-nlp";
-import model from "wink-eng-lite-web-model";
-import { WordCloud, InformationIcon } from "../components";
+
+import { WordCloud, InformationIcon, useWinkDataContext } from "../components";
 import { extractTextFromHtml } from "./providers/ReactRenderingComponent";
-const nlp = winkNLP(model);
-// Obtain "its" helper to extract item properties.
-const its = nlp.its;
-// Obtain "as" reducer helper to reduce a collection.
-const as = nlp.as;
 
 // doc.entities().each((e) => e.markup());
 
@@ -276,7 +265,7 @@ function LabelPlugin() {
 export function BarChartComponent({ text }) {
   const chartRef = useRef(null);
   const legendRef = useRef(null);
-
+  const { nlp, its, as } = useWinkDataContext();
   useEffect(() => {
     if (text) {
       function createBarChart() {
@@ -472,9 +461,11 @@ export function BarChartComponent({ text }) {
 
       <IonCol className="ion-padding-start" size="12">
         <InformationIcon
-          label={"Sentiment Across Your Document"}
+          label={"Overall Sentiment Analysis"}
           id="information-sentiment-across-document"
-          content={"How the sentiment reads across your document on a sentence by sentence basis"}
+          content={
+            "Examining the sentiment conveyed in each sentence of your document."
+          }
         />
       </IonCol>
 
@@ -504,7 +495,7 @@ export function BarChartComponent({ text }) {
 export function ChartComponent({ text }) {
   const chartRef = useRef(null);
   const legendRef = useRef(null);
-
+  const { nlp, its, as } = useWinkDataContext();
   useEffect(() => {
     if (text) {
       function createLineChart(text) {
@@ -517,7 +508,7 @@ export function ChartComponent({ text }) {
 
         //  console.log('markup: ', doc.out(its.markedUpText));
         doc.entities().each((e) => {
-          if (e.out(its.type) === "DATE") console.log(e.out());
+          // if (e.out(its.type) === "DATE") console.log(e.out());
         });
 
         const chart = new LineChart(
@@ -726,9 +717,11 @@ export function ChartComponent({ text }) {
 
       <IonCol className="ion-padding-start" size="12">
         <InformationIcon
-          label={"Information Density"}
+          label={"Sentence-Level Information Density"}
           id="information-density"
-          content={"The amount of information packed into each of your sentences."}
+          content={
+            "The amount of information packed into each of your sentences."
+          }
         />
       </IonCol>
 
@@ -759,9 +752,8 @@ export function ReadabilityStats({ checkFeatureAccess, text }) {
   const [readabilityScore, setReadabilityScore] = useState(null);
   const [cleanText, setCleanText] = useState("");
   const [doc, setDoc] = useState(null);
-  const [Its, setIts] = useState(its);
-  // Example usage:
 
+  const { nlp, its, as } = useWinkDataContext();
   // console.log(`Score: ${score}`);
   // console.log(`Grade: ${grade}`);
   // console.log(`Summary: ${summary}`);
@@ -770,13 +762,13 @@ export function ReadabilityStats({ checkFeatureAccess, text }) {
     // console.log("text", text);
 
     const pristineText = extractTextFromHtml(text);
-    console.log("raw text  ", pristineText);
+    // console.log("raw text  ", pristineText);
     setCleanText(pristineText);
     const doc = nlp.readDoc(pristineText);
     setDoc(doc);
 
     const readabilityStats = doc.out(its.readabilityStats);
-
+    console.log("readability stats", readabilityStats);
     setReadabilityScore(getGradeAndSummary(readabilityStats.fres));
     setReadabilityStats(readabilityStats);
   }, [text]);
@@ -796,42 +788,28 @@ export function ReadabilityStats({ checkFeatureAccess, text }) {
       <IonRow className="ion-justify-content-start">
         <IonCol className="ion-float-left" size="12">
           <WordCloud
-         
             text={cleanText}
             checkFeatureAccess={checkFeatureAccess}
-            its={Its}
+            its={its}
             doc={doc}
           />
         </IonCol>
-</IonRow>
+      </IonRow>
 
+      <InformationIcon
+        label="SEO Reachability Score"
+        id="seo-score-tools"
+        content="A SEO And Readability BreakDown Of Your Document."
+      />
 
+      <IonRow className="ion-padding-start">
+        <IonCol size="6"> Readability: </IonCol>
+        <IonCol size="6" className="ion-text-capitalize">
+          {readabilityScore.summary}
+          {/* <IonList><IonItem>Score:{readabilityStats.fres}</IonItem><IonItem>Reading Level: {readabilityScore.grade}  </IonItem><IonItem>Summary  {readabilityScore.summary} </IonItem></IonList> */}
+        </IonCol>
+      </IonRow>
 
-
-     
-          <InformationIcon
-            label="SEO Reachability Score"
-            id="seo-score-tools"
-            content="A SEO And Readability BreakDown Of Your Document."
-          />
- 
-
-
-
-
-
-        <IonRow className="ion-padding-start" >
-          <IonCol size="6"> Readability: </IonCol>
-          <IonCol size="6" className="ion-text-capitalize">
-            {readabilityScore.summary}
-            {/* <IonList><IonItem>Score:{readabilityStats.fres}</IonItem><IonItem>Reading Level: {readabilityScore.grade}  </IonItem><IonItem>Summary  {readabilityScore.summary} </IonItem></IonList> */}
-          </IonCol>
-        </IonRow>
-
-
-
-
-      
       <IonRow className="ion-padding-start">
         <IonCol>
           <IonLabel>Sentiment</IonLabel>
@@ -839,7 +817,7 @@ export function ReadabilityStats({ checkFeatureAccess, text }) {
         <IonCol>{getSentimentSummary(readabilityStats.sentiment)}</IonCol>
       </IonRow>
 
-      <IonRow className="ion-padding-start" >
+      <IonRow className="ion-padding-start">
         <IonCol>
           <IonLabel>Reading Time</IonLabel>
         </IonCol>
@@ -889,10 +867,6 @@ export function ReadabilityStats({ checkFeatureAccess, text }) {
           ))}
         </IonCol>
       </IonRow>
-
-
-
-
     </IonGrid>
   );
 }
@@ -901,14 +875,70 @@ export function ReadabilityStats({ checkFeatureAccess, text }) {
 
 function getGradeAndSummary(score) {
   const ranges = [
-    { min: 90, max: 100, grade: "5th grade", summary: "Very easy to read", ageRange: "Ages 10 and above", tip: "Ideal for reaching a broad audience, including young readers and those with lower reading levels. Use this content to introduce your product or service to a wide range of potential customers." },
-    { min: 80, max: 89, grade: "6th grade", summary: "Easy to read", ageRange: "Ages 11 and above",tip: "Well-suited for general audiences. Consider using this content for blog posts, informative articles, and introductory marketing materials to effectively promote your product, goods, or services." },
-    { min: 70, max: 79, grade: "7th grade", summary: "Fairly easy to read", ageRange: "Ages 12 and above",tip: "Great for reaching a slightly older audience. This level of content is suitable for blog posts, informative articles, and marketing materials targeting teenagers and young adults, helping you connect with your target market." },
-    { min: 60, max: 69, grade: "8th & 9th grade", summary: "Plain English", ageRange: "Ages 13 and above",tip: "Provides clear and straightforward communication. Use this content for in-depth articles, reports, and materials targeting a more mature audience, enabling you to convey the value of your product, goods, or services effectively." },
-    { min: 50, max: 59, grade: "10th to 12th grade", summary: "Fairly difficult to read", ageRange: "Ages 15 and above" ,tip: "Best suited for content aimed at high school students and above. Consider using this level for technical articles, advanced educational materials, and specialized marketing campaigns to showcase the unique features and benefits of your offering."},
-    { min: 30, max: 49, grade: "College", summary: "Difficult to read", ageRange: "Ages 18 and above", tip: "Targeting a college-educated audience is recommended for this level. Use this content for whitepapers, research reports, and specialized marketing materials to highlight the expertise and quality of your product, goods, or services." },
-    { min: 10, max: 29, grade: "College graduate", summary: "Very difficult to read", ageRange: "Ages 22 and above",tip: "Content at this level is best suited for professionals and academics. Utilize this for highly technical reports, industry-specific materials, and expert-level content to establish your product, goods, or services as a trusted authority in the field." },
-    { min: 0, max: 9, grade: "Professional", summary: "Extremely difficult to read", ageRange: "Ages 25 and above", tip: "Reserved for expert-level content and specialized industries. Ensure your audience has a high level of expertise in the subject matter before using this level of content for marketing purposes. This content can serve to reinforce your product, goods, or services' position as a top-tier solution in your industry."}
+    {
+      min: 90,
+      max: 100,
+      grade: "5th grade",
+      summary: "Very easy to read",
+      ageRange: "Ages 10 and above",
+      tip: "Ideal for reaching a broad audience, including young readers and those with lower reading levels. Use this content to introduce your product or service to a wide range of potential customers.",
+    },
+    {
+      min: 80,
+      max: 89,
+      grade: "6th grade",
+      summary: "Easy to read",
+      ageRange: "Ages 11 and above",
+      tip: "Well-suited for general audiences. Consider using this content for blog posts, informative articles, and introductory marketing materials to effectively promote your product, goods, or services.",
+    },
+    {
+      min: 70,
+      max: 79,
+      grade: "7th grade",
+      summary: "Fairly easy to read",
+      ageRange: "Ages 12 and above",
+      tip: "Great for reaching a slightly older audience. This level of content is suitable for blog posts, informative articles, and marketing materials targeting teenagers and young adults, helping you connect with your target market.",
+    },
+    {
+      min: 60,
+      max: 69,
+      grade: "8th & 9th grade",
+      summary: "Plain English",
+      ageRange: "Ages 13 and above",
+      tip: "Provides clear and straightforward communication. Use this content for in-depth articles, reports, and materials targeting a more mature audience, enabling you to convey the value of your product, goods, or services effectively.",
+    },
+    {
+      min: 50,
+      max: 59,
+      grade: "10th to 12th grade",
+      summary: "Fairly difficult to read",
+      ageRange: "Ages 15 and above",
+      tip: "Best suited for content aimed at high school students and above. Consider using this level for technical articles, advanced educational materials, and specialized marketing campaigns to showcase the unique features and benefits of your offering.",
+    },
+    {
+      min: 30,
+      max: 49,
+      grade: "College",
+      summary: "Difficult to read",
+      ageRange: "Ages 18 and above",
+      tip: "Targeting a college-educated audience is recommended for this level. Use this content for whitepapers, research reports, and specialized marketing materials to highlight the expertise and quality of your product, goods, or services.",
+    },
+    {
+      min: 10,
+      max: 29,
+      grade: "College graduate",
+      summary: "Very difficult to read",
+      ageRange: "Ages 22 and above",
+      tip: "Content at this level is best suited for professionals and academics. Utilize this for highly technical reports, industry-specific materials, and expert-level content to establish your product, goods, or services as a trusted authority in the field.",
+    },
+    {
+      min: 0,
+      max: 9,
+      grade: "Professional",
+      summary: "Extremely difficult to read",
+      ageRange: "Ages 25 and above",
+      tip: "Reserved for expert-level content and specialized industries. Ensure your audience has a high level of expertise in the subject matter before using this level of content for marketing purposes. This content can serve to reinforce your product, goods, or services' position as a top-tier solution in your industry.",
+    },
   ];
 
   for (const range of ranges) {
@@ -924,14 +954,24 @@ function getGradeAndSummary(score) {
 }
 function getSentimentSummary(score) {
   if (score >= 0.8) {
-    return "Very positive sentiment";
+    return "Inspiring - Consider the Impact";
   } else if (score >= 0.6) {
-    return "Positive sentiment";
+    return "Positive - Embrace the Potential";
   } else if (score >= 0.4) {
-    return "Neutral sentiment";
+    return "Hopeful Sentiment - Seek Growth";
   } else if (score >= 0.2) {
-    return "Negative sentiment";
+    return "Lacks Focus - Reflect on Choices";
+  } else if (score > 0) {
+    return "Cautious Sentiment - Be Mindful Of Your Audience";
+  } else if (score > -0.2) {
+    return "Concerning Issues In This Document - Evaluate Negatives";
+  } else if (score > -0.4) {
+    return "Serious Issues In This Document - Address Issues";
+  } else if (score > -0.6) {
+    return "Urgent Issues In This Document - Take Precautions";
+  } else if (score > -0.8) {
+    return "Overhaul This Document - Assess the Situation";
   } else {
-    return "Very negative sentiment";
+    return "Destructive - Reconsider Choices!";
   }
 }

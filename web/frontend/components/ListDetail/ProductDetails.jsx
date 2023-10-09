@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, useMemo } from "react";
 // import { Redirect } from 'react_router_dom';
-import { Editor } from "@tinymce/tinymce-react";
+// import { Editor } from "@tinymce/tinymce-react";
 // import "tinymce/tinymce";
 // import "tinymce/models/dom/model";
 import {
@@ -34,8 +34,7 @@ import {
   exitOutline,
   informationCircle,
 } from "ionicons/icons";
-import {trash, pictures} from "../../assets";
-
+import { trash, pictures, beehive, honeyPot } from "../../assets";
 
 import { Context, SharedData } from "../../utilities/data-context.js";
 import { shortenText } from "../../utilities/utility-methods";
@@ -47,12 +46,15 @@ import {
   useDataProvidersContext,
   ImageLoader,
   // Tinymce,
-  ImageCache 
+  ImageCache,
+  useTinyMCEDataContext, NoImagePlaceHolder
 } from "../../components";
 // import { navigate } from "ionicons/icons";
 
 export function ProductDetails({ data }) {
   //const fetch = useAuthenticatedFetch();
+const {Editor} = useTinyMCEDataContext()
+
   const {
     includeProductImagesFeature,
     chestnut_sourwood_acacia,
@@ -64,7 +66,7 @@ export function ProductDetails({ data }) {
 
     clearSelection,
     imageSelectionChanged,
-
+    DataProviderNavigate,
     imageSelectionModalIsOpen,
     assignImageSelectionModalIsOpen,
   } = useDataProvidersContext();
@@ -84,306 +86,299 @@ export function ProductDetails({ data }) {
 
   return (
     <>
-    <IonGrid style={{ padding: 0, margin: 0 }}>
-      <IonRow>
-        <IonCol>
-          <IonRow>
-            <IonCol key="first" size="12">
-              {images.length ? (
-                images
-                  .slice(0, 1)
-                  .map((image, index) => (
-                    <ImageCache
-                      key={index}
-                      className={`ion-padding ${
-                        index > 0 ? "ion-hide-sm-down" : ""
-                      }`}
-                      src={image.transformedSrc}
-                      alt={title}
-                    />
-                  ))
-              ) : (
-                <IonImg
-                  key="placeholderImageProductDetails"
-                  className="ion-padding"
-                  src="https://placehold.co/300x200?text=No+Image+Available"
-                />
-              )}
-            </IonCol>
+      <IonGrid style={{ padding: 0, margin: 0 }}>
+        <IonRow>
+          <IonCol>
+            <IonRow>
+              <IonCol key="first" size="12">
+                {images.length ? (
+                  images
+                    .slice(0, 1)
+                    .map((image, index) => (
+                      <ImageCache
+                        key={index}
+                        className={`ion-padding ${
+                          index > 0 ? "ion-hide-sm-down" : ""
+                        }`}
+                        src={image.transformedSrc}
+                        alt={title}
+                      />
+                    ))
+                ) : (
+                  <NoImagePlaceHolder
+                    key="placeholderImageProductDetails"
+                    className="ion-padding"
+                  />
+                )}
+              </IonCol>
 
-            <IonCol
-              style={{ display: "flex", justifyContent: "center" }}
-              size="12"
-            >
-              <IonItem lines="none">
-                <IonLabel
-                  // id="hover-trigger"
-                  style={{ fontSize: "12px" }}
-                >
-                  {shortenText(title)}
-                </IonLabel>
-
-                <IonPopover
-                  key={title}
-                  translucent={true}
-                  animated="true"
-                  // trigger={title.length > 30 ? "hover-trigger" : ""}
-                  // triggerAction="hover"
-                >
-                  <IonContent className="ion-padding">{title}</IonContent>
-                  <IonText color="secondary">
-                    <sub>
-                      <IonIcon icon={exitOutline}></IonIcon> click outside box
-                      to close
-                    </sub>
-                  </IonText>
-                </IonPopover>
-              </IonItem>
-            </IonCol>
-          </IonRow>
-        </IonCol>
-        <IonCol key="second" size="12" size-md="7">
-          <IonRow>
-            <IonCol size="12">
-              {" "}
-              <IonButtons className="ion-float-end">
-                <IonButton
-                  onClick={clearSelection}
-                  fill="clear"
-                  size="small"
-                color="primary"
-                  className="ion-float-end ion-padding-top"
-                >
-                  Clear Selections
-                </IonButton>
-                <IonButton  color="neural"
-                  onClick={clearSelection}
-                  className="ion-float-start"
-                  size="large"
-                >
-                  <IonIcon
-                    slot="icon-only"
-                  
-                    icon={trash}
-                  ></IonIcon>
-                </IonButton>
-              </IonButtons>
-            </IonCol>
-
-            <IonCol style={{ padding: 0, margin: 0 }} size="12">
-              <IonRow className={"ion-align-items-end"}>
-                <IonCol key="fourth" size="12">
-                  <IonItem lines="none">
-                    <Editor
-                      value={description}
-                      inline
-                      disabled={true}
-                      init={{
-                        branding: false,
-                        promotion: false,
-                        // theme: false,
-                        //   content_css:"tinymce/skins/content/tinymce-5/content.min.css",
-                        inline_styles: true,
-                        inline_boundaries: true,
-
-                        menubar: false,
-                        toolbar_sticky: false,
-                        min_height: 400,
-                        height: 400,
-                        readyOnly: true,
-                        disable: true,
-                      }}
-                    />
-                    {/* <ReactRenderingComponent
-                      text={description || "no description"}
-                    /> */}
-                  </IonItem>
-                </IonCol>
-                <IonCol key="fifth" size="5" offset="7">
-                  <IonItem
-                    button="false"
-                    lines="none"
-                    color="transparent"
-                    detail="false"
+              <IonCol
+                style={{ display: "flex", justifyContent: "center" }}
+                size="12"
+              >
+                <IonItem lines="none">
+                  <IonLabel
+                    // id="hover-trigger"
+                    style={{ fontSize: "12px" }}
                   >
-                    <IonItem lines="none" slot="end" color="transparent">
-                      <IonRadioGroup
-                  
-                        slot="start"
-                        allowEmptySelection={true}
-                        onIonChange={(e) =>
-                          // console.log('-----',Boolean(e.detail.value)) &&
-                          optionChange(
-                            "description",
-                            Boolean(e?.detail?.value)
-                              ? extractTextFromHtml(description).slice(10)
-                              : null
-                          )
-                        }
-                      >
-                        <IonRadio
-                       
-                          key="descriptionInclude"
-                          style={{ fontSize: "12px" }}
-                          color="success"
-                          value="include"
-                          checked={productDetailOptions.find(
-                            ([key, value]) => key === "description"
-                          )}
-                          className="ion-padding"
-                        >
-                          include
-                        </IonRadio>
-                      </IonRadioGroup>
-                    </IonItem>
-                    <IonIcon
-                      size="small"
-                      color="secondary"
-                      slot="end"
-                      aria-label="Tap on include add the existing description in the composition assist"
-                      id="include-description-hover-trigger"
-                      icon={informationCircleOutline}
-                    ></IonIcon>
-                  </IonItem>
-                </IonCol>{" "}
-                <IonPopover
-                  key="Include existing description in composition"
-                  translucent={true}
-                  animated="true"
-                  trigger="include-description-hover-trigger"
-                  triggerAction="hover"
-                >
-                  <IonContent className="ion-padding">
-                    <IonText>
-                      <p>Include existing description in composition.</p>
-                    </IonText>
+                    {shortenText(title)}
+                  </IonLabel>
+
+                  <IonPopover
+                    key={title}
+                    translucent={true}
+                    animated="true"
+                    // trigger={title.length > 30 ? "hover-trigger" : ""}
+                    // triggerAction="hover"
+                  >
+                    <IonContent className="ion-padding">{title}</IonContent>
                     <IonText color="secondary">
-                      {" "}
                       <sub>
-                        {" "}
                         <IonIcon icon={exitOutline}></IonIcon> click outside box
                         to close
                       </sub>
                     </IonText>
-                  </IonContent>
-                </IonPopover>
-              </IonRow>
-            </IonCol>
+                  </IonPopover>
+                </IonItem>
+              </IonCol>
+            </IonRow>
+          </IonCol>
+          <IonCol key="second" size="12" size-md="7">
+            <IonRow>
+              <IonCol size="12">
+                {" "}
+                <IonButtons className="ion-float-end">
+                  <IonButton
+                    onClick={clearSelection}
+                    fill="clear"
+                    size="small"
+                    color="primary"
+                    className="ion-float-end ion-padding-top"
+                  >
+                    Clear Selections
+                  </IonButton>
+                  <IonButton
+                    color="neural"
+                    onClick={clearSelection}
+                    className="ion-float-start"
+                    size="large"
+                  >
+                    <IonIcon slot="icon-only" icon={trash}></IonIcon>
+                  </IonButton>
+                </IonButtons>
+              </IonCol>
 
-            <SelectOptions
-              optionName={Object.keys({ tags }).pop()}
-              options={tags}
-              // selectedProperty={"title"}
-            />
-            <SelectOptions
-              optionName={Object.keys({ collections }).pop()}
-              options={collections}
-              selectedProperty={"title"}
-            />
+              <IonCol style={{ padding: 0, margin: 0 }} size="12">
+                <IonRow className={"ion-align-items-end"}>
+                  <IonCol key="fourth" size="12">
+                    <IonItem lines="none">
+                      <Editor
+                        value={description}
+                        inline
+                        disabled={true}
+                        init={{
+                          branding: false,
+                          promotion: false,
+                          // theme: false,
+                          //   content_css:"tinymce/skins/content/tinymce-5/content.min.css",
+                          inline_styles: true,
+                          inline_boundaries: true,
 
-            {metafields &&
-              metafields.length > 0 &&
-              (() => {
-                const values = metafields.map(
-                  (metafield, index) => metafield.value
-                );
-
-                return (
-                  <SelectOptions
-                    key="metafields"
-                    optionName={Object.keys({ metafields }).pop()}
-                    options={values}
-                    sizes={{ size: "12", "size-md": "4" }}
-                  />
-                );
-              })()}
-
-            <IonCol size="12">
-              <IonRow>
-                {options &&
-                  options.map((option, index) => {
-                    let { name, values } = option;
-                    name = name.toLowerCase();
-                    const key = "option_" + name;
-
-                    return (
-                      <SelectOptions
-                        key={index}
-                        // selectedProperty={"title"}
-                        optionName={key}
-                        options={values}
-                        sizes={{ size: "12", "size-md": "4" }}
+                          menubar: false,
+                          toolbar_sticky: false,
+                          min_height: 400,
+                          height: 400,
+                          readyOnly: true,
+                          disable: true,
+                        }}
                       />
-                    );
-                  })}
-              </IonRow>
-            </IonCol>
-          </IonRow>
+                      {/* <ReactRenderingComponent
+                      text={description || "no description"}
+                    /> */}
+                    </IonItem>
+                  </IonCol>
+                  <IonCol key="fifth" size="5" offset="7">
+                    <IonItem
+                      button="false"
+                      lines="none"
+                      color="transparent"
+                      detail="false"
+                    >
+                      <IonItem lines="none" slot="end" color="transparent">
+                        <IonRadioGroup
+                          slot="start"
+                          allowEmptySelection={true}
+                          onIonChange={(e) =>
+                            // console.log('-----',Boolean(e.detail.value)) &&
+                            optionChange(
+                              "description",
+                              Boolean(e?.detail?.value)
+                                ? extractTextFromHtml(description).slice(10)
+                                : null
+                            )
+                          }
+                        >
+                          <IonRadio
+                            key="descriptionInclude"
+                            style={{ fontSize: "12px" }}
+                            color="success"
+                            value="include"
+                            checked={productDetailOptions.find(
+                              ([key, value]) => key === "description"
+                            )}
+                            className="ion-padding"
+                          >
+                            include
+                          </IonRadio>
+                        </IonRadioGroup>
+                      </IonItem>
+                      <IonIcon
+                        size="small"
+                        color="secondary"
+                        slot="end"
+                        aria-label="Tap on include add the existing description in the composition assist"
+                        id="include-description-hover-trigger"
+                        icon={informationCircleOutline}
+                      ></IonIcon>
+                    </IonItem>
+                  </IonCol>{" "}
+                  <IonPopover
+                    key="Include existing description in composition"
+                    translucent={true}
+                    animated="true"
+                    trigger="include-description-hover-trigger"
+                    triggerAction="hover"
+                  >
+                    <IonContent className="ion-padding">
+                      <IonText>
+                        <p>Include existing description in composition.</p>
+                      </IonText>
+                      <IonText color="secondary">
+                        {" "}
+                        <sub>
+                          {" "}
+                          <IonIcon icon={exitOutline}></IonIcon> click outside
+                          box to close
+                        </sub>
+                      </IonText>
+                    </IonContent>
+                  </IonPopover>
+                </IonRow>
+              </IonCol>
 
-          <IonRow>
-            <IonCol size="12"></IonCol>
-            {variants &&
-              variants.map((variant, index) => {
-                const {
-                  id,
-                  namespace,
-                  value,
-                  price,
-                  inventoryQuantity,
-                  title,
-                  weight,
-                  weightUnit,
-                } = variant;
-                const displayVariant = JSON.parse(JSON.stringify(variant));
-                displayVariant.title = displayVariant.title.toLowerCase();
+              <SelectOptions
+                optionName={Object.keys({ tags }).pop()}
+                options={tags}
+                // selectedProperty={"title"}
+              />
+              <SelectOptions
+                optionName={Object.keys({ collections }).pop()}
+                options={collections}
+                selectedProperty={"title"}
+              />
 
-                delete displayVariant.id;
+              {metafields &&
+                metafields.length > 0 &&
+                (() => {
+                  const values = metafields.map(
+                    (metafield, index) => metafield.value
+                  );
 
-                for (const [key, value] of Object.entries(displayVariant)) {
-                  if (!value) {
-                    delete displayVariant[key];
+                  return (
+                    <SelectOptions
+                      key="metafields"
+                      optionName={Object.keys({ metafields }).pop()}
+                      options={values}
+                      sizes={{ size: "12", "size-md": "4" }}
+                    />
+                  );
+                })()}
+
+              <IonCol size="12">
+                <IonRow>
+                  {options &&
+                    options.map((option, index) => {
+                      let { name, values } = option;
+                      name = name.toLowerCase();
+                      const key = "option_" + name;
+
+                      return (
+                        <SelectOptions
+                          key={index}
+                          // selectedProperty={"title"}
+                          optionName={key}
+                          options={values}
+                          sizes={{ size: "12", "size-md": "4" }}
+                        />
+                      );
+                    })}
+                </IonRow>
+              </IonCol>
+            </IonRow>
+
+            <IonRow>
+              <IonCol size="12"></IonCol>
+              {variants &&
+                variants.map((variant, index) => {
+                  const {
+                    id,
+                    namespace,
+                    value,
+                    price,
+                    inventoryQuantity,
+                    title,
+                    weight,
+                    weightUnit,
+                  } = variant;
+                  const displayVariant = JSON.parse(JSON.stringify(variant));
+                  displayVariant.title = displayVariant.title.toLowerCase();
+
+                  delete displayVariant.id;
+
+                  for (const [key, value] of Object.entries(displayVariant)) {
+                    if (!value) {
+                      delete displayVariant[key];
+                    }
                   }
-                }
-                if (displayVariant.weight) {
-                  displayVariant.weight += " " + displayVariant.weightUnit;
-                }
-                delete displayVariant.weightUnit;
+                  if (displayVariant.weight) {
+                    displayVariant.weight += " " + displayVariant.weightUnit;
+                  }
+                  delete displayVariant.weightUnit;
 
-                const key =
-                  "variant_" +
-                  displayVariant.title.replace(/ /g, "_").toLowerCase();
+                  const key =
+                    "variant_" +
+                    displayVariant.title.replace(/ /g, "_").toLowerCase();
 
-                const values = Object.entries(displayVariant).map(
-                  ([key, value]) => key + ": " + value
-                );
+                  const values = Object.entries(displayVariant).map(
+                    ([key, value]) => key + ": " + value
+                  );
 
-                return (
-                  <SelectOptions
-                    key={index}
-                    optionName={key}
-                    options={values}
-                    optionChange={optionChange}
-                    validUser={chestnut_sourwood_acacia}
-                    sizes={{ size: "12", "size-md": "4" }}
-                  />
-                );
-              })}{" "}
-          </IonRow>
-        </IonCol>
-      </IonRow>
-   
+                  return (
+                    <SelectOptions
+                      key={index}
+                      optionName={key}
+                      options={values}
+                      optionChange={optionChange}
+                      validUser={chestnut_sourwood_acacia}
+                      sizes={{ size: "12", "size-md": "4" }}
+                    />
+                  );
+                })}{" "}
+            </IonRow>
+          </IonCol>
+        </IonRow>
 
-      <IonModal key="typeHead" isOpen={imageSelectionModalIsOpen}>
-        <AppTypeahead
-          title="Include Images"
-          items={images}
-          selectedItems={selectedImages}
-          onSelectionCancel={() => assignImageSelectionModalIsOpen(false)}
-          onSelectionChange={imageSelectionChanged}
-        />
-      </IonModal>
-    </IonGrid>
-    <div
+        <IonModal key="typeHead" isOpen={imageSelectionModalIsOpen}>
+          <AppTypeahead
+            title="Include Images"
+            items={images}
+            selectedItems={selectedImages}
+            onSelectionCancel={() => assignImageSelectionModalIsOpen(false)}
+            onSelectionChange={imageSelectionChanged}
+          />
+        </IonModal>
+      </IonGrid>
+      <div
         style={{ padding: 0, margin: 0 }}
         size="12"
         key="ImageSelection"
@@ -391,39 +386,50 @@ export function ProductDetails({ data }) {
       >
         <IonItem lines="none" button={false} key="images" detail={false}>
           <IonButtons slot="end">
-            {" "}
-            {/* <IonLabel slot="end"> */}
-            <IonText
-              style={{ fontSize: "11px" }}
-              className="ion-text-wrap  ion-padding-top"
-              color={includeProductImagesFeature.hasAccess ? "" : "medium"}
+          
+          {includeProductImagesFeature.hasAccess ? "" :<>
+             <IonButton
+              className="ion-padding-top"
+              size="small"
+        
+              fill="clear"
             >
               {includeProductImagesFeature.message("")}
-            </IonText>
-            {/* </IonLabel> */}
+            </IonButton>
+
+            <IonButton onClick={e => DataProviderNavigate("/subscriptions") } slot="icon-only" >
+              <IonIcon size="large" icon={honeyPot}></IonIcon>
+            </IonButton>
+          </>}
+          
+         
+            
+        
             <IonButton
               className="ion-padding-top"
               size="small"
+              color="primary"
+              fill="clear"
               disabled={!includeProductImagesFeature.hasAccess}
               onClick={() => {
                 assignImageSelectionModalIsOpen((prevIsOpen) => !prevIsOpen);
               }}
-              color="primary"
-              fill="clear"
             >
               Select Images
             </IonButton>
-            <IonButton 
-            color="neural"
-            disabled={!includeProductImagesFeature.hasAccess}
-             onClick={() => {
-              assignImageSelectionModalIsOpen((prevIsOpen) => !prevIsOpen);
-            }} 
-            size="large">
-            <IonIcon slot="icon-only" icon={pictures} 
-              //src="../assets/pictures.svg"
-              ></IonIcon>
-            </IonButton>{" "}
+
+            <IonButton
+              color="neural"
+              size="large"
+              disabled={!includeProductImagesFeature.hasAccess}
+              onClick={() => {
+                assignImageSelectionModalIsOpen((prevIsOpen) => !prevIsOpen);
+              }}
+            >
+              <IonIcon slot="icon-only" icon={pictures}></IonIcon>
+            </IonButton>
+
+
             <IonIcon
               size="small"
               color="secondary"
@@ -432,6 +438,7 @@ export function ProductDetails({ data }) {
               id="Image-options-hover-trigger"
               icon={informationCircleOutline}
             ></IonIcon>
+
           </IonButtons>
         </IonItem>
 

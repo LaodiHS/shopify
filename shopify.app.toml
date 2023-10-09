@@ -1,8 +1,8 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-name = "test-vibefenwei"
+name = "test-neuralnectar"
 client_id = "b2919712bc4555c05f978c56eb4f5750"
-application_url = "https://lauren-pipeline-nextel-allowance.trycloudflare.com"
+application_url = "https://sword-iii-pumps-bad.trycloudflare.com"
 embedded = true
 
 [access_scopes]
@@ -11,9 +11,9 @@ scopes = "write_products,read_content,write_content"
 
 [auth]
 redirect_urls = [
-  "https://lauren-pipeline-nextel-allowance.trycloudflare.com/auth/callback",
-  "https://lauren-pipeline-nextel-allowance.trycloudflare.com/auth/shopify/callback",
-  "https://lauren-pipeline-nextel-allowance.trycloudflare.com/api/auth/callback"
+  "https://sword-iii-pumps-bad.trycloudflare.com/auth/callback",
+  "https://sword-iii-pumps-bad.trycloudflare.com/auth/shopify/callback",
+  "https://sword-iii-pumps-bad.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

@@ -13,17 +13,28 @@ import React, {
   createRef,
 } from "react";
 import {
-  useIonViewDidEnter,
-  useIonViewWillEnter,
-  useIonViewDidLeave,
-  useIonViewWillLeave,
+  // useIonViewDidEnter,
+  // useIonViewWillEnter,
+  // useIonViewDidLeave,
+  // useIonViewWillLeave,
   IonContent,
   IonGrid,
   IonRow,
   IonCol,
   IonSpinner,
+  IonText,
+  IonButtons,
+  IonButton,
+  IonIcon,
+  IonPage,
+  IonList,
+  IonProgressBar
 } from "@ionic/react";
-import { useAuthenticatedFetch, useAppBridge } from "@shopify/app-bridge-react";
+import {
+  //useAuthenticatedFetch,
+  useAppBridge,
+} from "@shopify/app-bridge-react";
+ import {  productViewCache} from "../../utilities/store"
 import { useLocation, useNavigate } from "react_router_dom";
 import { request } from "@shopify/app-bridge/actions/AuthCode";
 import { useShopifyContext } from "../providers/ShopifyContext";
@@ -34,6 +45,8 @@ import { useIonToast, useIonRouter } from "@ionic/react";
 import { AnimatedContent } from "./";
 import { NavigationRefs } from "./";
 
+import { honeyPot, readingTree, honeyCombGridDrop, girlReading, readingBag } from "../../assets";
+import { useAuthenticatedFetch } from "../../hooks";
 // import {TRAINING_DATA} from 'https://storage.googleapis.com/jmstore/TensorFlowJS/EdX/TrainingData/fashion-mnist.js';
 // async function loadYOLOModel() {
 //   const model = await loadGraphModel('path_to_yolo_model/model.json');
@@ -123,6 +136,185 @@ import { NavigationRefs } from "./";
 //   reader.readAsDataURL(blob);
 // }
 
+
+
+
+
+
+
+
+
+
+
+
+
+let fetchO;
+let presentToastO;
+async function fetchDataWithCache({ url, method, body }) {
+ 
+  const cached_url_method_body_parameters =
+    url + JSON.stringify(method) + JSON.stringify(body);
+
+  if (mapState.has(cached_url_method_body_parameters)) {
+    // console.log(
+    //   "This is a cached fetchDataWithCache call: ",
+    //   mapState.get(cached_url_method_body_parameters)
+    // );
+    return mapState.get(cached_url_method_body_parameters);
+  }
+
+  let retryCount = 3;
+  let success = false;
+
+  const options = {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+    },
+  };
+
+  if (body) {
+    try {
+      options.body = JSON.stringify(body);
+    } catch (error) {
+      console.log("json stringify error", error);
+    }
+  }
+
+  
+
+  while (!success && retryCount > 0) {
+    try {
+      const response = await fetchO(url, options);
+
+      if (response.ok) {
+        const data = await response.json();
+        success = true;
+
+        if (response.status === 404) {
+          return [];
+        }
+        mapActions.set(cached_url_method_body_parameters, data.data);
+        return data.data;
+      } else {
+        retryCount--;
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+      }
+    } catch (error) {
+      retryCount--;
+
+      if (retryCount === 0) {
+        presentToastO({
+          message: "There was a network error! Please try again later.",
+          duration: 5000,
+          position: "middle",
+        });
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+      }
+    }
+  }
+}
+
+async function uncachedFetchData({ url, method = "GET", body }) {
+
+  if (!fetch) {
+    throw new Error("authenticated fetch required");
+  }
+
+  const boxed = { data: null, error: null };
+  try {
+    const options = {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    };
+
+    if (body) {
+      options.body = JSON.stringify(body);
+    }
+
+    const response_data = await fetchO(url, options);
+    const data = await response_data.json();
+
+    boxed.data = data?.data;
+    if (response_data.error) {
+      boxed.error = response_data.error;
+    }
+    if (data?.error) {
+      boxed.error = data.error;
+    }
+  } catch (error) {
+    if (error.code === 500) {
+      presentToastO({
+        message: "There was a network error! Please try again later.",
+        duration: 5000,
+        position: "middle", // top, bottom, middle
+        onDidDismiss: (e) => {
+          //setDisableButtons(false);
+        },
+      });
+    }
+    presentToastO({
+      message: JSON.stringify(error),
+      duration: 5000,
+      position: "middle", // top, bottom, middle
+      onDidDismiss: (e) => {
+        //setDisableButtons(false);
+      },
+    });
+    console.log("error", error);
+    boxed.error = error || null;
+  }
+  return boxed;
+}
+
+function useMap(initialEntries = []) {
+  const [mapStateForUseMap, setMapStateForUseMap] = useState(new Map(initialEntries));
+
+  const mapActions = {
+    get: (key) => mapStateForUseMap.get(key),
+    set: (key, value) => {
+      if (mapStateForUseMap.get(key) !== value) {
+        const newMap = new Map(mapStateForUseMap);
+        newMap.set(key, value);
+        setMapStateForUseMap(newMap);
+      }
+    },
+    delete: (key) => {
+      if (mapStateForUseMap.has(key)) {
+        const newMap = new Map(mapStateForUseMap);
+        newMap.delete(key);
+        setMapStateForUseMap(newMap);
+      }
+    },
+    clear: () => {
+      if (mapStateForUseMap.size > 0) {
+        setMapStateForUseMap(new Map());
+      }
+    },
+    entries: () => mapStateForUseMap.entries(),
+    forEach: (callback) => mapStateForUseMap.forEach(callback),
+    has: (key) => mapStateForUseMap.has(key),
+    keys: () => mapStateForUseMap.keys(),
+    values: () => mapStateForUseMap.values(),
+    get size() {
+      return mapStateForUseMap.size;
+    },
+  };
+
+  return [mapStateForUseMap, mapActions];
+}
+
+
+
+
+
+
+
+
+
+
 const DataProvidersContext = createContext(null);
 
 export function useDataProvidersContext() {
@@ -169,25 +361,87 @@ function createEventEmitter() {
 }
 const eventEmitter = createEventEmitter();
 export function DataProvidersProvider({ children }) {
+  const [user, setUser] = useState({});
+  const [subscriptions, setSubscriptions] = useState(["free"]);
+  const [currentSession, setCurrentSession] = useState({});
+  const [sessionLoaded, setSessionLoaded] = useState(false);
+  const [subscriptionRetrievalLoading, setSubscriptionRetrievalLoading] =useState(false);
+  const [contextualOptions, setContextualOptions] = useState({});
+  const [selectedCollections, setSelectedCollections] = useState([]);
+  const [presentToast] = useIonToast();
+  presentToastO = presentToast;
+  const [selectedImageText, setSelectedImageText] = useState("0 Items");
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [selectedImageMap, setSelectedImageMap] = useState({});
+  const [languageOptions, setLanguageOptions] = useState([]);
+  const [assistRequestInstance, setAssistRequestInstance] = useState(null);
+  const [imageSelectionModalIsOpen, setImageSelectionModalIsOpen] = useState(false);
+  const [wordList, setWordList] = useState([
+    "Reliable",
+    "Innovative",
+    "Stylish",
+    "Durable",
+    "Efficient",
+    "High-quality",
+    "Versatile",
+    "User-friendly",
+    "Affordable",
+    "Sleek",
+    "Cutting-edge",
+    "Compact",
+    "Eco-friendly",
+    "Elegant",
+    "Powerful",
+    "Convenient",
+    "Modern",
+    "Safe",
+    "Customizable",
+    "Premium",
+    "Lightweight",
+    "Trendy",
+    "Practical",
+    "Functional",
+    "Sophisticated",
+    "Trustworthy",
+    "Eco-conscious",
+    "Luxurious",
+    "Ergonomic",
+    "Sleek",
+  ]);
+
+  const [clearAssistResultMethod, setClearAssistResultMethod] = useState(new Map());
+  const [refDictionary, setRefDictionary] = useState(NavigationRefs);
+  const [mappedLegend, setMappedLegend] = useState([[]]);
+  const [legendReversed, setLegendReversed] = useState({});
+  const [legend, setLegend] = useState({});
+  const [contentSaved, setContentSaved] = useState(false);
+  const [serverSentEventLoading, setServerSentEventLoading] = useState(false);
+  const [updateArticleMethod, setUpdateArticleMethod] = useState(null);
+  const [markupText, setMarkupText] = useState("");
   const fetch = useAuthenticatedFetch(); // Make sure you have this hook defined somewhere
+  fetchO= fetch;
   const navigate = useNavigate();
   const [plans, setPlans] = useState({});
   const app = useAppBridge();
   const context = useShopifyContext();
 
-  useEffect(async () => {
-    const token = await getSessionToken(app);
+  // useEffect(async () => {
+  //   const token = await getSessionToken(app);
 
-    let session = await app.getState();
+  //   let session = await app.getState();
 
-    return () => {};
-  }, []);
+  //   return () => {};
+  // }, []);
 
-  const [user, setUser] = useState({});
-  const [subscriptions, setSubscriptions] = useState(["free"]);
-  const [currentSession, setCurrentSession] = useState({});
-  const [subscriptionRetrievalLoading, setSubscriptionRetrievalLoading] =
-    useState(false);
+
+
+
+
+
+
+
+
+
 
   const setRouteSubscriptions = (activeSubscriptions, activeSession) => {
     setSubscriptions(activeSubscriptions);
@@ -219,13 +473,14 @@ export function DataProvidersProvider({ children }) {
           return;
         }
         const data = await subscriptionsResponse.json();
-
+        console.log('session loaded')
+        setSessionLoaded(true);
         const { activeSubscriptions, session, user, redirectUri } = data;
         const redirect = Redirect.create(app);
         console.log("subscription redirectUri: ", redirectUri);
 
         setPlans(data.plans);
-        console.log("user", user);
+      
         assignUser(user);
         setRouteSubscriptions(activeSubscriptions, session);
 
@@ -235,16 +490,16 @@ export function DataProvidersProvider({ children }) {
 
         if (!DEPLOYMENT_ENV) {
           if (redirectUri) {
-            localStorage.clear();
+            productViewCache.clear();
           } else {
-            localStorage.setItem("plans", JSON.stringify(data.plans));
-            localStorage.setItem("user", JSON.stringify(user));
+            productViewCache.set("plans", data.plans);
+            productViewCache.set("user", user);
 
-            localStorage.setItem(
+            productViewCache.set(
               "activeSubscriptions",
-              JSON.stringify(activeSubscriptions)
+              activeSubscriptions
             );
-            localStorage.setItem("session", JSON.stringify(session));
+            productViewCache.set("session",session);
           }
         }
         redirect.dispatch(Redirect.Action.REMOTE, { url: redirectUri });
@@ -258,17 +513,19 @@ export function DataProvidersProvider({ children }) {
       setSubscriptionRetrievalLoading(false);
     };
     if (!DEPLOYMENT_ENV) {
-      const activeSubscriptions = localStorage.getItem("activeSubscriptions");
-      const session = localStorage.getItem("session");
-      const plans = localStorage.getItem("plans");
-      const user = localStorage.getItem("user");
+      const activeSubscriptions = productViewCache.get("activeSubscriptions");
+      const session = productViewCache.get("session");
+      const plans = productViewCache.get("plans");
+      const user = productViewCache.get("user");
       if (plans && user && activeSubscriptions && session) {
+
         try {
-          setPlans(JSON.parse(plans));
-          assignUser(JSON.parse(user));
+          setSessionLoaded(true);
+          setPlans(plans);
+          assignUser(user);
           setRouteSubscriptions(
-            JSON.parse(activeSubscriptions),
-            JSON.parse(session)
+            activeSubscriptions,
+            session
           );
         } catch (error) {
           console.log("error", error);
@@ -328,12 +585,50 @@ export function DataProvidersProvider({ children }) {
       if (required.length > 1) {
         required[required.length - 1] = "or " + required[required.length - 1];
       }
-      const requiredLabel = required.join(", ");
+      const requiredLabel = required;
+
+      if (!requiredLabel) return null;
 
       return {
         hasAccess: false,
-        message: (label) => `${label}: ( with ${requiredLabel} subscription. )`,
-        some: () => `Some Features Require A ${requiredLabel} Subscription.`,
+        lockButton: (text) => (
+          <IonList>
+            <IonItem
+              className="ion-padding-top ion-text-capitalize"
+              button="true"
+              slot="start"
+              fill="clear"
+              onClick={(e) => DataProviderNavigate("/subscriptions")}
+              color="warning"
+            >
+              {requiredLabel && requiredLabel?.slice(0, 1)[0]}{" "}
+              <IonLabel slot="start" className="ion-padding-top">
+                Honey Members{" "}
+              </IonLabel>{" "}
+              <IonIcon size="large" slot="end" icon={honeyPot}></IonIcon>
+            </IonItem>
+          </IonList>
+        ),
+        message: (label) => (
+          <IonText
+            style={{ cursor: "pointer" }}
+            onClick={(e) => DataProviderNavigate("/subscriptions")}
+            color="warning"
+            className="ion-text-capitalize"
+          >
+            {requiredLabel && requiredLabel?.slice(0, 1)[0]} Honey Members
+          </IonText>
+        ),
+        some: () => (
+          <IonText
+            style={{ cursor: "pointer" }}
+            onClick={(e) => DataProviderNavigate("/subscriptions")}
+            color="warning"
+            className="ion-text-capitalize"
+          >
+            Some Features Require A ${requiredLabel} Subscription.
+          </IonText>
+        ),
       };
     }
   }
@@ -364,173 +659,15 @@ export function DataProvidersProvider({ children }) {
     chestnut_sourwood_acacia,
   };
 
-  const [contextualOptions, setContextualOptions] = useState({});
   function assignContextualOptions(updateOptions) {
     modifyState(setContextualOptions, updateOptions);
   }
 
-  const [presentToast] = useIonToast();
+ 
 
-  function useMap(initialEntries = []) {
-    const [mapState, setMapState] = useState(new Map(initialEntries));
 
-    const mapActions = {
-      get: (key) => mapState.get(key),
-      set: (key, value) => {
-        if (mapState.get(key) !== value) {
-          const newMap = new Map(mapState);
-          newMap.set(key, value);
-          setMapState(newMap);
-        }
-      },
-      delete: (key) => {
-        if (mapState.has(key)) {
-          const newMap = new Map(mapState);
-          newMap.delete(key);
-          setMapState(newMap);
-        }
-      },
-      clear: () => {
-        if (mapState.size > 0) {
-          setMapState(new Map());
-        }
-      },
-      entries: () => mapState.entries(),
-      forEach: (callback) => mapState.forEach(callback),
-      has: (key) => mapState.has(key),
-      keys: () => mapState.keys(),
-      values: () => mapState.values(),
-      get size() {
-        return mapState.size;
-      },
-    };
 
-    return [mapState, mapActions];
-  }
 
-  const [mapState, mapActions] = useMap();
-
-  async function fetchDataWithCache({ url, method, body }) {
-    const cached_url_method_body_parameters =
-      url + JSON.stringify(method) + JSON.stringify(body);
-
-    if (mapState.has(cached_url_method_body_parameters)) {
-      // console.log(
-      //   "This is a cached fetchDataWithCache call: ",
-      //   mapState.get(cached_url_method_body_parameters)
-      // );
-      return mapState.get(cached_url_method_body_parameters);
-    }
-
-    let retryCount = 3;
-    let success = false;
-
-    const options = {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-      },
-    };
-
-    if (body) {
-      try {
-        options.body = JSON.stringify(body);
-      } catch (error) {
-        console.log("json stringify error", error);
-      }
-    }
-
-    while (!success && retryCount > 0) {
-      try {
-        const response = await fetch(url, options);
-
-        if (response.ok) {
-          const data = await response.json();
-          success = true;
-
-          if (response.status === 404) {
-            return [];
-          }
-          mapActions.set(cached_url_method_body_parameters, data.data);
-          return data.data;
-        } else {
-          retryCount--;
-          await new Promise((resolve) => setTimeout(resolve, 3000));
-        }
-      } catch (error) {
-        retryCount--;
-
-        if (retryCount === 0) {
-          presentToast({
-            message: "There was a network error! Please try again later.",
-            duration: 5000,
-            position: "middle",
-          });
-          await new Promise((resolve) => setTimeout(resolve, 3000));
-        }
-      }
-    }
-  }
-
-  const uncachedFetchData = async ({ url, method = "GET", body }) => {
-    if (!fetch) {
-      throw new Error("authenticated fetch required");
-    }
-
-    const boxed = { data: null, error: null };
-    try {
-      const options = {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      };
-
-      if (body) {
-        options.body = JSON.stringify(body);
-      }
-
-      const response_data = await fetch(url, options);
-      const data = await response_data.json();
-
-      boxed.data = data?.data;
-      if (response_data.error) {
-        boxed.error = response_data.error;
-      }
-      if (data?.error) {
-        boxed.error = data.error;
-      }
-    } catch (error) {
-      if (error.code === 500) {
-        presentToast({
-          message: "There was a network error! Please try again later.",
-          duration: 5000,
-          position: "middle", // top, bottom, middle
-          onDidDismiss: (e) => {
-            //setDisableButtons(false);
-          },
-        });
-      }
-      presentToast({
-        message: JSON.stringify(error),
-        duration: 5000,
-        position: "middle", // top, bottom, middle
-        onDidDismiss: (e) => {
-          //setDisableButtons(false);
-        },
-      });
-      console.log("error", error);
-      boxed.error = error || null;
-    }
-    return boxed;
-  };
-
-  const [selectedCollections, setSelectedCollections] = useState([]);
-
-  const [selectedImageText, setSelectedImageText] = useState("0 Items");
-  const [selectedImages, setSelectedImages] = useState([]);
-  const [selectedImageMap, setSelectedImageMap] = useState({});
-  const [languageOptions, setLanguageOptions] = useState([]);
   const handleSelectChange = async (event, category) => {
     console.log("select_change", event, category);
     category = category.trim();
@@ -609,45 +746,9 @@ export function DataProvidersProvider({ children }) {
     }
   };
 
-  const [imageSelectionModalIsOpen, setImageSelectionModalIsOpen] =
-    useState(false);
-
   function assignImageSelectionModalIsOpen(bool_value) {
     modifyState(setImageSelectionModalIsOpen, bool_value);
   }
-
-  const [wordList, setWordList] = useState([
-    "Reliable",
-    "Innovative",
-    "Stylish",
-    "Durable",
-    "Efficient",
-    "High-quality",
-    "Versatile",
-    "User-friendly",
-    "Affordable",
-    "Sleek",
-    "Cutting-edge",
-    "Compact",
-    "Eco-friendly",
-    "Elegant",
-    "Powerful",
-    "Convenient",
-    "Modern",
-    "Safe",
-    "Customizable",
-    "Premium",
-    "Lightweight",
-    "Trendy",
-    "Practical",
-    "Functional",
-    "Sophisticated",
-    "Trustworthy",
-    "Eco-conscious",
-    "Luxurious",
-    "Ergonomic",
-    "Sleek",
-  ]);
 
   // const permutations = generatePermutations(wordList);
 
@@ -699,8 +800,6 @@ export function DataProvidersProvider({ children }) {
     router.push(path);
   }
 
-  const [assistRequestInstance, setAssistRequestInstance] = useState(null);
-
   function assignAssistRequest(updateOption) {
     modifyState(setAssistRequestInstance, updateOption);
   }
@@ -712,10 +811,6 @@ export function DataProvidersProvider({ children }) {
       console.error("assist request not assigned");
     }
   }
-
-  const [clearAssistResultMethod, setClearAssistResultMethod] = useState(
-    new Map()
-  );
 
   function assignClearAssistMethod(key, updateOption) {
     modifyState(setClearAssistResultMethod, (prevState) => {
@@ -730,18 +825,13 @@ export function DataProvidersProvider({ children }) {
     clearAssistResultMethod.get("clearSentences")();
   }
 
-  const [updateArticleMethod, setUpdateArticleMethod] = useState(null);
-
   function assignUpdateArticleMethod(updateOption) {
     modifyState(setUpdateArticleMethod, updateOption);
   }
 
-  const [markupText, setMarkupText] = useState("");
   function assignMarkupText(text) {
     modifyState(setMarkupText, text);
   }
-
-  const [refDictionary, setRefDictionary] = useState(NavigationRefs);
 
   // useEffect(() => {
 
@@ -773,13 +863,9 @@ export function DataProvidersProvider({ children }) {
     );
   }
 
-  const [serverSentEventLoading, setServerSentEventLoading] = useState(false);
-
   function assignServerSentEventLoading(updateOption) {
     modifyState(setServerSentEventLoading, updateOption);
   }
-
-  const [contentSaved, setContentSaved] = useState(false);
 
   function assignContentSaved(updateOptions) {
     modifyState(setContentSaved, updateOptions);
@@ -787,9 +873,6 @@ export function DataProvidersProvider({ children }) {
       setContentSaved(false);
     }, 5000);
   }
-  const [mappedLegend, setMappedLegend] = useState([[]]);
-  const [legendReversed, setLegendReversed] = useState({});
-  const [legend, setLegend] = useState({});
 
   function assignLegend(rawLegend) {
     setMappedLegend(rawLegend);
@@ -804,7 +887,20 @@ export function DataProvidersProvider({ children }) {
     console.log("formattedLegend:  ", formattedLegend);
   }
 
+
+
+
+
+
+
+
+
+
+
+
   const value = {
+    sessionLoaded,
+
     mappedLegend,
     legend,
     legendReversed,
@@ -853,27 +949,8 @@ export function DataProvidersProvider({ children }) {
 
   return (
     <DataProvidersContext.Provider value={value}>
-      {subscriptionRetrievalLoading ? <Loading /> : children}
+      { children}
     </DataProvidersContext.Provider>
   );
 }
 
-function Loading() {
-  return (
-    <IonContent>
-      <IonGrid style={{ height: "100vh" }}>
-        <IonRow
-          className="ion-justify-content-center ion-align-items-center"
-          style={{ height: "100%" }}
-        >
-          <IonCol size="auto">
-            <IonSpinner
-              style={{ width: "100px", height: "100px" }}
-              color="tertiary"
-            ></IonSpinner>
-          </IonCol>
-        </IonRow>
-      </IonGrid>
-    </IonContent>
-  );
-}

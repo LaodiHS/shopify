@@ -1,10 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-
-import { useNavigate } from "react_router_dom";
-import { Page, Layout, Image, Text } from "@shopify/polaris";
-import { ListDetailComponent } from "./ListDetailComponent";
-import { Context } from "../utilities/data-context";
-
 import {
   IonItem,
   IonList,
@@ -32,23 +26,34 @@ import {
   IonPage,
   IonSpinner,
   IonIcon,
-  useIonViewWillEnter,
+  IonChip,
+
 } from "@ionic/react";
+
 import {
-  PaidFeature,
-  ProductsCard,
   useProductDataContext,
   useDataProvidersContext,
   ImageCache,
   AnimatedContent,
+  useWinkDataContext,
+
 } from "../components";
-import { deskLamp, pictures } from "../assets";
+import { alertCircleOutline } from "ionicons/icons";
+import { deskLamp,  imagePlaceHolder } from "../assets";
+
 export function ListComponent() {
+
+
+
   const { productsData, defineProductData } = useProductDataContext();
+
+
   const [products, setProducts] = useState([]);
   const [mainDisplayImages, setMainDisplayImages] = useState({});
   const elementRefs = useRef([]);
   const { DataProviderNavigate } = useDataProvidersContext();
+  const { cardDataStats, generateComplementaryColor, getColor } =
+    useWinkDataContext();
   const [cardTitleStyle, setCardTitleStyle] = useState({
     fontSize: "1.2rem", // Use relative 'rem' unit for font size
     fontWeight: "bold",
@@ -61,24 +66,29 @@ export function ListComponent() {
   useEffect(() => {
     setProducts(productsData.productsData);
 
+
     const mainImagesSrc = productsData?.productsData?.reduce(
       (acc, product, productIndex) => {
         acc[productIndex] = {
           img:
-            product?.images[0]?.transformedSrc ||
-            "https://placehold.co/300x200?text=No+Image+Available",
+            product?.images[0]?.transformedSrc
+              ||imagePlaceHolder
+            ,
           index: 0,
         };
         return acc;
       },
       {}
     );
+    console.log('images changed', mainImagesSrc)
     setMainDisplayImages(mainImagesSrc);
     elementRefs.current = elementRefs.current.slice(
       0,
       productsData.productsData.length
     );
   }, [productsData.productsData]);
+
+  
   function handleThumbnailClick(productIndex, imageIndex) {
     setMainDisplayImages((prev) => {
       return {
@@ -92,12 +102,12 @@ export function ListComponent() {
   }
 
   async function createNarrative(e, item, index, ref) {
-    AnimatedContent({ current: ref }, "fadeOutTopRight", {
+    AnimatedContent({ current: ref }, "fadeOutUpBig", {
       duration: 0.3,
       onComplete: async () => {
         ref.style.display = "none";
         defineProductData(index);
-      await  DataProviderNavigate(
+        await DataProviderNavigate(
           "/product-details",
           { target: "host" },
           {
@@ -123,10 +133,10 @@ export function ListComponent() {
                   sizeSm="12"
                   sizeXl="3"
                 >
-                  <IonCard>
-                    <IonCardHeader>
+                  <IonCard key="listComponentCard">
+                    <IonCardHeader key="IonCardHeader">
                       <IonCardTitle style={{ marginBottom: "16px" }}>
-                        <IonSkeletonText
+                        <IonSkeletonText 
                           animated
                           style={{ height: "300px", width: "80%" }}
                         />
@@ -214,6 +224,12 @@ export function ListComponent() {
                 </IonCol>
               );
             }
+            const cardStats = cardDataStats(product.description);
+
+            const sentiment = cardStats.readabilityStats().sentiment;
+            const percentageTagsMatch = cardStats.metaTagPMatchTextPercent(
+              product.tags
+            );
 
             const { images } = product;
 
@@ -239,29 +255,28 @@ export function ListComponent() {
                         ? product.title.substring(0, 100) + "..."
                         : product.title}
                     </IonCardTitle>
+                    <IonCardSubtitle
+                      style={{ color: getColor(sentiment.score) }}
+                    >
+                      SEO Health: {sentiment.status}{" "}
+                    </IonCardSubtitle>
                   </IonCardHeader>
                   <IonCardContent key={productIndex + "cardContent"}>
                     <IonGrid key={`imageProductTitleImageGrid_${productIndex}`}>
                       <IonRow key={productIndex + "row"}>
                         <IonCol
                           key={productIndex + "col"}
-                          size="6"
+                          size="12"
                           sizeMd="12"
                           sizeSm="12"
                         >
+            
                           <ImageCache
                             style={{ minHeight: "300px" }}
                             key={`imageProductTitleImageCache_${productIndex}`}
-                            src={mainDisplayImages[productIndex]?.img}
+                            src={mainDisplayImages[productIndex]?.img }
                           />
-                          {/* <IonImg
-                            key={`DisplayImageProductsDisplay_${productIndex}`}
-                            src={
-                              images[selectedImageIndex]?.transformedSrc ||
-                              "https://placehold.co/300x200?text=No+Image+Available"
-                            }
-
-                          /> */}
+                     
                           <div
                             key={
                               productIndex + "displayContainer" + parentKeyScope
@@ -272,35 +287,43 @@ export function ListComponent() {
                               Top: "10px",
                             }}
                           >
-                            {images.map((image, imageIndex) => (
-                              <ImageCache
-                                sliderImg={true}
-                                key={
-                                  `thumbnail_${productIndex}_${imageIndex}` +
-                                  image.transformedSrc
-                                }
-                                src={image.transformedSrc}
-                                style={{
-                                  width: "60px",
-                                  height: "60px",
-                                  border:
-                                    imageIndex ===
-                                    mainDisplayImages[productIndex].index
-                                      ? "2px solid blue"
-                                      : "none",
-                                  marginRight: "5px",
-                                  cursor: "pointer",
-                                }}
-                                onClick={() =>
-                                  handleThumbnailClick(productIndex, imageIndex)
-                                }
-                              />
-                            ))}
+                            {images.map((image, imageIndex) => {
+                              return (
+                               
+                              
+                                <ImageCache
+                                  sliderImg={true}
+                                  key={
+                                    `thumbnail_${productIndex}_${imageIndex}` +
+                                    image.transformedSrc
+                                  }
+                                  src={image.transformedSrc}
+                                  style={{
+                                    width: "60px",
+                                    height: "60px",
+                                    border:
+                                      imageIndex ===
+                                      mainDisplayImages[productIndex].index
+                                        ? "2px solid blue"
+                                        : "none",
+                                    marginRight: "5px",
+                                    cursor: "pointer",
+                                  }}
+                                  onClick={() =>
+                                    handleThumbnailClick(
+                                      productIndex,
+                                      imageIndex
+                                    )
+                                  }
+                                />
+                              
+                              );
+                            })}
                           </div>
                         </IonCol>
                         <IonCol
                           key={product.description + productIndex}
-                          size="6"
+                          size="12"
                           sizeMd="12"
                           sizeSm="12"
                         >
@@ -312,10 +335,43 @@ export function ListComponent() {
                               ? product.description.substring(0, 100) + "..."
                               : product.description}
                           </p>
+                          <h4
+                            key={productIndex + "sentiment"}
+                            className="ion-padding-top"
+                          >
+                            Description Analysis:
+                          </h4>
+
+                          <IonItem lines="none">
+                            <IonLabel
+                              style={{ color: getColor(sentiment.score) }}
+                              className="ion-text-wrap"
+                            >
+                              {sentiment.val}
+                            </IonLabel>{" "}
+                            <IonIcon
+                              size="large"
+                              style={{
+                                wordBreak: "break-word",
+                                color: getColor(sentiment.score),
+                              }}
+                              icon={
+                                sentiment.score <= 0.39
+                                  ? alertCircleOutline
+                                  : ""
+                              }
+                            />
+                          </IonItem>
+                          {(product?.tags?.length || "") && (
+                            <h4
+                              key={productIndex + "Tags ion-padding-bottom"}
+                              className="ion-padding-bottom ion-padding-top"
+                            >
+                              Tags :
+                            </h4>
+                          )}
                           <IonBadge
-                            key={
-                              product.description + productIndex + "ionBadge"
-                            }
+                            key={"tags" + productIndex + "ionBadge"}
                             style={{ wordBreak: "break-word" }}
                             className="ion-text-wrap"
                             color="secondary"
@@ -323,7 +379,44 @@ export function ListComponent() {
                             {product.tags.slice(0, 5).join(", ")}
                             {product.tags.length > 5 && <li>...</li>}
                           </IonBadge>
-                          <h4 key={productIndex + "variants"}>Variants:</h4>
+
+                          <h4
+                            key={productIndex + "TagsMatch"}
+                            className="ion-padding-top"
+                          >
+                            Tag Match:
+                          </h4>
+
+                          <IonItem lines="none">
+                            <IonLabel
+                              style={{
+                                color: getColor(percentageTagsMatch / 100),
+                              }}
+                              className="ion-text-wrap"
+                            >
+                              {percentageTagsMatch}% of the tags match your
+                              product description.
+                            </IonLabel>
+                            <IonIcon
+                              size="large"
+                              style={{
+                                wordBreak: "break-word",
+                                color: getColor(percentageTagsMatch / 100),
+                              }}
+                              icon={
+                                percentageTagsMatch <= 50
+                                  ? alertCircleOutline
+                                  : ""
+                              }
+                            />
+                          </IonItem>
+
+                          <h4
+                            key={productIndex + "variants"}
+                            className="ion-padding-bottom ion-padding-top"
+                          >
+                            Variants:
+                          </h4>
                           <ul
                             key={productIndex + "wordBreak"}
                             style={{ wordBreak: "break-word" }}
@@ -388,13 +481,21 @@ export function ListComponent() {
                                 fill="clear"
                                 disabled={true}
                                 size="large"
+                                style={{
+                                  backgroundImage: `url(${deskLamp})`,
+                                  backgroundPosition: "right",
+                                  backgroundSize: "contain",
+                                  backgroundRepeat: "no-repeat",
+                                  height: "80px",
+                                  width: "200px",
+                                }}
                               >
                                 {" "}
-                                <IonIcon
+                                {/* <IonIcon
                                   slot="icon-only"
                                   color="dark"
                                   icon={deskLamp}
-                                ></IonIcon>
+                                ></IonIcon> */}
                               </IonButton>
                               <IonButton
                                 className="ion-padding-top ion-padding-right"
@@ -409,7 +510,7 @@ export function ListComponent() {
                                   )
                                 }
                                 expand="block"
-                                size="small"
+                                size="large"
                                 color="warning"
                               >
                                 Enhance Content

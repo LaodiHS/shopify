@@ -56,7 +56,7 @@ export  function Search({animationRef}) {
     <IonPage ref={animationRef}>
     <IonHeader>
       <IonToolbar>
-        <IonTitle>VibeFenWei Product Search</IonTitle>
+        <IonTitle>Neural Nectar</IonTitle>
         </IonToolbar>
         <IonToolbar>
       <IonSearchbar

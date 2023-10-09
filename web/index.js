@@ -24,19 +24,12 @@ import { authentication } from "./authentication.js";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 import { request } from "./cache-to-file.js";
-import compression from "compression"
-import {handleDescriptionEndpoints, handleArticleEndpoints, handlePostEndpoints,
+import compression from "compression";
+import {
+  handleDescriptionEndpoints,
+  handleArticleEndpoints,
+  handlePostEndpoints,
 } from "./description-requests.js";
-
-
-
-
-
-
-
-
-
-
 
 import * as userStore from "./userStore.js";
 
@@ -56,18 +49,15 @@ const log = (message, obj) =>
     })
   );
 
-
-  
-
 async function startServer() {
   try {
     const redisClient = await connectToRedis();
 
-  
     userStore.setRedis(redisClient);
     await userStore.createUsersFolderAsync();
     const { queue, worker } = await setupBullMQServer(redisClient);
 
+    
     // Middleware to handle async function errors
     // const asyncErrorHandler = (asyncFn) => (req, res, next) => {
     //   asyncFn(req, res, next).catch(next);
@@ -80,17 +70,14 @@ async function startServer() {
     console.log("NODE_ENV--->", process.env.NODE_ENV);
     // process.env.NODE_ENV = "production";
 
-    
     const STATIC_PATH =
       process.env.NODE_ENV === "production"
         ? `${process.cwd()}/frontend/dist`
         : `${process.cwd()}/frontend`;
 
     const app = await authentication();
-    // const csp = "frame-ancestors 'self' vibefenwei.fly.dev";
+    // const csp = "frame-ancestors 'self' neuralnectar.fly.dev";
 
-    
-    
     serverSideEvent(app, redisClient, queue);
     handleDescriptionEndpoints(app, queue);
     handleArticleEndpoints(app, queue);
@@ -98,12 +85,8 @@ async function startServer() {
 
     app.get("/api/current/subscription/status", async (req, res) => {
       try {
-
-
-
         const session = res.locals.shopify.session;
 
-     
         const subscriptions = await shopify.api.billing.subscriptions({
           session,
         });
@@ -120,12 +103,6 @@ async function startServer() {
           user = await updateSubscription(shop, subscription.name);
         }
 
-
-
-
-        
-      
-
         const activeSubscriptions = subscriptions.activeSubscriptions.map(
           (sub) => sub.name
         );
@@ -137,7 +114,7 @@ async function startServer() {
           redirectUri = await shopify.api.billing.request({
             session,
             plan: plans[0],
-            isTest
+            isTest,
           });
 
           activeSubscriptions.push("free");
@@ -158,11 +135,6 @@ async function startServer() {
         });
       }
     });
-
- 
-
-
-
 
     app.post(
       "/api/subscription/selection",
@@ -229,7 +201,6 @@ async function startServer() {
           //   session: session,
           // });
 
-
           const { plan } = req.body;
           const { session } = res.locals.shopify;
 
@@ -238,7 +209,7 @@ async function startServer() {
           const hasPayment = await shopify.api.billing.check({
             session,
             plans: plans,
-            isTest
+            isTest,
           });
 
           let activeSubs;
@@ -248,7 +219,7 @@ async function startServer() {
             });
 
             const { activeSubscriptions } = subscriptions;
-            activeSubs = activeSubscriptions
+            activeSubs = activeSubscriptions;
             for (const { id, name, test } of activeSubscriptions) {
               try {
                 // await shopify.api.billing.cancel({
@@ -261,14 +232,15 @@ async function startServer() {
             }
           }
 
-
           if (plans.includes(plan)) {
             const redirectUrl = await shopify.api.billing.request({
               session,
               plan: plan,
               isTest: true,
             });
-          activeSubs = activeSubs ? activeSubs.map(sub => sub.name).pop() : "free";
+            activeSubs = activeSubs
+              ? activeSubs.map((sub) => sub.name).pop()
+              : "free";
             console.log("returnUrl", redirectUrl);
             res.status(200).send({ redirectUrl, subscriptions: [activeSubs] });
           } else {
@@ -277,7 +249,7 @@ async function startServer() {
                 header: "Successfully Unsubscribed",
                 body: "You Have Been Successfully Unsubscribed",
               },
-               subscriptions: [activeSubs],
+              subscriptions: [activeSubs],
             });
           }
         } catch (err) {
@@ -288,7 +260,6 @@ async function startServer() {
         }
       }
     );
-
 
     app.post("/api/welcome/subscriber", async (req, res) => {
       let status = 200;
@@ -324,7 +295,6 @@ async function startServer() {
     //   })
     // );
 
-    
     contentGenerator(app);
     app.get("/api/user", async (_req, res) => {
       const userData = await shopify.api.rest.User.all({
@@ -339,8 +309,6 @@ async function startServer() {
 
       let status = 200;
       let error = null;
-
-
 
       try {
         let params = {
@@ -372,6 +340,7 @@ async function startServer() {
       }
     });
 
+    
     productSearch(app);
     app.get("/api/inventory-item/", async (_req, res) => {
       if (_req.params.id && _req.params.id !== "") {
@@ -398,7 +367,6 @@ async function startServer() {
       let resp = null;
       let capacityReached = false;
 
-      
       try {
         console.log("session", res.locals.shopify.session);
         resp = await createUsageRecord(res.locals.shopify.session);
@@ -479,7 +447,6 @@ async function startServer() {
       //     pageInfo = response.pageInfo;
       //   console.log('pageInfo-->', pageInfo)
 
-
       let status = 200;
       let error = null;
       let data = null;
@@ -503,7 +470,7 @@ async function startServer() {
         error = err.message;
         data = null; // Reset data to null in case of an error
       }
-      console.log('data-->', data);
+      console.log("data-->", data);
       // console.log("paging Data====>:", data);
       res.status(status).send({ success: status === 200, data, error });
     });
@@ -529,11 +496,6 @@ async function startServer() {
       res.status(status).send({ success: status === 200, data, error });
     });
 
-    
-
-
-
-
     // app.get("/api/products/create", async (_req, res) => {
     //   let status = 200;
     //   let error = null;
@@ -549,9 +511,10 @@ async function startServer() {
     // });
     const dir_name = dirname(fileURLToPath(import.meta.url));
 
-
-    const completePath = path.join(dir_name, "node_modules", "tinymce").replace("/web/", "/");
-      console.log('processCW',process.cwd())
+    const completePath = path
+      .join(dir_name, "node_modules", "tinymce")
+      .replace("/web/", "/");
+    console.log("processCW", process.cwd());
     console.log("complete path: " + completePath);
     app.use("/tinymce", express.static(completePath));
 
@@ -560,10 +523,7 @@ async function startServer() {
     // setting the index to true will fail, because it is checked by shopify.
     app.use(serveStatic(STATIC_PATH, { index: false }));
 
-
     // app.use(express.urlencoded({ extended: false }));
-
-
 
     // const ensureInstalledOnShop = (req, res, next) => {
     //   console.log("ensure installed on shopify");
@@ -579,9 +539,8 @@ async function startServer() {
 
     // app.use("/*", shopify.ensureInstalledOnShop());
 
-    app.use("/*", 
-    shopify.ensureInstalledOnShop(),
-     async (_req, res, _next) => {
+    
+    app.use("/*", shopify.ensureInstalledOnShop(), async (_req, res, _next) => {
       // console.log('middleware', shopify.ensureInstalledOnShop())
 
       return res

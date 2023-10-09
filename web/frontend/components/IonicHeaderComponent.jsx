@@ -8,6 +8,7 @@ import {
   IonGrid,
   IonRow,
   IonCol,
+  IonProgressBar,
 } from "@ionic/react";
 import {
   descriptionWorkStation,
@@ -20,18 +21,19 @@ import {
   halfMoon,
   readingTree,
   honeyCombGridDrop,
+  
 } from "../assets";
-export function IonicHeaderComponent({ centerText, left, right }) {
-  useEffect(() => {
-    // Update the usage whenever tokenUsage changes
-  }, []);
+export function IonicHeaderComponent({ centerText, left, right, progress = 100 , buffer=100, type="determinate"}) {
+ 
+
   centerText = centerText || "neural nectar";
   return (
     <IonHeader 
-    // translucent={true}
+     translucent={true}
+    style={{"--background":"none"}}
     >
       <IonToolbar
-     
+       style={{"--background":"none"}}
       >
         {left}
         <IonTitle    style={{
@@ -39,6 +41,7 @@ export function IonicHeaderComponent({ centerText, left, right }) {
           backgroundPosition: "center",
           backgroundSize: "contain",
           backgroundRepeat: "no-repeat",
+          padding:"20px",
           minHeight: "40px",
         }}className="ion-text-center">
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
@@ -52,6 +55,9 @@ export function IonicHeaderComponent({ centerText, left, right }) {
         </IonTitle>
 
         {right}
+        <IonProgressBar 
+        //color="neural" 
+        type={type} buffer={buffer} color="dark" value={progress} />
       </IonToolbar>
     </IonHeader>
   );

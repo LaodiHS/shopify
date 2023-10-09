@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo, } from "react";
-import { useAuthenticatedFetch, useAppBridge } from "@shopify/app-bridge-react";
 import { useIonToast } from "@ionic/react";
 import { useDataProvidersContext } from "../../components";
 

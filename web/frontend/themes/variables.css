@@ -365,6 +365,7 @@ http://ionicframework.com/docs/theming/ */
 	--ion-color-shade: var(--ion-color-shoe-shade);
 	--ion-color-tint: var(--ion-color-shoe-tint);
 }
-* {
-  font-family: "Roboto", sans-serif;
+
+:root {
+  color-scheme: light only;
 }

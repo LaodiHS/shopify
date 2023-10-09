@@ -10,7 +10,7 @@ import {
   IonChip,
 } from "@ionic/react";
 import { VariableSizeList } from "react-window";
-import { Marker, useDataProvidersContext } from "../components";
+import { Marker, useDataProvidersContext, NoImagePlaceHolder } from "../components";
 
 function SentenceHighlight({ text, color }) {
   return (
@@ -439,10 +439,9 @@ const cleanText = (text, selectedImageMap) => {
 
         if (label.includes("_jpg")) {
           parts.push(
-            `<img src=${
-              selectedImageMap[label]?.url ||
-              "https://placehold.co/300x200?text=No+Image+Available"
-            }  />`
+            selectedImageMap[label]?.url ? <img src={
+              selectedImageMap[label]?.url} />  
+               : <NoImagePlaceHolder />
           );
         }
 

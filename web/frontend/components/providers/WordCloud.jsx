@@ -3,7 +3,7 @@ import cloud from "d3-cloud";
 import * as d3 from "d3";
 import debounce from "lodash.debounce";
 import { IonRow, IonCol, IonButton, IonText } from "@ionic/react";
-import { beehive } from "../../assets";
+import { beehive, honeyPot } from "../../assets";
 
 import tinycolor from "tinycolor2";
 import { useDataProvidersContext, InformationIcon,DocumentImagery } from "../";
@@ -52,7 +52,7 @@ const colorMap = {};
 colorMap.NOUN = "#67001f";
 colorMap.PROPN = "#67001f";
 colorMap.ADJ = "#878787";
-colorMap.VERB = "#1a1a1a";
+colorMap.VERB = "#996600";
 colorMap.ADV = "#d6604d";
 function wordsFromTextNLP(doc, its) {
   const tokensFTByPoS = {};
@@ -95,8 +95,10 @@ function generateWordCloud(layout, svgRef, svgContainer, words) {
   const ScaleFontValueToRange = createScalerForWords(words);
   const width = svgContainer.current.offsetWidth;
 
+const computedHeight = words.length * 4.75
+const height = computedHeight < 200 ? 200 : computedHeight;
   layout
-    .size([width, words.length * 4.75])
+    .size([width, height])
     .words(words)
     .padding(7)
     .rotate(0)
@@ -207,7 +209,7 @@ export function WordCloud({ text, doc, its, checkFeatureAccess }) {
         <IonCol
           onClick={(e) => DataProviderNavigate("/subscriptions")}
           style={{
-            backgroundImage: `url(${beehive})`,
+            backgroundImage: `url(${honeyPot})`,
             height: "100px",
             backgroundPosition: "center",
             backgroundSize: "contain",
@@ -284,14 +286,10 @@ export function WordCloud({ text, doc, its, checkFeatureAccess }) {
 
   return (
     <>
-      <InformationIcon label="The Most Important Ideas In your Document" id="word-cloud-seo-tools" content=" These words don't reflect the most commonly used terms in your document. Rather, they offer a visual representation of the pivotal ideas that resonate with your reader, encapsulating the essence of the document in their mental imagery" />
+      <InformationIcon label="Key Concepts in Your Document" id="word-cloud-seo-tools" content="These words not only capture the most frequently used terms in your document, but they also provide a visual representation of the key concepts that strongly resonate with your reader. They encapsulate the core essence of the document in vivid mental imagery" />
        <IonCol size="12" className="ion-text-center ion-text-capitalize">
-       <DocumentImagery text={text} />     
+       {/* <DocumentImagery text={text} />      */}
       </IonCol>
-
-
-
-
       <IonCol
         className={
           `ion-text-center ion-text-capitalize ${importantIdeas.length
@@ -300,7 +298,7 @@ export function WordCloud({ text, doc, its, checkFeatureAccess }) {
         }
         size="12"
       >
-        <IonText className="ion-text-center" color="warning">There are currently no ideas in your document.</IonText>
+        <IonText className="ion-text-center" color="warning">There is currently not enough data in your document.</IonText>
       </IonCol>
       <IonCol
         key="svgContainer"

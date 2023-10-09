@@ -1,169 +1,220 @@
 import { createContext } from "react";
-
+import * as zip from "lzutf8";
 const ProductsMap = new Map();
 const cachedCursorKeys = new Set();
+function isInt(n) {
+  return Number(n) === n && n % 1 === 0;
+}
 
-export const productViewCache = {
-  set: function (key, value) {
-    try {
-      ProductsMap.set(key, JSON.parse(JSON.stringify(value)));
-      localStorage.setItem(key, JSON.stringify(value));
-    } catch (error) {
-      console.log("error", error);
+function isFloat(n) {
+  return Number(n) === n && n % 1 !== 0;
+}
+function isBase64(str) {
+  try {
+    return btoa(atob(str)) == str;
+  } catch (error) {
+    return false;
+  }
+}
+
+function encodeSingleDigit(num) {
+  console.log("encoded", num);
+  const b = btoa(String(num));
+  console.log('b:   ',b);
+  return b;
+}
+function decodeSingleDigit(num) {
+  console.log("numb", num);
+  const a = parseInt(atob(num));
+  console.log("decoded   ", a);
+  return a;
+}
+
+function encode(key, pageObject){
+
+  if (isInt(pageObject) || isFloat(pageObject)) {
+    ProductsMap.set(key, pageObject);
+    console.log('pageObject:    ',pageObject)
+    sessionStorage.setItem(zip.compress(key,{outputEncoding: "StorageBinaryString"}), zip.compress(encodeSingleDigit(pageObject),{outputEncoding: "StorageBinaryString"}) );
+    return;
+  }
+
+  sessionStorage.setItem(zip.compress(key,{outputEncoding: "StorageBinaryString"}), zip.compress(stringifiedObject,{outputEncoding: "StorageBinaryString"}) );
+
+  try {
+    const stringifiedObject = JSON.stringify(pageObject);
+
+    ProductsMap.set(key, JSON.parse(stringifiedObject));
+    sessionStorage.setItem(zip.compress(key,{outputEncoding: "StorageBinaryString"}), zip.compress(stringifiedObject,{outputEncoding: "StorageBinaryString"}) );
+
+
+  } catch (error) {
+    console.error("An error occurred while storing data:", error);
+  }
+}
+
+function decode(key){
+
+  if (!key) {
+    throw new Error("Please provide a key to get the cache.");
+  }
+
+    const element =   sessionStorage.getItem(zip.compress(key,{outputEncoding: "StorageBinaryString"}));
+
+    if (element) {
+      console.log('element', element, typeof(element))
+        const page =  zip.decompress(element,{inputEncoding: "StorageBinaryString"} )
+      if (isBase64(page)) {
+        console.log('page ', page)
+        return decodeSingleDigit(page);
+      }
+
+      return JSON.parse(page);
     }
-  },
-  get: function (key) {
+
+
+
+  try {
     if (ProductsMap.has(key)) {
       return ProductsMap.get(key);
     }
-    const page = localStorage.getItem(key);
-    if (page) {
-      try {
-        return JSON.parse(page);
-      } catch (error) {
-        console.log("error", error);
-      }
+
+    // const keyE = JSON.stringify(zip.compress(key)) 
+
+
+
+
+
+    // if(sessionStorage.getItem(keyE)){
+
+  } catch (error) {
+    console.error("An error occurred while retrieving data:", error);
+  }
+
+  return null;
+
+
+}
+function setCache(key, pageObject, isCursor = false) {
+  if (!key) {
+    throw new Error("Please provide a key to set the cache.");
+  }
+  if (isCursor) {
+    console.log("cursor---key", key);
+    cachedCursorKeys.add(key);
+  }
+ 
+           // encode(key, pageObject)
+
+  try {
+    const stringifiedObject = JSON.stringify(pageObject);
+
+    ProductsMap.set(key, JSON.parse(stringifiedObject));
+    sessionStorage.setItem(key, stringifiedObject) ;
+
+
+  } catch (error) {
+    console.error("An error occurred while storing data:", error);
+  }
+}
+
+function getCache(key) {
+  if (!key) {
+    throw new Error("Please provide a key to get the cache.");
+  }
+
+  
+    
+
+
+
+  try {
+    if (ProductsMap.has(key)) {
+      return ProductsMap.get(key);
     }
 
-    return null;
-  },
+    // const keyE = JSON.stringify(zip.compress(key)) 
+
+
+  const element = sessionStorage.getItem(key);
+
+  
+      
+  
+      return JSON.parse(element);
+
+
+    // if(sessionStorage.getItem(keyE)){
+
+  } catch (error) {
+    console.error("An error occurred while retrieving data:", error);
+  }
+
+  return null;
+}
+
+function clearKey(key) {
+  sessionStorage.removeItem(key);
+  ProductsMap.delete(key);
+}
+
+function clearCursorKey(key) {
+  if (cachedCursorKeys.has(key)) {
+    cachedCursorKeys.delete(key);
+    sessionStorage.removeItem(key);
+    ProductsMap.delete(key);
+  }
+}
+
+export const productViewCache = {
+  set: setCache,
+  get: getCache,
+  clear: clearAllCaches,
+  clearKey,
 };
-
+// for product cursors look for setPage
 export const pageIngCache = {
-  setPage: function (key, pageObject) {
-    if (!key) {
-      throw new Error(
-        "Please provide a key to the pageIngCache setPage method"
-      );
-    }
-
-    try {
-      ProductsMap.set(key, JSON.parse(JSON.stringify(pageObject)));
-      localStorage.setItem(key, JSON.stringify(pageObject));
-      cachedCursorKeys.add(key);
-    } catch (error) {
-      console.error("An error occurred while storing data:", error);
-    }
-  },
-
-  getPage: function (key) {
-    if (!key) {
-      throw new Error(
-        "Please provide a key to the pageIngCache getPage method"
-      );
-    }
-
-    try {
-      if (ProductsMap.has(key)) {
-        return ProductsMap.get(key);
-      }
-      const page = localStorage.getItem(key);
-      if (page) {
-        return JSON.parse(page);
-      }
-    } catch (error) {
-      console.error("An error occurred while retrieving data:", error);
-    }
-
-    return null;
-  },
-  clearAllCaches() {
-    cachedCursorKeys.forEach((key) => {
-      localStorage.removeItem(key);
-    });
-    cachedCursorKeys.clear();
-    ProductsMap.clear();
-  },
-  clearKey(key) {
-    if (cachedCursorKeys.has(key)) {
-      cachedCursorKeys.delete(key);
-      localStorage.removeItem(key);
-      ProductsMap.clear();
-    }
-  },
+  setPage: setCache,
+  getPage: getCache,
+  clearAllCaches,
+  clearCursorKey,
 };
 
 export const urlCache = {
-  setCache: function (key, pageObject) {
-    if (!key) {
-      throw new Error(
-        "Please provide a key to the pageIngCache setPage method"
-      );
-    }
-
-    try {
-      ProductsMap.set(key, JSON.parse(JSON.stringify(pageObject)));
-      localStorage.setItem(key, JSON.stringify(pageObject));
-      cachedCursorKeys.add(key);
-    } catch (error) {
-      console.error("An error occurred while storing data:", error);
-    }
-  },
-
-  getCache: function (key) {
-    if (!key) {
-      throw new Error(
-        "Please provide a key to the pageIngCache getPage method"
-      );
-    }
-
-    try {
-      if (ProductsMap.has(key)) {
-        return ProductsMap.get(key);
-      }
-      const page = localStorage.getItem(key);
-
-      if (page) {
-        return JSON.parse(page);
-      }
-    } catch (error) {
-      console.error("An error occurred while retrieving data:", error);
-    }
-
-    return null;
-  },
-  clearAllCaches() {
-    cachedCursorKeys.forEach((key) => {
-      localStorage.removeItem(key);
-    });
-    cachesData.clear();
-    ProductsMap.clear();
-  },
-  clearKey(key) {
-    if (cachedCursorKeys.has(key)) {
-      cachedCursorKeys.delete(key);
-      localStorage.removeItem(key);
-      ProductsMap.clear();
-    }
-  },
+  setCache,
+  getCache,
+  clearAllCaches,
+  clearCursorKey,
 };
 
 class LHistory {
   constructor(name) {
     this.name = name;
     this.pageState = new Map();
-    const pageHistory = localStorage.getItem(name);
+
+    const pageHistory = this.retrieveDataFromLocalStorage();
     if (pageHistory) {
-      try {
-        const storedState = JSON.parse(pageHistory);
-        this.validateAndSyncState(storedState);
-      } catch (error) {
-        console.error("Error parsing stored state:", error);
-      }
+      this.validateAndSyncState(pageHistory);
     } else {
-      this.pageState.set("index", 0);
-      this.pageState.set("pagingState", []);
-      this.saveState();
+      this.resetToDefaultState();
     }
+  }
+
+  retrieveDataFromLocalStorage() {
+    const pageHistory = sessionStorage.getItem(this.name);
+    try {
+      return JSON.parse(pageHistory);
+    } catch (error) {
+      console.error("Error parsing stored state from local storage:", error);
+    }
+    return null;
   }
 
   validateAndSyncState(storedState) {
     const requiredKeys = ["index", "pagingState"];
 
     if (requiredKeys.every((key) => key in storedState)) {
-      this.pageState = new Map(
-        Object.entries(storedState).map(([key, val]) => [key, val])
-      );
+      this.pageState = new Map(Object.entries(storedState));
       this.saveState();
     } else {
       console.warn("Stored state is invalid. Resetting to default state.");
@@ -177,18 +228,6 @@ class LHistory {
     this.saveState();
   }
 
-  retrieveDataFromLocalStorage() {
-    const pageHistory = localStorage.getItem(this.name);
-    if (pageHistory) {
-      try {
-        const storedState = JSON.parse(pageHistory);
-        return storedState;
-      } catch (error) {
-        console.error("Error parsing stored state from local storage:", error);
-      }
-    }
-    return null;
-  }
   getFallbackPageState() {
     return this.retrieveDataFromLocalStorage();
   }
@@ -203,26 +242,27 @@ class LHistory {
   }
 
   saveState() {
-    localStorage.setItem(
+    sessionStorage.setItem(
       this.name,
       JSON.stringify(Object.fromEntries(this.pageState))
     );
   }
 
   push(item) {
-    this.checkFallbackState()
-    this.pageState.get("pagingState").push(item);
-    this.pageState.set("index", this.pageState.get("pagingState").length - 1);
+    this.checkFallbackState();
+    const pagingState = this.pageState.get("pagingState");
+    pagingState.push(item);
+    this.pageState.set("index", pagingState.length - 1);
     this.saveState();
   }
+
   includes(item) {
-    this.checkFallbackState()
+    this.checkFallbackState();
     return this.pageState.get("pagingState").includes(item);
   }
 
   getPreviousPage() {
-   this.checkFallbackState()
-
+    this.checkFallbackState();
     const index = this.pageState.get("index");
 
     if (index >= 0) {
@@ -233,31 +273,29 @@ class LHistory {
   }
 
   getCurrentPage() {
-    this.checkFallbackState()
-
-    const pagingState = this.pageState.get("pagingState");
-    return pagingState[this.pageState.get("index")];
+    this.checkFallbackState();
+    return this.pageState.get("pagingState")[this.pageState.get("index")];
   }
 
   hasCurrentPage() {
-    this.checkFallbackState()
-    const pagingState = this.pageState.get("pagingState");
-
-    return pagingState.length >= 1;
+    this.checkFallbackState();
+    return this.pageState.get("pagingState").length >= 1;
   }
 
   hasNextPage() {
-    this.checkFallbackState()
+    this.checkFallbackState();
     const index = this.pageState.get("index");
     return index < this.pageState.get("pagingState").length - 1;
   }
+
   hasPreviousPage() {
-    this.checkFallbackState()
-    const index = this.pageState.get("index");
-    return index > 0;
+    this.checkFallbackState();
+    return this.pageState.get("index") > 0;
   }
+
   getNextPage() {
-    this.checkFallbackState()
+    this.checkFallbackState();
+
     if (this.hasNextPage()) {
       const index = this.pageState.get("index") + 1;
       this.pageState.set("index", index);
@@ -265,15 +303,24 @@ class LHistory {
       return this.pageState.get("pagingState")[index];
     }
   }
+
   getCurrentIndex() {
-    this.checkFallbackState()
-    const index = this.pageState.get("index");
-    return index;
+    this.checkFallbackState();
+    return this.pageState.get("index");
   }
 }
 
-const History = new LHistory("pagingHistory");
+let History = new LHistory("pagingHistory");
 export { History };
+function clearAllCaches() {
+  cachedCursorKeys.forEach((key) => {
+    sessionStorage.removeItem(key);
+  });
+
+  cachedCursorKeys.clear();
+  ProductsMap.clear();
+  History = new LHistory("pagingHistory");
+}
 
 export const formatProducts = (productData, key) => {
   if (
@@ -356,7 +403,7 @@ export const formatProducts = (productData, key) => {
     return productsObject;
   } else {
     if (key) {
-      urlCache.clearKey(key);
+      urlCache.clearCursorKey(key);
     }
     throw new Error("Invalid Products object");
   }
@@ -389,3 +436,46 @@ const l = {
   antithesis:
     "The juxtaposition of contrasting ideas in a balanced or parallel structure.",
 };
+
+// function store(key, input) {
+//   if (!key || !input) {
+//     console.log('no input or key provided', key, 'no input input provided', input)
+//     throw new Error("no key or input");
+//   }
+//   if (typeof input === "string") {
+//     sessionStorage.setItem(key, zip.compress(input));
+//   } else {
+//     try {
+//       const toStr = JSON.stringify(input);
+//       try {
+//         const compressed = zip.compress(toStr);
+//         sessionStorage.setItem(key, compressed);
+//       } catch (e) {
+//         console.log('failed to compress', toStr)
+//         sessionStorage.setItem(key, toStr);
+//       }
+//     } catch (e) {
+//       console.log("error:", e);
+//     }
+//   }
+// }
+// function retrieve(key) {
+//   if(!key){
+//     console.log('no key for retrieve', key)
+//      return null;
+//   }
+
+//   if (key) {
+//     const result = sessionStorage.getItem(key);
+//     if(!result) return null;
+//     if (!isCompressed(result)) return result;
+//     if (!result) return result;
+//     try {
+//       return zip.decompress(result);
+//     } catch (e) {
+//       console.log('key: ' ,key, 'failed to decompress', result)
+//       return result;
+//     }
+//   }
+//   return null;
+// }

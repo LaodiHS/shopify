@@ -24,6 +24,7 @@ import {
   readingTree,
   honeyCombGridDrop,
   beehive,
+  honeyPot,
 } from "../../assets";
 
 export function AccordionInformationHeader({ lock, accordionName, boxName, note }) {
@@ -45,7 +46,7 @@ export function AccordionInformationHeader({ lock, accordionName, boxName, note 
         slot="end"
         size=""
         id={boxName + accordionName+ "lock"}
-        icon={beehive}
+        icon={honeyPot}
         >   {lock}
 
         </IonIcon>

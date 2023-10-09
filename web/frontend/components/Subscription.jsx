@@ -34,32 +34,14 @@ import {
   IonPopover,
 } from "@ionic/react";
 import { useAuthenticatedFetch } from "../hooks";
-import { Toast } from "@shopify/app-bridge-react";
-import { chevronBack, fileTray } from "ionicons/icons";
+import {productViewCache} from "../utilities/store"
 import {
-  sunset,
-  yellowDeskWithLight,
-  brownDeskWithLight,
-  appleBooks,
-  simpleColorDesk,
-  readingTree,
-  autumnSvg,
-  colorBookShelves,
-  halfMoon,
-  deskLamp,
-  milkyway,
-  milkywayWashOut,
-  starWindow,
-  autumnWindLeaves,
-  closedWindow,
   autumnTrees,
-  kidReadingBench,
   benchWarmer,
   honeyCombGridDrop,
   chestnutHoney,
   acaciaHoney,
   sourwoodHoney,
-  honeyPot,
   honeyStick,
 } from "../assets";
 
@@ -71,11 +53,12 @@ import {
   CurrentScreenWidth,
 } from "../components";
 
+
 export const SubscriptionComponent = ({
   animationRef,
   //  subscriptions
 }) => {
-  const { subscriptions, plans, setSubscriptions } = useDataProvidersContext();
+  const { subscriptions, plans, setSubscriptions, sessionLoaded } = useDataProvidersContext();
 
   const fetch = useAuthenticatedFetch();
   const [showModal, setShowModal] = useState(false);
@@ -127,9 +110,10 @@ export const SubscriptionComponent = ({
           "You will be taken to the Shopify subscription page to approve your purchase..."
         );
         if (!DEPLOYMENT_ENV) {
-          localStorage.removeItem("plans");
-          localStorage.removeItem("user");
-          localStorage.removeItem("activeSubscription");
+          // productViewCache.clear();
+          // productViewCache.clearKey("plans");
+          // productViewCache.clearKey("user");
+          // productViewCache.clearKey("activeSubscription");
         }
         handleRedirect(data.redirectUrl);
       } else if (response.ok && data.message) {
@@ -148,13 +132,22 @@ export const SubscriptionComponent = ({
   const closeModal = () => {
     setShowModal(false);
   };
-  const subscriptionsOptions = Object.entries(plans).map(([title, body]) => {
+
+ const [subscriptionsOptions, setSubscriptionOptions] =  useState([])
+ useEffect(()=>{
+  console.log('plans', plans, sessionLoaded)
+  if (plans){
+ const getSubscriptionsOptions = Object.entries(plans).map(([title, body]) => {
     return {
       title,
-      price: `${body.amount}/${body.interval.toLowerCase().replace(/_/g, " ")}`,
-      features: body.usageTerms,
+      price: `${body?.amount}/${body?.interval?.toLowerCase()?.replace(/_/g, " ")}`,
+      features: body?.usageTerms
     };
   });
+setSubscriptionOptions(getSubscriptionsOptions);
+  }
+ },[plans])
+ 
   const [cardWidth, setCardWidth] = useState();
   const screenWidth = CurrentScreenWidth();
   const cardWidthRef = useRef(null);
