@@ -106,7 +106,7 @@ export function ListComponent() {
       duration: 0.3,
       onComplete: async () => {
         ref.style.display = "none";
-        defineProductData(index);
+       await defineProductData(index);
         await DataProviderNavigate(
           "/product-details",
           { target: "host" },

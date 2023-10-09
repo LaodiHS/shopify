@@ -14,7 +14,7 @@ const navigate = useNavigate()
         <IonCard onClick={(e) => navigate("/subscriptions", {host:true, replace:true})}
         style={{
             boxShadow:"none",
-          backgroundImage: `url(${honeyPot})`,
+          backgroundImage: `url(${beehive})`,
           height: "100px",
           backgroundPosition: "center",
           backgroundSize: "contain",

@@ -46,7 +46,7 @@ export function AccordionInformationHeader({ lock, accordionName, boxName, note 
         slot="end"
         size=""
         id={boxName + accordionName+ "lock"}
-        icon={honeyPot}
+        icon={beehive}
         >   {lock}
 
         </IonIcon>

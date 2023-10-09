@@ -34,13 +34,13 @@ import {
   useIonViewWillEnter,
 } from "@ionic/react";
 import { chevronBack, chevronForward } from "ionicons/icons";
-import { pageIngCache, History, formatProducts } from "../utilities/store";
+
 import { ListComponent } from "./ListComponent";
 import { useProductDataContext, IonicHeaderComponent } from "../components";
 export function ProductsCard({ animationRef }) {
   const [products, setProducts] = useState([]);
 
-  const pagingHistory = History;
+ 
 
   const {
     uncachedFetchData,
@@ -51,6 +51,9 @@ export function ProductsCard({ animationRef }) {
     hasNextIndexPage,
     productsData,
     setPaging,
+    pagingHistory,
+    formatProducts,
+    pageIngCache,
   } = useProductDataContext();
 
   useEffect(() => {
@@ -62,10 +65,10 @@ export function ProductsCard({ animationRef }) {
     if (productsData?.pageInfo?.hasNextPage) {
       const { endCursor } = productsData.pageInfo;
       if (pagingHistory.hasNextPage()) {
-        const cached = pageIngCache.getPage(pagingHistory.getNextPage());
+        const cached =  await pageIngCache.getPage(pagingHistory.getNextPage());
         const formattedData = cached;
-        console.log('formatedData: ',formattedData)
-        setPaging(formattedData);
+  
+       await setPaging(formattedData);
         setProductsLoading(false);
         return;
       }
@@ -82,7 +85,7 @@ export function ProductsCard({ animationRef }) {
         console.log("data", response);
         const data = await response;
         const format = formatProducts(data);
-        setPaging(format);
+      await setPaging(format);
 
         setProductsLoading(false);
       } catch (error) {
@@ -106,10 +109,10 @@ export function ProductsCard({ animationRef }) {
       pagingHistory?.hasPreviousPage()
     ) {
       setProductsLoading(true);
-      const cachedData = pageIngCache.getPage(pagingHistory.getPreviousPage());
+      const cachedData = await pageIngCache.getPage(pagingHistory.getPreviousPage());
       console.log("cachedData", cachedData);
       const formattedData = cachedData;
-      setPaging(formattedData);
+     await setPaging(formattedData);
       setProductsLoading(false);
     }
   };

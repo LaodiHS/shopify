@@ -110,7 +110,9 @@ import {
   TinyMCEDataProvider,
   useProductDataContext,
   LoadingPageComponent,
+  AnimatedContent,
 } from "./components";
+import { indexDb } from "./utilities/IndexDB";
 import { useAuthenticatedFetch } from "./hooks";
 import { NavigationMenu } from "@shopify/app-bridge-react";
 import {
@@ -126,6 +128,9 @@ tinymceCustomPlugins(tinymce);
 
 export default function App() {
   // productViewCache.clear();
+  const [dependenciesLoaded, setDependenciesLoaded] = useState({});
+
+
   const pages = import.meta.globEager("./pages/**/!(*.test.[jt]sx)*.([jt]sx)");
   const navigationPanel = !DEPLOYMENT_ENV
     ? [
@@ -158,7 +163,7 @@ export default function App() {
 
       const clearLocalStorage = () => {
         if (DEPLOYMENT_ENV) {
-         productViewCache.clear();
+          productViewCache.clear();
         }
       };
 
@@ -170,8 +175,8 @@ export default function App() {
     };
   }, []);
 
-  return (
-    <IonApp force-theme="light">
+  
+   return  (<IonApp force-theme="light">
       <PolarisProvider>
         <BrowserRouter>
           <AppBridgeProvider>
@@ -181,21 +186,19 @@ export default function App() {
                 <TinyMCEDataProvider>
                   <WinkDataProvider>
                     <DataProvidersProvider>
-                   
-                      <ProductDataProvider>  
-                         <ImageCacheWorker />
+                      <ProductDataProvider>
+                        <ImageCacheWorker />
                         <IonMenuNav />
                       </ProductDataProvider>
                     </DataProvidersProvider>
                   </WinkDataProvider>
                 </TinyMCEDataProvider>
-              </NavigationDataProvider>
+              </NavigationDataProvider> 
             </QueryProvider>
           </AppBridgeProvider>
         </BrowserRouter>
       </PolarisProvider>
-    </IonApp>
-  );
+    </IonApp>) 
 }
 
 function LandingPage({ animationRef }) {
@@ -215,6 +218,9 @@ function LandingPage({ animationRef }) {
     });
   });
 
+  useEffect(() => {
+    return () => (arrowRef.current = null);
+  }, []);
   const handleGetStarted = async () => {
     // Handle navigation to the next page
 
@@ -414,38 +420,39 @@ function Home({ animationRef }) {
     defineProductData: defineData,
     fetchData,
     sessionLoaded,
+    pagingHistory,
   } = useProductDataContext();
 
-useEffect(() => {
-if(data.productsData) {
-  setReleaseLoadingState(true)
-}
-
-
-
-},[])
-
-
+  useEffect(() => {
+    if (data.productsData, pagingHistory) {
+      setReleaseLoadingState(true);
+    }
+  }, []);
 
   useEffect(async () => {
-    console.log('sessionLoaded', sessionLoaded)
-    if (sessionLoaded) {
+    if (sessionLoaded && pagingHistory) {
       await fetchData();
       setFetchedData(true);
+
+      return () => {
+        setFetchedData(false);
+      };
     }
-  }, [sessionLoaded]);
+  }, [sessionLoaded, pagingHistory]);
 
   useEffect(() => {
     let id;
-    if (sessionLoaded && fetchData) {
+    if (sessionLoaded) {
       id = setTimeout(() => {
         setReleaseLoadingState(true);
       }, 10000);
     }
     return () => {
-      clearTimeout(id);
+      if (id) {
+        clearTimeout(id);
+      }
     };
-  }, [sessionLoaded, fetchData]);
+  }, [sessionLoaded]);
 
   //  return  <LoadingPageComponent  type="indeterminate" progress={progress} />
 
@@ -625,8 +632,10 @@ function IonMenuNav() {
     DataProviderNavigate,
     serverSentEventLoading,
     contentSaved,
+    sessionLoaded,
   } = useDataProvidersContext();
   const { aiWorkStationSetter, aiWorkStation } = useNavigationDataContext();
+
   useEffect(() => {
     // console.log("pathname", location.pathname);
     setCurrentRoute(location.pathname);
@@ -878,7 +887,7 @@ function IonMenuNav() {
                   color={contentSaved && tab.saveSignal ? "success" : "neural"}
                   key={"icon" + index}
                   src={tab.access.hasAccess && tab.src}
-                  icon={!tab.src && tab.access.hasAccess ? tab.icon : honeyPot}
+                  icon={!tab.src && tab.access.hasAccess ? tab.icon : beehive}
                   className="custom-icon"
                 />
                 <IonLabel

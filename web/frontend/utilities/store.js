@@ -1,4 +1,5 @@
 import { createContext } from "react";
+import {  indexDb } from "./IndexDB";
 import * as zip from "lzutf8";
 const ProductsMap = new Map();
 const cachedCursorKeys = new Set();
@@ -95,12 +96,12 @@ function decode(key){
 
 
 }
-function setCache(key, pageObject, isCursor = false) {
+async function setCache (key, pageObject, isCursor = false) {
   if (!key) {
     throw new Error("Please provide a key to set the cache.");
   }
   if (isCursor) {
-    console.log("cursor---key", key);
+  
     cachedCursorKeys.add(key);
   }
  
@@ -108,23 +109,19 @@ function setCache(key, pageObject, isCursor = false) {
 
   try {
     const stringifiedObject = JSON.stringify(pageObject);
-
     ProductsMap.set(key, JSON.parse(stringifiedObject));
+    await indexDb.db.setItem(key, stringifiedObject);
     sessionStorage.setItem(key, stringifiedObject) ;
-
 
   } catch (error) {
     console.error("An error occurred while storing data:", error);
   }
 }
 
-function getCache(key) {
+async function getCache(key) {
   if (!key) {
     throw new Error("Please provide a key to get the cache.");
   }
-
-  
-    
 
 
 
@@ -133,18 +130,12 @@ function getCache(key) {
       return ProductsMap.get(key);
     }
 
-    // const keyE = JSON.stringify(zip.compress(key)) 
+   const retrieveStoredData = await indexDb.db.getItem(key)
+      return JSON.parse(retrieveStoredData)
 
+  // const element = sessionStorage.getItem(key);
+  //   return JSON.parse(element);
 
-  const element = sessionStorage.getItem(key);
-
-  
-      
-  
-      return JSON.parse(element);
-
-
-    // if(sessionStorage.getItem(keyE)){
 
   } catch (error) {
     console.error("An error occurred while retrieving data:", error);
@@ -153,12 +144,12 @@ function getCache(key) {
   return null;
 }
 
-function clearKey(key) {
+async function clearKey(key) {
   sessionStorage.removeItem(key);
   ProductsMap.delete(key);
 }
 
-function clearCursorKey(key) {
+async function clearCursorKey(key) {
   if (cachedCursorKeys.has(key)) {
     cachedCursorKeys.delete(key);
     sessionStorage.removeItem(key);
@@ -310,16 +301,16 @@ class LHistory {
   }
 }
 
-let History = new LHistory("pagingHistory");
-export { History };
-function clearAllCaches() {
+
+export { LHistory };
+async function clearAllCaches() {
   cachedCursorKeys.forEach((key) => {
     sessionStorage.removeItem(key);
   });
 
   cachedCursorKeys.clear();
   ProductsMap.clear();
-  History = new LHistory("pagingHistory");
+
 }
 
 export const formatProducts = (productData, key) => {

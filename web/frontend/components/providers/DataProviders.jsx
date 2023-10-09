@@ -28,13 +28,19 @@ import {
   IonIcon,
   IonPage,
   IonList,
-  IonProgressBar
+  IonProgressBar,
 } from "@ionic/react";
 import {
   //useAuthenticatedFetch,
   useAppBridge,
 } from "@shopify/app-bridge-react";
- import {  productViewCache} from "../../utilities/store"
+import {
+  LHistory,
+  productViewCache,
+  pageIngCache,
+  formatProducts,
+} from "../../utilities/store";
+import { indexDb } from "../../utilities/IndexDB";
 import { useLocation, useNavigate } from "react_router_dom";
 import { request } from "@shopify/app-bridge/actions/AuthCode";
 import { useShopifyContext } from "../providers/ShopifyContext";
@@ -45,7 +51,14 @@ import { useIonToast, useIonRouter } from "@ionic/react";
 import { AnimatedContent } from "./";
 import { NavigationRefs } from "./";
 
-import { honeyPot, readingTree, honeyCombGridDrop, girlReading, readingBag } from "../../assets";
+import {
+  honeyPot,
+  beehive,
+  readingTree,
+  honeyCombGridDrop,
+  girlReading,
+  readingBag,
+} from "../../assets";
 import { useAuthenticatedFetch } from "../../hooks";
 // import {TRAINING_DATA} from 'https://storage.googleapis.com/jmstore/TensorFlowJS/EdX/TrainingData/fashion-mnist.js';
 // async function loadYOLOModel() {
@@ -136,22 +149,9 @@ import { useAuthenticatedFetch } from "../../hooks";
 //   reader.readAsDataURL(blob);
 // }
 
-
-
-
-
-
-
-
-
-
-
-
-
 let fetchO;
 let presentToastO;
 async function fetchDataWithCache({ url, method, body }) {
- 
   const cached_url_method_body_parameters =
     url + JSON.stringify(method) + JSON.stringify(body);
 
@@ -180,8 +180,6 @@ async function fetchDataWithCache({ url, method, body }) {
       console.log("json stringify error", error);
     }
   }
-
-  
 
   while (!success && retryCount > 0) {
     try {
@@ -216,7 +214,6 @@ async function fetchDataWithCache({ url, method, body }) {
 }
 
 async function uncachedFetchData({ url, method = "GET", body }) {
-
   if (!fetch) {
     throw new Error("authenticated fetch required");
   }
@@ -270,7 +267,9 @@ async function uncachedFetchData({ url, method = "GET", body }) {
 }
 
 function useMap(initialEntries = []) {
-  const [mapStateForUseMap, setMapStateForUseMap] = useState(new Map(initialEntries));
+  const [mapStateForUseMap, setMapStateForUseMap] = useState(
+    new Map(initialEntries)
+  );
 
   const mapActions = {
     get: (key) => mapStateForUseMap.get(key),
@@ -305,15 +304,6 @@ function useMap(initialEntries = []) {
 
   return [mapStateForUseMap, mapActions];
 }
-
-
-
-
-
-
-
-
-
 
 const DataProvidersContext = createContext(null);
 
@@ -365,7 +355,8 @@ export function DataProvidersProvider({ children }) {
   const [subscriptions, setSubscriptions] = useState(["free"]);
   const [currentSession, setCurrentSession] = useState({});
   const [sessionLoaded, setSessionLoaded] = useState(false);
-  const [subscriptionRetrievalLoading, setSubscriptionRetrievalLoading] =useState(false);
+  const [subscriptionRetrievalLoading, setSubscriptionRetrievalLoading] =
+    useState(false);
   const [contextualOptions, setContextualOptions] = useState({});
   const [selectedCollections, setSelectedCollections] = useState([]);
   const [presentToast] = useIonToast();
@@ -375,7 +366,8 @@ export function DataProvidersProvider({ children }) {
   const [selectedImageMap, setSelectedImageMap] = useState({});
   const [languageOptions, setLanguageOptions] = useState([]);
   const [assistRequestInstance, setAssistRequestInstance] = useState(null);
-  const [imageSelectionModalIsOpen, setImageSelectionModalIsOpen] = useState(false);
+  const [imageSelectionModalIsOpen, setImageSelectionModalIsOpen] =
+    useState(false);
   const [wordList, setWordList] = useState([
     "Reliable",
     "Innovative",
@@ -408,8 +400,11 @@ export function DataProvidersProvider({ children }) {
     "Ergonomic",
     "Sleek",
   ]);
+  const [pagingHistory, setPagingHistory] = useState(null);
 
-  const [clearAssistResultMethod, setClearAssistResultMethod] = useState(new Map());
+  const [clearAssistResultMethod, setClearAssistResultMethod] = useState(
+    new Map()
+  );
   const [refDictionary, setRefDictionary] = useState(NavigationRefs);
   const [mappedLegend, setMappedLegend] = useState([[]]);
   const [legendReversed, setLegendReversed] = useState({});
@@ -419,12 +414,13 @@ export function DataProvidersProvider({ children }) {
   const [updateArticleMethod, setUpdateArticleMethod] = useState(null);
   const [markupText, setMarkupText] = useState("");
   const fetch = useAuthenticatedFetch(); // Make sure you have this hook defined somewhere
-  fetchO= fetch;
+  fetchO = fetch;
   const navigate = useNavigate();
   const [plans, setPlans] = useState({});
   const app = useAppBridge();
   const context = useShopifyContext();
-
+  const [dependenciesLoaded, setDependenciesLoaded] = useState({});
+  const [AllDependenciesLoaded, setAllDependenciesLoaded] = useState(false);
   // useEffect(async () => {
   //   const token = await getSessionToken(app);
 
@@ -433,15 +429,39 @@ export function DataProvidersProvider({ children }) {
   //   return () => {};
   // }, []);
 
+  useEffect(async () => {
+    // console.log('indexDb=---->',indexDb);
+    // console.log('indexDb=--2-->',indexDb);
+    // console.log('db------->', db)
+    // console.log('indexdb:   ',indexDb.db)
 
+    if (!indexDb.db) {
+      const db = await indexDb.startIndexDB();
+      setDependenciesLoaded((prev) => ({
+        ...prev,
+        IndexedSessionStorage: true,
+      }));
+      setPagingHistory(new LHistory("pagingHistory"));
+      setDependenciesLoaded((prev) => ({ ...prev, pagingHistory: true }));
+    }
+    return async () => {
+      if (indexDb.db) {
+        await indexDb.stopIndexDB();
+        setDependenciesLoaded((prev) => ({
+          ...prev,
+          IndexedSessionStorage: false,
+        }));
+      }
+    };
+  }, []);
 
-
-
-
-
-
-
-
+  useEffect(() => {
+    if (Object.values(dependenciesLoaded).length > 0) {
+      setAllDependenciesLoaded(
+        Object.values(dependenciesLoaded).every((val) => val === true)
+      );
+    }
+  }, [dependenciesLoaded]);
 
   const setRouteSubscriptions = (activeSubscriptions, activeSession) => {
     setSubscriptions(activeSubscriptions);
@@ -455,91 +475,91 @@ export function DataProvidersProvider({ children }) {
   function assignUser(user) {
     modifyState(setUser, user);
   }
-  useEffect(() => {
-    const fetchDataSession = async () => {
-      try {
-        setSubscriptionRetrievalLoading(true);
-        const subscriptionsResponse = await fetch(
-          "/api/current/subscription/status"
-        );
 
-        if (!subscriptionsResponse.ok) {
-          // If the response status is not ok (e.g., 401 Unauthorized or 403 Forbidden),
-          // it means the user is not authenticated or doesn't have access.
-          // Redirect the user to the login page or show an error message.
-          // navigation("/login");
-
-          setSubscriptionRetrievalLoading(false);
-          return;
-        }
-        const data = await subscriptionsResponse.json();
-        console.log('session loaded')
-        setSessionLoaded(true);
-        const { activeSubscriptions, session, user, redirectUri } = data;
-        const redirect = Redirect.create(app);
-        console.log("subscription redirectUri: ", redirectUri);
-
-        setPlans(data.plans);
-      
-        assignUser(user);
-        setRouteSubscriptions(activeSubscriptions, session);
-
-        if (user && user.seen === false) {
-          navigate("/welcome");
-        }
-
-        if (!DEPLOYMENT_ENV) {
-          if (redirectUri) {
-            productViewCache.clear();
-          } else {
-            productViewCache.set("plans", data.plans);
-            productViewCache.set("user", user);
-
-            productViewCache.set(
-              "activeSubscriptions",
-              activeSubscriptions
-            );
-            productViewCache.set("session",session);
-          }
-        }
-        redirect.dispatch(Redirect.Action.REMOTE, { url: redirectUri });
-      } catch (err) {
-        // Handle network errors or other unexpected errors here.
-        setPlans(err.plans);
-        const retryInterval = 4000; // 4 seconds
-        setTimeout(fetchDataSession, retryInterval);
-        console.error("Error fetching data", err);
-      }
-      setSubscriptionRetrievalLoading(false);
-    };
-    if (!DEPLOYMENT_ENV) {
-      const activeSubscriptions = productViewCache.get("activeSubscriptions");
-      const session = productViewCache.get("session");
-      const plans = productViewCache.get("plans");
-      const user = productViewCache.get("user");
-      if (plans && user && activeSubscriptions && session) {
-
+  useEffect(async () => {
+    if (AllDependenciesLoaded) {
+      const fetchDataSession = async () => {
         try {
-          setSessionLoaded(true);
-          setPlans(plans);
-          assignUser(user);
-          setRouteSubscriptions(
-            activeSubscriptions,
-            session
+          setSubscriptionRetrievalLoading(true);
+          const subscriptionsResponse = await fetch(
+            "/api/current/subscription/status"
           );
-        } catch (error) {
-          console.log("error", error);
-          fetchDataSession();
+
+          if (!subscriptionsResponse.ok) {
+            // If the response status is not ok (e.g., 401 Unauthorized or 403 Forbidden),
+            // it means the user is not authenticated or doesn't have access.
+            // Redirect the user to the login page or show an error message.
+            // navigation("/login");
+
+            setSubscriptionRetrievalLoading(false);
+            return;
+          }
+          const data = await subscriptionsResponse.json();
+          console.log("session loaded");
+          setSessionLoaded(true);
+          const { activeSubscriptions, session, user, redirectUri } = data;
+          const redirect = Redirect.create(app);
+          console.log("subscription redirectUri: ", redirectUri);
+
+          setPlans(data.plans);
+
+          assignUser(user);
+          setRouteSubscriptions(activeSubscriptions, session);
+
+          if (user && user.seen === false) {
+            navigate("/welcome");
+          }
+
+          if (!DEPLOYMENT_ENV) {
+            if (redirectUri) {
+              productViewCache.clear();
+            } else {
+              await productViewCache.set("plans", data.plans);
+              await productViewCache.set("user", user);
+
+              await productViewCache.set(
+                "activeSubscriptions",
+                activeSubscriptions
+              );
+              await productViewCache.set("session", session);
+            }
+          }
+          redirect.dispatch(Redirect.Action.REMOTE, { url: redirectUri });
+        } catch (err) {
+          // Handle network errors or other unexpected errors here.
+          setPlans(err.plans);
+          const retryInterval = 4000; // 4 seconds
+          setTimeout(fetchDataSession, retryInterval);
+          console.error("Error fetching data", err);
+        }
+        setSubscriptionRetrievalLoading(false);
+      };
+      if (!DEPLOYMENT_ENV) {
+        const activeSubscriptions = await productViewCache.get(
+          "activeSubscriptions"
+        );
+        const session = await productViewCache.get("session");
+        const plans = await productViewCache.get("plans");
+        const user = await productViewCache.get("user");
+        if (plans && user && activeSubscriptions && session) {
+          try {
+            setSessionLoaded(true);
+            setPlans(plans);
+            assignUser(user);
+            setRouteSubscriptions(activeSubscriptions, session);
+          } catch (error) {
+            console.log("error", error);
+            await fetchDataSession();
+          }
+        } else {
+          await fetchDataSession();
         }
       } else {
-        fetchDataSession();
+        await fetchDataSession();
       }
-    } else {
-      fetchDataSession();
     }
-
     // fetchDataSession();
-  }, []);
+  }, [AllDependenciesLoaded]);
 
   const freeOptions = ["free", "chestnut", "sourwood", "acacia", "premiere"];
 
@@ -605,7 +625,7 @@ export function DataProvidersProvider({ children }) {
               <IonLabel slot="start" className="ion-padding-top">
                 Honey Members{" "}
               </IonLabel>{" "}
-              <IonIcon size="large" slot="end" icon={honeyPot}></IonIcon>
+              <IonIcon size="large" slot="end" icon={beehive}></IonIcon>
             </IonItem>
           </IonList>
         ),
@@ -662,11 +682,6 @@ export function DataProvidersProvider({ children }) {
   function assignContextualOptions(updateOptions) {
     modifyState(setContextualOptions, updateOptions);
   }
-
- 
-
-
-
 
   const handleSelectChange = async (event, category) => {
     console.log("select_change", event, category);
@@ -887,20 +902,14 @@ export function DataProvidersProvider({ children }) {
     console.log("formattedLegend:  ", formattedLegend);
   }
 
-
-
-
-
-
-
-
-
-
-
-
   const value = {
+    AllDependenciesLoaded,
+    modifyState,
+    pagingHistory,
+    productViewCache,
+    pageIngCache,
+    formatProducts,
     sessionLoaded,
-
     mappedLegend,
     legend,
     legendReversed,
@@ -949,8 +958,7 @@ export function DataProvidersProvider({ children }) {
 
   return (
     <DataProvidersContext.Provider value={value}>
-      { children}
+      {children}
     </DataProvidersContext.Provider>
   );
 }
-

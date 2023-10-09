@@ -38,7 +38,7 @@ import {
   informationCircle,
 } from "ionicons/icons";
 import { Context } from "../../utilities/data-context";
-import { pageIngCache, History, formatProducts } from "../../utilities/store";
+
 import {
   useNavigationDataContext,
   ReactRenderingComponent,
@@ -138,7 +138,10 @@ export function Accordion({
     setContentSaved,
     eventEmitter,  
     assignClearAssistMethod,
-    mappedLegend
+    mappedLegend,
+    isProductsLoading,
+    pageIngCache,
+   formatProducts 
    } = useProductDataContext();
   
 
@@ -163,18 +166,20 @@ export function Accordion({
     // const blogName = await generateHash(currentSession.shop);
     // setHashBlogName(blogName);
   }, []);
-  useEffect(() => {
-    if (!productData) {
-      location.pathname = "/";
-    }
-  }, [productData]);
+
+
 
   useEffect(() => {
     assignUpdateArticleMethod(() => handleUpdateClick);
   }, []);
   useEffect(() => {
+if(productData){
     setWords([productData.description]);
     setMarkupText(productData.description);
+}else{
+  location.pathname = "/"
+}
+ 
   }, []);
 
   useEffect(() => {
@@ -683,10 +688,10 @@ export function Accordion({
         const { descriptionHtml } = product;
         setContentSaved(true);
         console.log("save");
-        updateProductProperty("description", descriptionHtml);
+       await updateProductProperty("description", descriptionHtml);
         setMarkupText(descriptionHtml);
         console.log("current Cursor", productData.currentCursor);
-        pageIngCache.clearCursorKey(productData.currentCursor);
+       await pageIngCache.clearCursorKey(productData.currentCursor);
         console.log("product updated");
       }
     } else if (type === "article" && markupText.length) {
@@ -909,10 +914,10 @@ function renderAccordionItem({
     return null;
   }
 
-  function autosaveContent(editor) {
+  async function autosaveContent(editor) {
    
     const content = editor.getContent();
-    productViewCache.set("autosaveContent", content);
+   await productViewCache.set("autosaveContent", content);
     console.log(" Editor Content autosaved to localStorage:");
   }
 

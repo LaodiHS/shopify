@@ -2,7 +2,7 @@
 
 name = "test-neuralnectar"
 client_id = "b2919712bc4555c05f978c56eb4f5750"
-application_url = "https://sword-iii-pumps-bad.trycloudflare.com"
+application_url = "https://joined-grab-cdt-prefers.trycloudflare.com"
 embedded = true
 
 [access_scopes]
@@ -11,9 +11,9 @@ scopes = "write_products,read_content,write_content"
 
 [auth]
 redirect_urls = [
-  "https://sword-iii-pumps-bad.trycloudflare.com/auth/callback",
-  "https://sword-iii-pumps-bad.trycloudflare.com/auth/shopify/callback",
-  "https://sword-iii-pumps-bad.trycloudflare.com/api/auth/callback"
+  "https://joined-grab-cdt-prefers.trycloudflare.com/auth/callback",
+  "https://joined-grab-cdt-prefers.trycloudflare.com/auth/shopify/callback",
+  "https://joined-grab-cdt-prefers.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

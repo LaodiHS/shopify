@@ -398,7 +398,7 @@ const {Editor} = useTinyMCEDataContext()
             </IonButton>
 
             <IonButton onClick={e => DataProviderNavigate("/subscriptions") } slot="icon-only" >
-              <IonIcon size="large" icon={honeyPot}></IonIcon>
+              <IonIcon size="large" icon={beehive}></IonIcon>
             </IonButton>
           </>}
           

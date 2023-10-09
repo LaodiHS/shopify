@@ -209,7 +209,7 @@ export function WordCloud({ text, doc, its, checkFeatureAccess }) {
         <IonCol
           onClick={(e) => DataProviderNavigate("/subscriptions")}
           style={{
-            backgroundImage: `url(${honeyPot})`,
+            backgroundImage: `url(${beehive})`,
             height: "100px",
             backgroundPosition: "center",
             backgroundSize: "contain",

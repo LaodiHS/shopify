@@ -66,7 +66,7 @@ const taskQueue = [];
 
 export function ImageCacheWorker() {
   const {
-  sessionLoaded,
+  sessionLoaded,indexDb
   } = useProductDataContext();
   useEffect(() => {
     if(sessionLoaded){

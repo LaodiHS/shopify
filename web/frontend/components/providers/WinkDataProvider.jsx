@@ -13,14 +13,7 @@ import { extractTextFromHtml } from "./";
 // import * as distanceJaro from "jaro-winkler";
 
 import tinycolor from "tinycolor2";
-import { useLocation, useNavigate } from "react_router_dom";
-import {
-  productViewCache,
-  pageIngCache,
-  History,
-  formatProducts,
-} from "../../utilities/store";
-import { useAuthenticatedFetch } from "../../hooks";
+
 import { navigate } from "ionicons/icons";
 import { darkenHexColor } from "../../utilities/darkenHexColor";
 const nlp = winkNLP(model);
