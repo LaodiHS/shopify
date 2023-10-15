@@ -3,9 +3,9 @@ import { dirname } from "path";
 import { fileURLToPath } from "url";
 import https from "https";
 import react from "@vitejs/plugin-react";
-// import react from "@vitejs/plugin-react-swc";
+//import react from "@vitejs/plugin-react-swc";
 // import vue from "@vitejs/plugin-vue";
-
+// import eslintPlugin from 'vite-plugin-eslint'
 
 if (
   process.env.npm_lifecycle_event === "build" &&
@@ -46,9 +46,78 @@ if (host === "localhost") {
   };
 }
 
-const dir_name = dirname(fileURLToPath(import.meta.url));
-console.log("dir_name", dir_name);
+
 export default defineConfig({
+  root: dirname(fileURLToPath(import.meta.url)),
+  plugins: [
+    react(
+      //{ devTarget: "es2022" }
+    ),
+    
+ 
+  ],
+  
+  define: {
+    DEPLOYMENT_ENV: process.env.NODE_ENV === "production",
+    API_URL: JSON.stringify(host),
+    "process.env.SHOPIFY_API_KEY": JSON.stringify(process.env.SHOPIFY_API_KEY),
+  },
+  build: {
+    minify:false,
+   
+      // commonjsOptions: {
+      //   transformMixedEsModules: true,
+      // }
+  },
+  resolve: {
+    preserveSymlinks: true,
+  },
+
+  server: {
+    host: "localhost",
+    port: process.env.FRONTEND_PORT,
+    hmr: hmrConfig,
+    proxy: {
+      "^/(\\?.*)?$": proxyOptions,
+      "^/api(/|(\\?.*)?$)": proxyOptions,
+      "^/sse(/|(\\?.*)?$)": proxyOptions,
+      "^/tinymce(/|(\\?.*)?$)": proxyOptions,
+    },
+  },
+});
+
+  
+   // 'process.env.NODE_ENV': JSON.stringify('production')
+// build: {
+//   // brotliSize: true, // Enables Brotli compression
+//   // chunkSizeWarningLimit: 4000,
+//   minify: false,
+//    //minify: "terser", // <-- add
+//   terserOptions: {
+//     compress: {
+//        drop_console: false,
+//       drop_debugger: false,
+//     },
+//     mangle: false,
+//   },
+// },    // {
+    // babel: {
+    //  include: /\.(js|jsx)$/,
+    //   plugins: ['babel-plugin-macros'],
+    //    babelrc: true
+    // },
+
+    //}
+    // react(
+    // //   {
+    // //   jsxImportSource: "@emotion/react",
+    // //   babel: {
+    // //     plugins: ["@emotion/babel-plugin"],
+    // //   },
+    // // }
+    // ),
+  // }
+  
   // build: {
   //   minify: true, // Enables minification
   //   brotliSize: true, // Enables Brotli compression
@@ -63,81 +132,5 @@ export default defineConfig({
   // esbuild: {
   //   drop: ['console', 'debugger'],
   // },
-
-  root: dir_name,
-  plugins: [
-    react(),
-    {
-    babel: {
-     include: /\.(js|jsx)$/,
-      plugins: ['babel-plugin-macros'],
-       babelrc: true
-    },
-
-    //}
-    // react(
-    // //   {
-    // //   jsxImportSource: "@emotion/react",
-    // //   babel: {
-    // //     plugins: ["@emotion/babel-plugin"],
-    // //   },
-    // // }
-    // ),
-  }
-  
-
-  ],
-  // optimizeDeps: {
-  //   //include: ["tinymce"], // Expose tinymce as a module
-  // },
-
-  define: {
-    DEPLOYMENT_ENV: process.env.NODE_ENV === "production",
-    API_URL: JSON.stringify(host),
-    "process.env.SHOPIFY_API_KEY": JSON.stringify(process.env.SHOPIFY_API_KEY),
-    // 'process.env.NODE_ENV': JSON.stringify('production')
-  },
-  resolve: {
-    preserveSymlinks: true,
-  },
-  // esbuild: {
-
-  //    minifyIdentifiers: true,
-  //   minifySyntax: true,
-  //   minify: true,
-
-  //   drop: ['console', 'debugger'],
-
-  // },
-
-  
-  build: {
-    // brotliSize: true, // Enables Brotli compression
-    // chunkSizeWarningLimit: 4000,
-    minify: false,
-     //minify: "terser", // <-- add
-    terserOptions: {
-      compress: {
-         drop_console: false,
-        drop_debugger: false,
-      },
-      mangle: false,
-    },
-  },
-  server: {
-    host: "localhost",
-    port: process.env.FRONTEND_PORT,
-    hmr: hmrConfig,
-    proxy: {
-      "^/(\\?.*)?$": proxyOptions,
-      "^/api(/|(\\?.*)?$)": proxyOptions,
-      "^/sse(/|(\\?.*)?$)": proxyOptions,
-      "^/tinymce(/|(\\?.*)?$)": proxyOptions,
-      // "^/*": proxyOptions,
-      // "^/dist(/|(\\?.*)?$)": proxyOptions,
-      // "^/dist/assets(/|(\\?.*)?$)": proxyOptions,
-      // Add the ngrok tunnel URL as an allowed origin
-      // "https://bit-enrolled-load-sections.trycloudflare.com": proxyOptions,
-    },
-  },
-});
+//   const dir_name = dirname(fileURLToPath(import.meta.url));
+// console.log("dir_name", dir_name);

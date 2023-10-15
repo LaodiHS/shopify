@@ -142,8 +142,8 @@ export default async function getProducts(session, first = 5, after = null, befo
       },
     });
     if(!isProduction){
-      console.log('product-paging-response message->',response.message)
-      console.log('product-paging-response message->',response)
+      // console.log('product-paging-response message->',response.message)
+      // console.log('product-paging-response message->',response)
     }
      return response;
   } catch (error) {

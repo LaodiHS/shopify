@@ -1,12 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
-
   IonGrid,
-
   IonRow,
   IonCol,
   IonLabel,
-
   IonText,
   IonChip,
 } from "@ionic/react";
@@ -16,7 +13,6 @@ import {
   Svg,
   getMultiValue,
   extend,
-  
   normalizePadding,
 } from "chartist";
 
@@ -829,18 +825,16 @@ export function ReadabilityStats({ checkFeatureAccess, text }) {
 
       <IonRow className="ion-padding-start">
         <IonCol>
-          <IonLabel>Number of Complex Words</IonLabel>
-        </IonCol>
-        <IonCol>{readabilityStats.numOfComplexWords}</IonCol>
-      </IonRow>
-
-      <IonRow className="ion-padding-start">
-        <IonCol>
           <IonLabel>Number of Sentences</IonLabel>
         </IonCol>
         <IonCol>{readabilityStats.numOfSentences}</IonCol>
       </IonRow>
-
+      <IonRow className="ion-padding-start">
+        <IonCol>
+          <IonLabel>Number of Words</IonLabel>
+        </IonCol>
+        <IonCol>{readabilityStats.numOfWords}</IonCol>
+      </IonRow>
       <IonRow className="ion-padding-start">
         <IonCol>
           <IonLabel>Number of Tokens</IonLabel>
@@ -850,11 +844,10 @@ export function ReadabilityStats({ checkFeatureAccess, text }) {
 
       <IonRow className="ion-padding-start">
         <IonCol>
-          <IonLabel>Number of Words</IonLabel>
+          <IonLabel>Number of Complex Words</IonLabel>
         </IonCol>
-        <IonCol>{readabilityStats.numOfWords}</IonCol>
+        <IonCol>{readabilityStats.numOfComplexWords}</IonCol>
       </IonRow>
-
       <IonRow className="ion-padding-start">
         <IonCol>
           <IonLabel>Complex Words:</IonLabel>

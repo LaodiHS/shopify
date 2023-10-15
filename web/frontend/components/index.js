@@ -43,4 +43,4 @@ export {
 } from "../utilities/TinymcePlugins";
 // export {extractKeywords} from './TextExtractor';
 export { IonicHeaderComponent } from "./IonicHeaderComponent";
-export { CurrentScreenWidth } from "./CurrentScreenWidth";
+export { useCurrentScreenWidth} from "./providers/CurrentScreenWidth";

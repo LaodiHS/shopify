@@ -1,15 +1,15 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState} from "react";
 import {
   IonImg,
-  IonSkeletonText,
-  IonGrid,
-  IonCol,
-  IonRow,
-  IonThumbnail,
+  IonSkeletonText
 } from "@ionic/react";
-import { useDataProvidersContext, NoImagePlaceHolder, useProductDataContext } from "../../components";
+import {
+  useDataProvidersContext,
+  useProductDataContext,
+} from "../../components";
 //navigator.hardwareConcurrency || 4; // Number of worker instances in the pool
 import { imagePlaceHolder } from "../../assets";
+import { productViewCache } from "../../utilities/store";
 function getOptimalNumThreads(defaultNumThreads = 3) {
   if (navigator && navigator.hardwareConcurrency) {
     // If hardwareConcurrency is available, use it as the number of threads
@@ -21,7 +21,8 @@ function getOptimalNumThreads(defaultNumThreads = 3) {
   }
 }
 // Worker code as a string literal
-const workerCode = `self.addEventListener('message', async (event) => {
+const workerCode = `
+self.addEventListener('message', async (event) => {
     const { srcList } = event.data;
 
     try {
@@ -61,25 +62,20 @@ function createImageCacheWorker() {
 }
 
 let workerPool;
-let imageCacheMap;
 const taskQueue = [];
 
 export function ImageCacheWorker() {
-  const {
-  sessionLoaded,indexDb
-  } = useProductDataContext();
+  const { sessionLoaded, indexDb } = useProductDataContext();
   useEffect(() => {
-    if(sessionLoaded){
-    workerPool = new Array(getOptimalNumThreads())
-      .fill(null)
-      .map(createImageCacheWorker);
-    imageCacheMap = new Map();
-    
-    return () => {
-      workerPool.forEach((worker) => worker.terminate());
-      imageCacheMap.clear();
-  }
-  };
+    if (sessionLoaded) {
+      workerPool = new Array(getOptimalNumThreads())
+        .fill(null)
+        .map(createImageCacheWorker);
+
+      return () => {
+        workerPool.forEach((worker) => worker.terminate());
+      };
+    }
   }, [sessionLoaded]);
 
   return null;
@@ -91,17 +87,14 @@ function getNextAvailableWorker() {
 function processTaskQueue() {
   const worker = getNextAvailableWorker();
   if (worker && taskQueue.length > 0) {
-  
     const { src, resolve } = taskQueue.shift();
     worker.isProcessing = true;
     worker.postMessage({ srcList: [src] });
 
     // Handle worker response
     worker.onmessage = (event) => {
-     
       const data = event.data;
 
-      
       if (Array.isArray(data)) {
         for (const item of data) {
           if (item.blob) {
@@ -121,20 +114,21 @@ function processTaskQueue() {
   }
 }
 
-function setImageMap(key, obj) {
-
+async function setImageMap(key, obj, productViewCaches) {
   if (!key) {
     throw new Error("image requires key");
   }
   if (!obj) {
     throw new Error("image requires blob");
   }
-
-  imageCacheMap.set(key, obj);
-
+  try {
+    await productViewCaches.set(key, obj);
+  } catch (error) {
+    throw new Error(`Error storing image`, error);
+  }
 }
-export function ImageCache({ src, alt, sliderImg, ...props }) {
-  //  const { imageCache, setImageCache } = useDataProvidersContext()
+export function ImageCache({ src, style, alt, sliderImg, ...props }) {
+  const { productViewCaches } = useDataProvidersContext();
   //  console.log('imageCache', imageCache)
   const [cachedSrc, setCachedSrc] = useState(null);
   const [imageLoading, setImageLoading] = useState(false);
@@ -155,23 +149,22 @@ export function ImageCache({ src, alt, sliderImg, ...props }) {
   useEffect(async () => {
     setImageLoading(true);
     const preloadImages = async (src) => {
+      if (productViewCache.has(src)) {
+        const cachedImage = await productViewCache.get(src);
 
-      if (imageCacheMap.has(src)) {
-
-        setCachedSrc(imageCacheMap.get(src));
+        setCachedSrc(cachedImage);
         setImageLoading(false);
         return;
       }
 
-      return new Promise((resolve) => {  
-      
+      return new Promise((resolve) => {
         taskQueue.push({ src, resolve });
         processTaskQueue();
-      }).then((imageSrc) => {
-
+      }).then(async (imageSrc) => {
         if (imageSrc) {
-          setImageMap(src, imageSrc);
-       
+
+          await setImageMap(src, imageSrc, productViewCaches);
+
           if (canLoad) {
             setCachedSrc(imageSrc);
           }
@@ -182,40 +175,34 @@ export function ImageCache({ src, alt, sliderImg, ...props }) {
         }
       });
     };
-src !== imagePlaceHolder ?
-  await  preloadImages(src) :
-  setCachedSrc(imagePlaceHolder);
-
+    src !== imagePlaceHolder
+      ? await preloadImages(src)
+      : setCachedSrc(imagePlaceHolder);
   }, [src]);
 
-  const height = sliderImg ? "60px" : "300px";
-  const width = sliderImg ? "60px" : "100%";
+ 
   function SkeletonImage() {
     return (
       <IonSkeletonText
-        key="animatedPlace=holder"
+        key= {src + "animatedPlace=holder"}
         animated
-        style={{ width, height, display: !imageLoading ? "none" : "block" }}
+        style={{ ...style, display: !imageLoading ? "none" : "block" }}
       />
     );
   }
 
   return (
     <>
- 
       <SkeletonImage />
       <IonImg
         onIonImgDidLoad={imageDidLoad()}
         style={{
-          minHeight: "300px",
-          height,
-          width,
-          maxHeight: height,
+          ...style,
           display: imageLoading ? "none" : "block",
         }}
-        key={src}
+        key={cachedSrc || src || imagePlaceHolder}
         src={cachedSrc || src || imagePlaceHolder}
-        // rel="preload"
+      
         as="image"
         alt={alt}
         {...props}
@@ -224,16 +211,17 @@ src !== imagePlaceHolder ?
   );
 }
 
-export function ImageCachePre(src) {
-  if (imageCacheMap.has(src)) {
+export async function ImageCachePre(src) {
+  const { productViewCaches } = useDataProvidersContext();
+  if (productViewCaches.has(src)) {
     return;
   }
-  new Promise((resolve) => {
+  await new Promise((resolve) => {
     taskQueue.push({ src, resolve });
     processTaskQueue();
   }).then((imageSrc) => {
     if (imageSrc) {
-      imageCacheMap.set(imageSrc);
+      productViewCaches.set(src, imageSrc);
     }
   });
 }

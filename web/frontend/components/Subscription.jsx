@@ -50,7 +50,7 @@ import { Redirect } from "@shopify/app-bridge/actions";
 import {
   useDataProvidersContext,
   IonicHeaderComponent,
-  CurrentScreenWidth,
+
 } from "../components";
 
 
@@ -58,7 +58,7 @@ export const SubscriptionComponent = ({
   animationRef,
   //  subscriptions
 }) => {
-  const { subscriptions, plans, setSubscriptions, sessionLoaded } = useDataProvidersContext();
+  const { subscriptions, plans, setSubscriptions, sessionLoaded, productViewCache } = useDataProvidersContext();
 
   const fetch = useAuthenticatedFetch();
   const [showModal, setShowModal] = useState(false);
@@ -110,6 +110,7 @@ export const SubscriptionComponent = ({
           "You will be taken to the Shopify subscription page to approve your purchase..."
         );
         if (!DEPLOYMENT_ENV) {
+          await productViewCache.clearAll()
           // productViewCache.clear();
           // productViewCache.clearKey("plans");
           // productViewCache.clearKey("user");
@@ -149,7 +150,7 @@ setSubscriptionOptions(getSubscriptionsOptions);
  },[plans])
  
   const [cardWidth, setCardWidth] = useState();
-  const screenWidth = CurrentScreenWidth();
+
   const cardWidthRef = useRef(null);
   useEffect(() => {
     const handleResize = () => {

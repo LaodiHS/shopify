@@ -25,24 +25,26 @@ import {
 export function LoadingPageComponent({ progress, type }) {
   const [iconSize, setIconSize] = useState("25px");
   const [cloudAnimationHeight, setCloudAnimationHeight] = useState("100px");
-  const animationRef = useRef();
+
   const arrowRef = useRef();
 
   useEffect(() => {
     setCloudAnimationHeight(window.innerHeight + "px");
     console.log("windowHeight:", window.innerHeight);
     const height = (8 / 100) * window.innerHeight;
-    setIconSize(Math.floor(height) + "px");
+
+    setIconSize(Math.floor(height));
     console.log("height: ", height);
   }, []);
+
   return (
     <IonPage
-      ref={(el) => {
-        animationRef.current = el; // Attach the IonPage element to animationRef
-        // Forward the ref to the parent component
-      }}
+    // ref={(el) => {
+    //   animationRef.current = el; // Attach the IonPage element to animationRef
+    //   // Forward the ref to the parent component
+    // }}
     >
-      <IonicHeaderComponent type={type} progress={progress} />
+      <IonicHeaderComponent type={"indeterminate"} progress={progress} />
 
       <div
         id="nc-main"
@@ -58,114 +60,78 @@ export function LoadingPageComponent({ progress, type }) {
       >
         <IonContent style={{ "--background": "none" }} className="">
           <IonGrid>
-            <IonRow>
-              {" "}
-          
-              <IonCol
-                style={{
-                  backgroundImage: ` url(${honeyDrop})`,
-                  backgroundPosition: "top center",
-                  backgroundSize: "contain",
-                  backgroundRepeat: "no-repeat",
-                  height: iconSize,
-                }}
-                className="ion-text-center"
-                size="12"
-              >
-                <IonRow>
-                  <IonCol>
-                    <h1
+
+            <IonRow className="ion-align-items-center">
+            
+
+             
+                  <IonCol size="5" className="ion-text-end ion-margin-top">
+                    <IonText
+                
                       style={{
                         color: "#ef8561",
-                        letterSpacing: "9px",
+                        letterSpacing: "1.9vw",
                         fontFamily: "'Baloo', sans-serif",
-                        wordSpacing: "40px",
                         fontSize: "5vw",
-                        float: "right",
-                        paddingRight: "51px",
                         whiteSpace: "nowrap" /* Prevents wrapping */,
-                        // overflow: "hidden", /* Clips content that overflows */
-                        // textOverflow: "ellipsis"
+                        overflow: "hidden" /* Clips content that overflows */,
+                        textOverflow: "ellipsis",
                       }}
                     >
                       neural
-                    </h1>
+                    </IonText>
                   </IonCol>
-                  <IonCol>
-                    <h1
+                  <IonCol size="2"  style={{
+                  backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.01), rgba(255, 255, 255, 0.01)), url(${honeyDrop})`,
+                  backgroundPosition: "center center",
+                  backgroundSize: "contain",
+                  backgroundRepeat: "no-repeat",
+                   height: iconSize + "px",
+                
+           
+                }}>
+
+                  </IonCol>
+                  <IonCol size="5" className="ion-text-start ion-margin-top">
+                    <IonText
+                     
                       style={{
                         color: "#ef8561",
-                        letterSpacing: "9px",
-
-                        float: "left",
+                        letterSpacing: "1.7vw",
+                        marginTop: iconSize + 50 + "px",
                         fontFamily: "'Baloo', sans-serif",
-                        wordSpacing: "40px",
                         fontSize: "5vw",
-                        paddingLeft: "53px",
                         whiteSpace: "nowrap" /* Prevents wrapping */,
-                        // overflow: "hidden", /* Clips content that overflows */
-                        // textOverflow: "ellipsis"
+                        overflow: "hidden" /* Clips content that overflows */,
+                        textOverflow: "ellipsis",
                       }}
                     >
                       nectar
-                    </h1>
+                    </IonText>
                   </IonCol>
-                </IonRow>
-              </IonCol>
-            </IonRow>
-            
-            <IonRow>
-              <IonCol className="ion-text-center">
-                <h3 style={{ fontSize: "3vh", fontFamily: "Baloo, san serif" }}>
-                  Reading your Catalog and Product Data
-                </h3>
-                <h2
-                  style={{ fontFamily: "Baloo, sans-serif" }}
-                  className="ion-text-center ion-text-capitalize"
-                >
-                  <IonText
-                    style={{ fontFamily: "Baloo, sans-serif" }}
-                    color="neural"
-                  ></IonText>
-                </h2>
-                <p
-                  style={{ fontFamily: "Baloo, sans-serif" }}
-                  className="ion-text-center"
-                ></p>
-
-                <div className="ion-text-center"></div>
-                <div className="ion-text-center animate__animated animate__fadeInUp">
-                  <IonButton
-                    style={{
-                      letterSpacing: "3px",
-                      fontFamily: "Baloo, sans-serif",
-                    }}
-                    fill="clear"
-                    expand="block"
-                    color="shoe"
-                  ></IonButton>{" "}
-                </div>
+             
+        
+              <IonCol style={{ padding: "0px", margin: "0px" }}>
                 <div className="full-wh">
-                
-       
-              
-                  <div className="bg-animation">       <div id="leaves">
-                <i></i>
-                <i></i>
-                <i></i>
-                <i></i>
-                <i></i>
-                <i></i>
-                <i></i>
-                <i></i>
-                <i></i>
-                <i></i>
-                <i></i>
-                <i></i>
-                <i></i>
-                <i></i>
-                <i></i>
-              </div>
+                  <div className="bg-animation">
+                    {" "}
+                    <div id="leaves">
+                      <i></i>
+                      <i></i>
+                      <i></i>
+                      <i></i>
+                      <i></i>
+                      <i></i>
+                      <i></i>
+                      <i></i>
+                      <i></i>
+                      <i></i>
+                      <i></i>
+                      <i></i>
+                      <i></i>
+                      <i></i>
+                      <i></i>
+                    </div>
                     <div id="stars"></div>
                     <div id="stars2"></div>
                     <div id="stars3"></div>
@@ -173,10 +139,42 @@ export function LoadingPageComponent({ progress, type }) {
                   </div>
                 </div>
               </IonCol>
+              <IonCol
+                style={{
+                  display: "grid",
+
+                  gridGap: "10px",
+
+                  gridTemplateColumns: "5fr 2fr",
+                }}
+                size="12"
+                // className="ion-hide-sm-down"
+              >
+                <h3
+                  style={{
+                    justifySelf: "end",
+                    alignSelf: "center",
+                    fontSize: "2.5vw",
+                    fontFamily: "Baloo, san serif",
+                  }}
+                >
+                  Reading Your Catalog And Product Data
+                
+                </h3>
+                <div
+                  className="ion-hide-sm-down"
+                  style={{ justifySelf: "start", placeItems:"center", display:"grid" }}
+                >
+                  <div className="loader"></div>
+                </div>
+              </IonCol>
             </IonRow>
+
+            <IonRow></IonRow>
           </IonGrid>
         </IonContent>
       </div>
     </IonPage>
   );
 }
+

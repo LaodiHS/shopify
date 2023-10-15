@@ -1,8 +1,8 @@
-import "@tensorflow/tfjs-backend-cpu";
-import "@tensorflow/tfjs-backend-webgl";
-import * as cocoSsd from "@tensorflow-models/coco-ssd";
-import * as tf from "@tensorflow/tfjs";
-import { loadGraphModel } from "@tensorflow/tfjs-converter";
+// import "@tensorflow/tfjs-backend-cpu";
+// import "@tensorflow/tfjs-backend-webgl";
+// import * as cocoSsd from "@tensorflow-models/coco-ssd";
+// import * as tf from "@tensorflow/tfjs";
+// import { loadGraphModel } from "@tensorflow/tfjs-converter";
 import React, {
   createContext,
   useContext,
@@ -149,121 +149,148 @@ import { useAuthenticatedFetch } from "../../hooks";
 //   reader.readAsDataURL(blob);
 // }
 
-let fetchO;
-let presentToastO;
-async function fetchDataWithCache({ url, method, body }) {
-  const cached_url_method_body_parameters =
-    url + JSON.stringify(method) + JSON.stringify(body);
-
-  if (mapState.has(cached_url_method_body_parameters)) {
-    // console.log(
-    //   "This is a cached fetchDataWithCache call: ",
-    //   mapState.get(cached_url_method_body_parameters)
-    // );
-    return mapState.get(cached_url_method_body_parameters);
+function logShopifyResponse(errorCode) {
+  switch (errorCode) {
+    case 200:
+      console.log(
+        "200 OK - The request was successfully processed by Shopify."
+      );
+      break;
+    case 201:
+      console.log(
+        "201 Created - The request has been fulfilled and a new resource has been created."
+      );
+      break;
+    case 202:
+      console.log(
+        "202 Accepted - The request has been accepted, but not yet processed."
+      );
+      break;
+    case 204:
+      console.log(
+        "204 No Content - The request has been accepted, but no content will be returned."
+      );
+      break;
+    case 205:
+      console.log(
+        "205 Reset Content - The request has been accepted, but no content will be returned. The client must reset the document from which the original request was sent."
+      );
+      break;
+    case 303:
+      console.log(
+        "303 See Other - The response to the request can be found under a different URL in the Location header and can be retrieved using a GET method on that resource."
+      );
+      break;
+    case 400:
+      console.log(
+        "400 Bad Request - The request wasn't understood by the server, generally due to bad syntax or because the Content-Type header wasn't correctly set to application/json."
+      );
+      break;
+    case 401:
+      console.log(
+        "401 Unauthorized - The necessary authentication credentials are not present in the request or are incorrect."
+      );
+      break;
+    case 402:
+      console.log(
+        "402 Payment Required - The requested shop is currently frozen. The shop owner needs to log in to the shop's admin and pay the outstanding balance to unfreeze the shop."
+      );
+      break;
+    case 403:
+      console.log(
+        "403 Forbidden - The server is refusing to respond to the request. This status is generally returned if you haven't requested the appropriate scope for this action."
+      );
+      break;
+    case 404:
+      console.log(
+        "404 Not Found - The requested resource was not found but could be available again in the future."
+      );
+      break;
+    case 405:
+      console.log(
+        "405 Method Not Allowed - The server recognizes the request but rejects the specific HTTP method. This status is generally returned when a client-side error occurs."
+      );
+      break;
+    case 406:
+      console.log(
+        "406 Not Acceptable - The requested resource is only capable of generating content not acceptable according to the Accept headers sent in the request."
+      );
+      break;
+    case 409:
+      console.log(
+        "409 Resource Conflict - The requested resource couldn't be processed because of conflict in the request."
+      );
+      break;
+    case 414:
+      console.log(
+        "414 URI Too Long - The server is refusing to accept the request because the Uniform Resource Identifier (URI) provided was too long."
+      );
+      break;
+    case 415:
+      console.log(
+        "415 Unsupported Media Type - The server is refusing to accept the request because the payload format is in an unsupported format."
+      );
+      break;
+    case 422:
+      console.log(
+        "422 Unprocessable Entity - The request body was well-formed but contains semantic errors."
+      );
+      break;
+    case 423:
+      console.log("423 Locked - The requested shop is currently locked.");
+      break;
+    case 429:
+      console.log(
+        "429 Too Many Requests - The request was not accepted because the application has exceeded the rate limit."
+      );
+      break;
+    case 430:
+      console.log(
+        "430 Shopify Security Rejection - The request was not accepted because the request might be malicious."
+      );
+      break;
+    case 500:
+      console.log(
+        "500 Internal Server Error - An internal error occurred in Shopify."
+      );
+      break;
+    case 501:
+      console.log(
+        "501 Not Implemented - The requested endpoint is not available on that particular shop."
+      );
+      break;
+    case 502:
+      console.log(
+        "502 Bad Gateway - The server received an invalid response from the upstream server."
+      );
+      break;
+    case 503:
+      console.log(
+        "503 Service Unavailable - The server is currently unavailable."
+      );
+      break;
+    case 504:
+      console.log(
+        "504 Gateway Timeout - The request couldn't complete in time."
+      );
+      break;
+    case 530:
+      console.log(
+        "530 Origin DNS Error - Cloudflare can't resolve the requested DNS record."
+      );
+      break;
+    case 540:
+      console.log(
+        "540 Temporarily Disabled - The requested endpoint isn't currently available."
+      );
+      break;
+    case 783:
+      console.log("783 Unexpected Token");
+      break;
+    default:
+      console.log("Unknown error code.");
+      break;
   }
-
-  let retryCount = 3;
-  let success = false;
-
-  const options = {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-    },
-  };
-
-  if (body) {
-    try {
-      options.body = JSON.stringify(body);
-    } catch (error) {
-      console.log("json stringify error", error);
-    }
-  }
-
-  while (!success && retryCount > 0) {
-    try {
-      const response = await fetchO(url, options);
-
-      if (response.ok) {
-        const data = await response.json();
-        success = true;
-
-        if (response.status === 404) {
-          return [];
-        }
-        mapActions.set(cached_url_method_body_parameters, data.data);
-        return data.data;
-      } else {
-        retryCount--;
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-      }
-    } catch (error) {
-      retryCount--;
-
-      if (retryCount === 0) {
-        presentToastO({
-          message: "There was a network error! Please try again later.",
-          duration: 5000,
-          position: "middle",
-        });
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-      }
-    }
-  }
-}
-
-async function uncachedFetchData({ url, method = "GET", body }) {
-  if (!fetch) {
-    throw new Error("authenticated fetch required");
-  }
-
-  const boxed = { data: null, error: null };
-  try {
-    const options = {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-      },
-    };
-
-    if (body) {
-      options.body = JSON.stringify(body);
-    }
-
-    const response_data = await fetchO(url, options);
-    const data = await response_data.json();
-
-    boxed.data = data?.data;
-    if (response_data.error) {
-      boxed.error = response_data.error;
-    }
-    if (data?.error) {
-      boxed.error = data.error;
-    }
-  } catch (error) {
-    if (error.code === 500) {
-      presentToastO({
-        message: "There was a network error! Please try again later.",
-        duration: 5000,
-        position: "middle", // top, bottom, middle
-        onDidDismiss: (e) => {
-          //setDisableButtons(false);
-        },
-      });
-    }
-    presentToastO({
-      message: JSON.stringify(error),
-      duration: 5000,
-      position: "middle", // top, bottom, middle
-      onDidDismiss: (e) => {
-        //setDisableButtons(false);
-      },
-    });
-    console.log("error", error);
-    boxed.error = error || null;
-  }
-  return boxed;
 }
 
 function useMap(initialEntries = []) {
@@ -360,7 +387,6 @@ export function DataProvidersProvider({ children }) {
   const [contextualOptions, setContextualOptions] = useState({});
   const [selectedCollections, setSelectedCollections] = useState([]);
   const [presentToast] = useIonToast();
-  presentToastO = presentToast;
   const [selectedImageText, setSelectedImageText] = useState("0 Items");
   const [selectedImages, setSelectedImages] = useState([]);
   const [selectedImageMap, setSelectedImageMap] = useState({});
@@ -413,14 +439,133 @@ export function DataProvidersProvider({ children }) {
   const [serverSentEventLoading, setServerSentEventLoading] = useState(false);
   const [updateArticleMethod, setUpdateArticleMethod] = useState(null);
   const [markupText, setMarkupText] = useState("");
-  const fetch = useAuthenticatedFetch(); // Make sure you have this hook defined somewhere
-  fetchO = fetch;
   const navigate = useNavigate();
   const [plans, setPlans] = useState({});
   const app = useAppBridge();
   const context = useShopifyContext();
   const [dependenciesLoaded, setDependenciesLoaded] = useState({});
   const [AllDependenciesLoaded, setAllDependenciesLoaded] = useState(false);
+  const fetch = useAuthenticatedFetch(); // Make sure you have this hook defined somewhere
+
+  async function fetchDataWithCache({ url, method, body }) {
+    if(sessionLoaded){
+
+   
+    const cached_url_method_body_parameters =
+      url + JSON.stringify(method) + JSON.stringify(body);
+
+    if (mapState.has(cached_url_method_body_parameters)) {
+      // console.log(
+      //   "This is a cached fetchDataWithCache call: ",
+      //   mapState.get(cached_url_method_body_parameters)
+      // );
+      return mapState.get(cached_url_method_body_parameters);
+    }
+
+    let retryCount = 3;
+    let success = false;
+
+    const options = {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    };
+
+    if (body) {
+      try {
+        options.body = JSON.stringify(body);
+      } catch (error) {
+        console.log("json stringify error", error);
+      }
+    }
+
+    while (!success && retryCount > 0) {
+      try {
+        const response = await fetch(url, options);
+
+        if (!response.ok) {
+          console.error("response ok", logShopifyResponse(response.status));
+        }
+
+        if (response.ok) {
+          const data = await response.json();
+          success = true;
+
+          if (response.status === 404) {
+            return [];
+          }
+          mapActions.set(cached_url_method_body_parameters, data.data);
+          return data.data;
+        } else {
+          retryCount--;
+          await new Promise((resolve) => setTimeout(resolve, 3000));
+        }
+      } catch (error) {
+        retryCount--;
+
+        if (retryCount === 0) {
+          presentToast({
+            message: "There was a network error! Please try again later.",
+            duration: 5000,
+            position: "middle",
+          });
+          await new Promise((resolve) => setTimeout(resolve, 3000));
+        }
+      }
+    }
+  }else{
+    console.error("call made outside session: ", url)
+  }
+ }
+  async function uncachedFetchData({ url, method = "GET", body }) {
+    if(sessionLoaded){
+    if (!fetch) {
+      throw new Error("authenticated fetch required");
+    }
+
+    const boxed = { data: null, error: null };
+    try {
+      const options = {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      };
+
+      if (body) {
+        options.body = JSON.stringify(body);
+      }
+
+      const response_data = await fetch(url, options);
+      const data = await response_data.json();
+
+      boxed.data = data?.data;
+      if (response_data.error) {
+        boxed.error = response_data.error;
+      }
+      if (data?.error) {
+        boxed.error = data.error;
+      }
+    } catch (error) {
+      console.error(logShopifyResponse(error));
+      presentToast({
+        message: "There was a network error! Please try again later.",
+        duration: 5000,
+        position: "middle", // top, bottom, middle
+        onDidDismiss: (e) => {
+          //setDisableButtons(false);
+        },
+      });
+
+      console.log("error", error);
+      boxed.error = error || null;
+    }
+    return boxed;
+  }else{
+    console.error("call made outside session: ", url)
+  }
+  }
   // useEffect(async () => {
   //   const token = await getSessionToken(app);
 
@@ -430,10 +575,7 @@ export function DataProvidersProvider({ children }) {
   // }, []);
 
   useEffect(async () => {
-    // console.log('indexDb=---->',indexDb);
-    // console.log('indexDb=--2-->',indexDb);
-    // console.log('db------->', db)
-    // console.log('indexdb:   ',indexDb.db)
+console.log('indexDb: ', indexDb.db);
 
     if (!indexDb.db) {
       const db = await indexDb.startIndexDB();
@@ -456,7 +598,7 @@ export function DataProvidersProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    if (Object.values(dependenciesLoaded).length > 0) {
+    if (Object.values(dependenciesLoaded).length === 2) {
       setAllDependenciesLoaded(
         Object.values(dependenciesLoaded).every((val) => val === true)
       );
@@ -478,8 +620,10 @@ export function DataProvidersProvider({ children }) {
 
   useEffect(async () => {
     if (AllDependenciesLoaded) {
+           console.log('all dependencies loaded')
       const fetchDataSession = async () => {
         try {
+     
           setSubscriptionRetrievalLoading(true);
           const subscriptionsResponse = await fetch(
             "/api/current/subscription/status"
@@ -490,13 +634,23 @@ export function DataProvidersProvider({ children }) {
             // it means the user is not authenticated or doesn't have access.
             // Redirect the user to the login page or show an error message.
             // navigation("/login");
-
             setSubscriptionRetrievalLoading(false);
+
+            setDependenciesLoaded((prev) => ({
+              ...prev,
+              sessionLoaded: sessionLoaded,
+            }));
+
+            throw new Error("unable to find your subscription");
             return;
           }
           const data = await subscriptionsResponse.json();
           console.log("session loaded");
           setSessionLoaded(true);
+          setDependenciesLoaded((prev) => ({
+            ...prev,
+            sessionLoaded: sessionLoaded,
+          }));
           const { activeSubscriptions, session, user, redirectUri } = data;
           const redirect = Redirect.create(app);
           console.log("subscription redirectUri: ", redirectUri);
@@ -512,7 +666,7 @@ export function DataProvidersProvider({ children }) {
 
           if (!DEPLOYMENT_ENV) {
             if (redirectUri) {
-              productViewCache.clear();
+              await productViewCache.clearAll();
             } else {
               await productViewCache.set("plans", data.plans);
               await productViewCache.set("user", user);
@@ -534,29 +688,32 @@ export function DataProvidersProvider({ children }) {
         }
         setSubscriptionRetrievalLoading(false);
       };
-      if (!DEPLOYMENT_ENV) {
-        const activeSubscriptions = await productViewCache.get(
-          "activeSubscriptions"
-        );
-        const session = await productViewCache.get("session");
-        const plans = await productViewCache.get("plans");
-        const user = await productViewCache.get("user");
-        if (plans && user && activeSubscriptions && session) {
-          try {
-            setSessionLoaded(true);
-            setPlans(plans);
-            assignUser(user);
-            setRouteSubscriptions(activeSubscriptions, session);
-          } catch (error) {
-            console.log("error", error);
-            await fetchDataSession();
-          }
-        } else {
-          await fetchDataSession();
-        }
-      } else {
+      // if (false && !DEPLOYMENT_ENV) {
+      //   const activeSubscriptions = await productViewCache.get(
+      //     "activeSubscriptions"
+      //   );
+      //   const session = await productViewCache.get("session");
+      //   const plans = await productViewCache.get("plans");
+      //   const user = await productViewCache.get("user");
+      //   if (plans && user && activeSubscriptions && session) {
+      //     try {
+      //       setPlans(plans);
+      //       assignUser(user);
+
+      //       setRouteSubscriptions(activeSubscriptions, session);
+
+      //       setSessionLoaded(true);
+      //     } catch (error) {
+      //       console.log("error", error);
+      //       await fetchDataSession();
+      //     }
+      //   } else {
+      //     await fetchDataSession();
+      //   }
+      // } else {
+        
         await fetchDataSession();
-      }
+      // }
     }
     // fetchDataSession();
   }, [AllDependenciesLoaded]);
@@ -901,7 +1058,35 @@ export function DataProvidersProvider({ children }) {
     setLegendReversed(formattedReversedLegend);
     console.log("formattedLegend:  ", formattedLegend);
   }
+  
+  useEffect(() => {
+    return () => {
+      const handleBeforeUnload = (event) => {
+        // event.preventDefault();
+        //  event.returnValue = "Are you sure you want to leave this page?";
 
+        window.addEventListener("unload", clearLocalStorage);
+      };
+
+      const clearLocalStorage = async () => {
+        if (DEPLOYMENT_ENV) {
+          await productViewCache.clearAll();
+        }
+      };
+
+      window.addEventListener("beforeunload", handleBeforeUnload);
+
+      return () => {
+        window.removeEventListener("beforeunload", handleBeforeUnload);
+      };
+    };
+  }, []);
+
+
+
+
+
+  
   const value = {
     AllDependenciesLoaded,
     modifyState,

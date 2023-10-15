@@ -201,7 +201,7 @@ export function WordCloud({ text, doc, its, checkFeatureAccess }) {
               color="shoe"
               onClick={(e) => DataProviderNavigate("/subscriptions")}
             >
-              Visualize The Most Important Ideas In Your Document
+             Quickly Visualize The Most Important Ideas In Your Document
             </IonButton>
 
           </IonText>

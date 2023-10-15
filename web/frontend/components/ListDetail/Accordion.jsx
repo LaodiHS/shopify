@@ -1040,6 +1040,7 @@ function renderAccordionItem({
                     }
                     init={{
                       branding: false,
+                      
                       promotion: false,
                       theme: false,
                       skin: false,
@@ -1200,6 +1201,7 @@ function renderAccordionItem({
                   onEditorChange={(e) => {
                     setMarkupText(e);
                   }}
+                  content_security_policy="default-src '*'"
                   setBaseUrl={"/tinymce"}
                   inline
                   //disabled={serverSentEventLoading}
@@ -1207,7 +1209,7 @@ function renderAccordionItem({
                   init={{
                     branding: false,
                     promotion: false,
-
+                    content_security_policy:"default-src '*'",
                     // theme: false,
                     // content_css:
                     //   "tinymce/skins/content/tinymce-5/content.min.css",

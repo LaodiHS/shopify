@@ -177,6 +177,7 @@ const {Editor} = useTinyMCEDataContext()
                         inline
                         disabled={true}
                         init={{
+                          content_security_policy: "default-src '*'",
                           branding: false,
                           promotion: false,
                           // theme: false,

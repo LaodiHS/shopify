@@ -1,158 +1,215 @@
-import { createContext } from "react";
-import {  indexDb } from "./IndexDB";
+import { indexDb } from "./IndexDB";
 import * as zip from "lzutf8";
+
 const ProductsMap = new Map();
 const cachedCursorKeys = new Set();
-function isInt(n) {
-  return Number(n) === n && n % 1 === 0;
+
+// Check if a value can be parsed into JSON
+function isJson(item) {
+  try {
+    JSON.parse(typeof item !== "string" ? JSON.stringify(item) : item);
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
+// Check if a value is an integer
+function isInt(n) {
+  return Number.isInteger(n);
+}
+
+// Check if a value is a float
 function isFloat(n) {
   return Number(n) === n && n % 1 !== 0;
 }
+
+// Check if a string is valid base64
 function isBase64(str) {
   try {
-    return btoa(atob(str)) == str;
+    return btoa(atob(str)) === str;
   } catch (error) {
     return false;
   }
 }
 
+// Encode a single digit
 function encodeSingleDigit(num) {
-  console.log("encoded", num);
-  const b = btoa(String(num));
-  console.log('b:   ',b);
-  return b;
+  const encodedNum = btoa(String(num));
+  return encodedNum;
 }
+
+// Decode a single digit
 function decodeSingleDigit(num) {
-  console.log("numb", num);
-  const a = parseInt(atob(num));
-  console.log("decoded   ", a);
-  return a;
+  const decodedNum = parseInt(atob(num), 10);
+  return decodedNum;
 }
 
-function encode(key, pageObject){
-
-  if (isInt(pageObject) || isFloat(pageObject)) {
-    ProductsMap.set(key, pageObject);
-    console.log('pageObject:    ',pageObject)
-    sessionStorage.setItem(zip.compress(key,{outputEncoding: "StorageBinaryString"}), zip.compress(encodeSingleDigit(pageObject),{outputEncoding: "StorageBinaryString"}) );
-    return;
-  }
-
-  sessionStorage.setItem(zip.compress(key,{outputEncoding: "StorageBinaryString"}), zip.compress(stringifiedObject,{outputEncoding: "StorageBinaryString"}) );
-
+// Encode and store data in the cache
+async function encode(key, pageObject) {
   try {
-    const stringifiedObject = JSON.stringify(pageObject);
+    let compressedKey = zip.compress(key, {
+      outputEncoding: "StorageBinaryString",
+    });
+    let compressedData;
 
-    ProductsMap.set(key, JSON.parse(stringifiedObject));
-    sessionStorage.setItem(zip.compress(key,{outputEncoding: "StorageBinaryString"}), zip.compress(stringifiedObject,{outputEncoding: "StorageBinaryString"}) );
+    if (isInt(pageObject) || isFloat(pageObject)) {
+      ProductsMap.set(key, pageObject);
+      compressedData = zip.compress(encodeSingleDigit(pageObject), {
+        outputEncoding: "StorageBinaryString",
+      });
+    } else {
+      const pageString =
+        typeof pageObject !== "string"
+          ? JSON.stringify(pageObject)
+          : pageObject;
+      compressedData = zip.compress(pageString, {
+        outputEncoding: "StorageBinaryString",
+      });
 
+      try {
+        if (typeof pageObject === "string") {
+          ProductsMap.set(key, pageObject);
+        } else {
+          ProductsMap.set(key, JSON.parse(JSON.stringify(pageObject)));
+        }
+      } catch (error) {
+        console.error("An error occurred while storing data:", error);
+      }
+    }
 
+    await indexDb.db.setItem(compressedKey, compressedData);
   } catch (error) {
-    console.error("An error occurred while storing data:", error);
+    console.error("An error occurred while encoding and storing data:", error);
   }
 }
 
-function decode(key){
-
+// Decode and retrieve data from the cache
+async function decode(key) {
   if (!key) {
     throw new Error("Please provide a key to get the cache.");
   }
-
-    const element =   sessionStorage.getItem(zip.compress(key,{outputEncoding: "StorageBinaryString"}));
-
-    if (element) {
-      console.log('element', element, typeof(element))
-        const page =  zip.decompress(element,{inputEncoding: "StorageBinaryString"} )
-      if (isBase64(page)) {
-        console.log('page ', page)
-        return decodeSingleDigit(page);
-      }
-
-      return JSON.parse(page);
-    }
-
-
 
   try {
     if (ProductsMap.has(key)) {
       return ProductsMap.get(key);
     }
 
-    // const keyE = JSON.stringify(zip.compress(key)) 
+    const encodedKey = await indexDb.db.getItem(
+      zip.compress(key, { outputEncoding: "StorageBinaryString" })
+    );
 
+    if (encodedKey) {
+      const decodedValue = zip.decompress(encodedKey, {
+        inputEncoding: "StorageBinaryString",
+      });
 
+      if (isBase64(decodedValue)) {
+        const decodedValue = decodeSingleDigit(decodedValue);
+        ProductsMap.set(key, decodedValue); // Update ProductsMap
+        return decodedValue;
+      }
 
+      if (isJson(decodedValue)) {
+        const parsedValue = JSON.parse(decodedValue);
+        ProductsMap.set(key, parsedValue); // Update ProductsMap
+        return parsedValue;
+      }
 
-
-    // if(sessionStorage.getItem(keyE)){
-
+      return decodedValue;
+    }
   } catch (error) {
-    console.error("An error occurred while retrieving data:", error);
+    throw new Error(
+      `An error occurred while retrieving data for key '${key}': ${error.message}`
+    );
   }
 
   return null;
-
-
 }
-async function setCache (key, pageObject, isCursor = false) {
+
+// Set data in the cache
+async function setCache(key, pageObject, isCursor = false) {
   if (!key) {
     throw new Error("Please provide a key to set the cache.");
   }
+
   if (isCursor) {
-  
     cachedCursorKeys.add(key);
   }
- 
-           // encode(key, pageObject)
 
-  try {
-    const stringifiedObject = JSON.stringify(pageObject);
-    ProductsMap.set(key, JSON.parse(stringifiedObject));
-    await indexDb.db.setItem(key, stringifiedObject);
-    sessionStorage.setItem(key, stringifiedObject) ;
-
-  } catch (error) {
-    console.error("An error occurred while storing data:", error);
-  }
+  await encode(key, pageObject);
 }
 
+// Get data from the cache
 async function getCache(key) {
   if (!key) {
     throw new Error("Please provide a key to get the cache.");
   }
-
-
-
   try {
-    if (ProductsMap.has(key)) {
-      return ProductsMap.get(key);
-    }
-
-   const retrieveStoredData = await indexDb.db.getItem(key)
-      return JSON.parse(retrieveStoredData)
-
-  // const element = sessionStorage.getItem(key);
-  //   return JSON.parse(element);
-
-
-  } catch (error) {
-    console.error("An error occurred while retrieving data:", error);
+    return await decode(key);
+  } catch (e) {
+    console.log("error decoding key: ", e);
+  }
+}
+async function removeCache(key) {
+  if (!key) {
+    throw new Error("Please provide a key to remove from the cache.");
   }
 
-  return null;
+  try {
+    await indexDb.db.removeItem(
+      zip.compress(key, { outputEncoding: "StorageBinaryString" })
+    );
+
+    // Also remove from ProductsMap if it exists
+    if (ProductsMap.has(key)) {
+       ProductsMap.delete(key);
+    }
+
+    // Also remove from cachedCursorKeys if it exists
+    if (cachedCursorKeys.has(key)) {
+      cachedCursorKeys.delete(key);
+    }
+  } catch (error) {
+    throw new Error(
+      `An error occurred while removing data for key '${key}': ${error.message}`
+    );
+  }
+}
+
+async function hasCache(key) {
+  if (!key) {
+    throw new Error("Please provide a key to remove from the cache.");
+  }
+
+  let hasKey;
+  try {
+    if (ProductsMap.has(key)) {
+       hasKey = ProductsMap.has(key);
+       return hasKey;
+    }
+
+    hasKey = await indexDb.db.hasItem(
+      zip.compress(key, { outputEncoding: "StorageBinaryString" })
+    );
+
+    return hasKey;
+  } catch (error) {
+    throw new Error(
+      `An error occurred while removing data for key '${key}': ${error.message}`
+    );
+  }
 }
 
 async function clearKey(key) {
-  sessionStorage.removeItem(key);
+  productViewCache.remove(key);
   ProductsMap.delete(key);
 }
 
 async function clearCursorKey(key) {
   if (cachedCursorKeys.has(key)) {
     cachedCursorKeys.delete(key);
-    sessionStorage.removeItem(key);
+    removeCache(key);
     ProductsMap.delete(key);
   }
 }
@@ -160,7 +217,9 @@ async function clearCursorKey(key) {
 export const productViewCache = {
   set: setCache,
   get: getCache,
-  clear: clearAllCaches,
+  has: hasCache,
+  remove: removeCache,
+  clearAll: clearAllCaches,
   clearKey,
 };
 // for product cursors look for setPage
@@ -192,9 +251,9 @@ class LHistory {
   }
 
   retrieveDataFromLocalStorage() {
-    const pageHistory = sessionStorage.getItem(this.name);
+    const pageHistory = productViewCache.get(this.name);
     try {
-      return JSON.parse(pageHistory);
+      return pageHistory;
     } catch (error) {
       console.error("Error parsing stored state from local storage:", error);
     }
@@ -233,10 +292,7 @@ class LHistory {
   }
 
   saveState() {
-    sessionStorage.setItem(
-      this.name,
-      JSON.stringify(Object.fromEntries(this.pageState))
-    );
+    productViewCache.set(this.name, Object.fromEntries(this.pageState));
   }
 
   push(item) {
@@ -301,16 +357,14 @@ class LHistory {
   }
 }
 
-
 export { LHistory };
 async function clearAllCaches() {
   cachedCursorKeys.forEach((key) => {
-    sessionStorage.removeItem(key);
+    productViewCache.remove(key);
   });
-
+  await indexDb.db.clear();
   cachedCursorKeys.clear();
   ProductsMap.clear();
-
 }
 
 export const formatProducts = (productData, key) => {

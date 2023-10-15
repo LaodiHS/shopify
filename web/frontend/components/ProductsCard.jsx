@@ -54,6 +54,7 @@ export function ProductsCard({ animationRef }) {
     pagingHistory,
     formatProducts,
     pageIngCache,
+
   } = useProductDataContext();
 
   useEffect(() => {
@@ -123,7 +124,10 @@ export function ProductsCard({ animationRef }) {
   // }
 
   return (
-    <IonPage ref={animationRef}>
+    <IonPage ref={(el) => {
+      animationRef.current = el; // Attach the IonPage element to animationRef
+      // Forward the ref to the parent component
+    }}>
     
       <IonicHeaderComponent
       type={isProductsLoading ? 'indeterminate' : 'determinate'}
@@ -200,15 +204,39 @@ function DisplayContents({}) {
   return null;
 }
 
-function SkeletonComponent() {
-  // Define the number of skeleton items to render (should match the number of products)
-  const numberOfSkeletonItems = 20; // Change this to your desired number
 
+function SkeletonComponent() {
+
+  const {
+   
+    productsPerPage
+    
+
+  } = useProductDataContext();
+  // Define the number of skeleton items to render (should match the number of products)
+// Change this to your desired number
+  const [cardTitleStyle, setCardTitleStyle] = useState({
+    fontSize: "1.8vw", // Use relative 'rem' unit for font size
+    fontWeight: "bold",
+    fontFamily:"baloo",
+    whiteSpace: "normal",
+    wordWrap: "break-word",
+    minHeight: "200px",
+    maxHeight: "200px"
+  });
+  const mainImageStyles = {
+    height: "100%",
+    maxHeight: "100%",
+    minHeight: "200px",
+    width: "100%",
+    minWidth: "100%",
+    maxWidth: "100%",
+  };
   return (
     <IonContent>
       <IonGrid>
         <IonRow>
-          {[...Array(numberOfSkeletonItems).keys()].map((productIndex) => (
+          {[...Array(productsPerPage).keys()].map((productIndex) => (
             <IonCol
               key={productIndex}
               size="12"
@@ -219,7 +247,7 @@ function SkeletonComponent() {
               <IonCard>
                 <IonCardHeader>
                   <IonCardTitle style={{ marginBottom: "16px" }}>
-                    <IonSkeletonText animated style={{ width: "80%" }} />
+                    <IonSkeletonText animated style={{ width: "80%" ,height:"30px" }} />
                   </IonCardTitle>
                 </IonCardHeader>
                 <IonCardContent>
@@ -228,15 +256,20 @@ function SkeletonComponent() {
                       <IonCol size="6" sizeMd="12" sizeSm="12">
                         <IonSkeletonText
                           animated
-                          style={{ width: "100%", height: "150px" }}
+                          style={{ ...mainImageStyles }}
                         />
                       </IonCol>
                       <IonCol size="6" sizeMd="12" sizeSm="12">
                         <IonSkeletonText animated style={{ width: "80%" }} />
+                        <IonSkeletonText animated style={{ width: "70%" }} />
                         <IonSkeletonText animated style={{ width: "80%" }} />
+                        <IonSkeletonText animated style={{ width: "50%" }} />
                         <IonSkeletonText animated style={{ width: "80%" }} />
+                        <IonSkeletonText animated style={{ width: "70%" }} />
                         <IonSkeletonText animated style={{ width: "80%" }} />
+                        <IonSkeletonText animated style={{ width: "30%" }} />
                         <IonSkeletonText animated style={{ width: "80%" }} />
+                        <IonSkeletonText animated style={{ width: "40%" }} />
                       </IonCol>
                     </IonRow>
                   </IonGrid>

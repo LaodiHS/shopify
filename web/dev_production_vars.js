@@ -10,6 +10,10 @@ const REDIS_LAB = process.env.NODE_ENV !== "production" ? REDIS_LAB_PRODUCTION :
 
 
 function parseRedisConnectionString(connectionString) {
+  if(!connectionString){
+    console.error("no connection string");
+    throw new Error("no connection string");
+  }
     const parts = connectionString.split('://')[1].split('@');
     if (parts.length !== 2) {
       throw new Error('Invalid Redis connection string format');

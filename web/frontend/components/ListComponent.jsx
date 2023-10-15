@@ -27,7 +27,6 @@ import {
   IonSpinner,
   IonIcon,
   IonChip,
-
 } from "@ionic/react";
 
 import {
@@ -37,50 +36,69 @@ import {
   AnimatedContent,
   useWinkDataContext,
 
+  useCurrentScreenWidth,
 } from "../components";
 import { alertCircleOutline } from "ionicons/icons";
-import { deskLamp,  imagePlaceHolder } from "../assets";
+import { deskLamp, imagePlaceHolder } from "../assets";
 
-export function ListComponent() {
+export function ListComponent(props) {
+  const { referenceObject, setReferenceObject } = useState({});
+  const [mainDisplayImages, setMainDisplayImages] = useState({});
 
-
-
-  const { productsData, defineProductData } = useProductDataContext();
-
+  const {
+    productsData,
+    defineProductData,
+    DataProviderNavigate,
+    eventEmitter,
+  } = useProductDataContext();
 
   const [products, setProducts] = useState([]);
-  const [mainDisplayImages, setMainDisplayImages] = useState({});
+
   const elementRefs = useRef([]);
-  const { DataProviderNavigate } = useDataProvidersContext();
+
   const { cardDataStats, generateComplementaryColor, getColor } =
     useWinkDataContext();
   const [cardTitleStyle, setCardTitleStyle] = useState({
-    fontSize: "1.2rem", // Use relative 'rem' unit for font size
-    fontWeight: "bold",
+    fontSize: "1.8vw", // Use relative 'rem' unit for font size
+    fontWeight: "normal",
+    fontFamily: "baloo",
     whiteSpace: "normal",
     wordWrap: "break-word",
+    minHeight: "200px",
+    maxHeight: "200px",
+
   });
+
+  const mainImageStyles = {
+    height: "100%",
+    maxHeight: "100%",
+    minHeight: "200px",
+    width: "100%",
+    minWidth: "100%",
+    maxWidth: "100%",
+  };
+
   const parentKeyScope = "ListComponent";
+
+  const { GetFontSize, getCardRef } = useCurrentScreenWidth();
+
   useEffect(() => {}, [products]);
 
   useEffect(() => {
     setProducts(productsData.productsData);
 
-
     const mainImagesSrc = productsData?.productsData?.reduce(
       (acc, product, productIndex) => {
         acc[productIndex] = {
-          img:
-            product?.images[0]?.transformedSrc
-              ||imagePlaceHolder
-            ,
+          img: product?.images[0]?.transformedSrc || imagePlaceHolder,
           index: 0,
         };
         return acc;
       },
       {}
     );
-    console.log('images changed', mainImagesSrc)
+    console.log("images changed", mainImagesSrc);
+
     setMainDisplayImages(mainImagesSrc);
     elementRefs.current = elementRefs.current.slice(
       0,
@@ -88,7 +106,6 @@ export function ListComponent() {
     );
   }, [productsData.productsData]);
 
-  
   function handleThumbnailClick(productIndex, imageIndex) {
     setMainDisplayImages((prev) => {
       return {
@@ -106,7 +123,7 @@ export function ListComponent() {
       duration: 0.3,
       onComplete: async () => {
         ref.style.display = "none";
-       await defineProductData(index);
+        await defineProductData(index);
         await DataProviderNavigate(
           "/product-details",
           { target: "host" },
@@ -136,9 +153,9 @@ export function ListComponent() {
                   <IonCard key="listComponentCard">
                     <IonCardHeader key="IonCardHeader">
                       <IonCardTitle style={{ marginBottom: "16px" }}>
-                        <IonSkeletonText 
+                        <IonSkeletonText
                           animated
-                          style={{ height: "300px", width: "80%" }}
+                          style={{ ...mainImageStyles }}
                         />
                       </IonCardTitle>
                     </IonCardHeader>
@@ -225,7 +242,6 @@ export function ListComponent() {
               );
             }
             const cardStats = cardDataStats(product.description);
-
             const sentiment = cardStats.readabilityStats().sentiment;
             const percentageTagsMatch = cardStats.metaTagPMatchTextPercent(
               product.tags
@@ -236,26 +252,37 @@ export function ListComponent() {
             return (
               <IonCol
                 key={productIndex + "ionCol"}
-                size="12"
+                size="auto"
+                sizeLg="auto"
                 sizeMd="6"
                 sizeSm="12"
                 sizeXl="3"
+                sizeXs="auto"
               >
                 <IonCard
-                  ref={(e) => (elementRefs.current[productIndex] = e)}
+                  ref={(ref) => (
+                    getCardRef( ref, productIndex),
+                    (elementRefs.current[productIndex] = ref)
+                  )}
                   key={productIndex + "ionCard"}
                 >
                   <IonCardHeader key={productIndex + "ionCardHeader"}>
-                    <IonCardTitle
-                      key={productIndex + "ionCardTitle"}
-                      style={cardTitleStyle}
-                      className="ion-padding"
-                    >
-                      {product.title.length > 100
-                        ? product.title.substring(0, 100) + "..."
-                        : product.title}
-                    </IonCardTitle>
+                    <GetFontSize
+                      index={productIndex}
+                      Element={
+                        <IonCardTitle
+                          key={productIndex + "ionCardTitle"}
+                          style={cardTitleStyle}
+                          className="ion-padding ion-text-capitalize"
+                        >
+                          {product.title.length > 100
+                            ? product.title.substring(0, 100) + "..."
+                            : product.title}
+                        </IonCardTitle>
+                      }
+                    />
                     <IonCardSubtitle
+                      key="cardSubTitle"
                       style={{ color: getColor(sentiment.score) }}
                     >
                       SEO Health: {sentiment.status}{" "}
@@ -270,14 +297,21 @@ export function ListComponent() {
                           sizeMd="12"
                           sizeSm="12"
                         >
-            
-                          <ImageCache
-                            style={{ minHeight: "300px" }}
-                            key={`imageProductTitleImageCache_${productIndex}`}
-                            src={mainDisplayImages[productIndex]?.img }
-                          />
-                     
-                          <div
+                          <IonCol
+                            size="12"
+                            style={{
+                              display: "flex",
+                              justifyContent: "center",
+                            }}
+                          >
+                            <ImageCache
+                              style={mainImageStyles}
+                              key={`mainProductImage_${productIndex}`}
+                              src={mainDisplayImages[productIndex]?.img}
+                            />
+                          </IonCol>
+                          <IonCol
+                            size="12"
                             key={
                               productIndex + "displayContainer" + parentKeyScope
                             }
@@ -288,27 +322,24 @@ export function ListComponent() {
                             }}
                           >
                             {images.map((image, imageIndex) => {
+                              const sliderImageStyles = {
+                                height: "60px",
+                                width: "60px",
+                                marginRight: "5px",
+                                cursor: "pointer",
+                                border:
+                                  imageIndex ===
+                                  mainDisplayImages[productIndex].index
+                                    ? "2px solid blue"
+                                    : "none",
+                              };
+
                               return (
-                               
-                              
                                 <ImageCache
                                   sliderImg={true}
-                                  key={
-                                    `thumbnail_${productIndex}_${imageIndex}` +
-                                    image.transformedSrc
-                                  }
+                                  key={`thumbnail_${imageIndex}`}
                                   src={image.transformedSrc}
-                                  style={{
-                                    width: "60px",
-                                    height: "60px",
-                                    border:
-                                      imageIndex ===
-                                      mainDisplayImages[productIndex].index
-                                        ? "2px solid blue"
-                                        : "none",
-                                    marginRight: "5px",
-                                    cursor: "pointer",
-                                  }}
+                                  style={sliderImageStyles}
                                   onClick={() =>
                                     handleThumbnailClick(
                                       productIndex,
@@ -316,10 +347,9 @@ export function ListComponent() {
                                     )
                                   }
                                 />
-                              
                               );
                             })}
-                          </div>
+                          </IonCol>
                         </IonCol>
                         <IonCol
                           key={product.description + productIndex}

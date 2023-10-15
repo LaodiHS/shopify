@@ -77,7 +77,7 @@ async function startServer() {
 
     const app = await authentication();
     // const csp = "frame-ancestors 'self' neuralnectar.fly.dev";
-
+   
     serverSideEvent(app, redisClient, queue);
     handleDescriptionEndpoints(app, queue);
     handleArticleEndpoints(app, queue);
@@ -106,11 +106,10 @@ async function startServer() {
         const activeSubscriptions = subscriptions.activeSubscriptions.map(
           (sub) => sub.name
         );
-
+        
         let redirectUri = null;
 
-        if (activeSubscriptions.length) {
-        } else {
+        if (activeSubscriptions.length === 0) {
           redirectUri = await shopify.api.billing.request({
             session,
             plan: plans[0],
@@ -125,7 +124,7 @@ async function startServer() {
           activeSubscriptions,
           plans: billingConfig,
           session: res.locals.shopify.session,
-          redirectUri,
+         // redirectUri,
         });
       } catch (error) {
         console.error(error);
@@ -323,12 +322,18 @@ async function startServer() {
         };
         // Step through pagination
         do {
-          const products = await client.get(params);
+          try{
+          const products = await client?.get(params) || {body:{products:[]}};
           // Check tags
-          for (const product of products.body.products) {
+          // @ts-ignore
+          for (const product of products?.body?.products) {
             await productTagger(client, product);
           }
+          // @ts-ignore
           params = products?.pageInfo?.nextPage;
+        }catch(err){
+console.log('error products tags', err);
+        }
         } while (params !== undefined);
         // Keep track of the last time this process runs
         reconciliation[session.shop] = new Date().toISOString();
@@ -343,10 +348,12 @@ async function startServer() {
     
     productSearch(app);
     app.get("/api/inventory-item/", async (_req, res) => {
-      if (_req.params.id && _req.params.id !== "") {
+      // @ts-ignore
+      if ( _req.params && _req.params?.id && _req.params?.id !== "") {
         const item = await shopify.api.rest.InventoryItem.find({
           session: res.locals.shopify.session,
-          id: _req.params.id,
+          // @ts-ignore
+          id: _req.params?.id,
         });
         res.status(200).send(item);
       } else {
@@ -470,7 +477,7 @@ async function startServer() {
         error = err.message;
         data = null; // Reset data to null in case of an error
       }
-      console.log("data-->", data);
+      // console.log("data-->", data);
       // console.log("paging Data====>:", data);
       res.status(status).send({ success: status === 200, data, error });
     });
@@ -519,7 +526,7 @@ async function startServer() {
     app.use("/tinymce", express.static(completePath));
 
     app.use(shopify.cspHeaders());
-
+   
     // setting the index to true will fail, because it is checked by shopify.
     app.use(serveStatic(STATIC_PATH, { index: false }));
 
@@ -540,7 +547,18 @@ async function startServer() {
     // app.use("/*", shopify.ensureInstalledOnShop());
 
     
-    app.use("/*", shopify.ensureInstalledOnShop(), async (_req, res, _next) => {
+
+    app.use("/*", ( (req, res, next) => {
+console.log('query:==>',req.query)
+console.log('body:==>',req.body)
+console.log('query:==>',req.params)
+console.log('url:==>',req.url)
+console.log('originalurl:==>',req.originalUrl)
+    
+next()
+    } ), 
+    shopify.ensureInstalledOnShop(),
+     async (_req, res, _next) => {
       // console.log('middleware', shopify.ensureInstalledOnShop())
 
       return res
@@ -554,5 +572,6 @@ async function startServer() {
     console.error("Error starting the server:", error);
   }
 }
+
 
 startServer();

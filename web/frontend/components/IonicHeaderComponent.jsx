@@ -29,7 +29,7 @@ export function IonicHeaderComponent({ centerText, left, right, progress = 100 ,
   centerText = centerText || "neural nectar";
   return (
     <IonHeader 
-     translucent={true}
+    //  translucent={true}
     style={{"--background":"none"}}
     >
       <IonToolbar

@@ -9,7 +9,7 @@ import { winkTokenixer } from "wink-tokenizer";
 
 import { extractTextFromHtml } from "./";
 
-// import Matcher from "did-you-mean";
+
 // import * as distanceJaro from "jaro-winkler";
 
 import tinycolor from "tinycolor2";

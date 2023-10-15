@@ -51,7 +51,6 @@ export async function authentication() {
 //   next();
 // });
 
-
  
 
   // app.use(compression({ threshold: 0 }))
@@ -71,7 +70,7 @@ export async function authentication() {
           isTest: isTest, // need to change to false when ready for production
         });
         console.log("has payment: " + hasPayment);
-        if (hasPayment) {
+        if (true || hasPayment) {
           console.log('has payment: ' + hasPayment);
           next();
         } else {
@@ -105,6 +104,9 @@ export async function authentication() {
   } catch (e) {
     console.log("error", e);
   }
+
+
+
   return app;
 }
 

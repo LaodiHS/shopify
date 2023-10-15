@@ -119,7 +119,7 @@ http://ionicframework.com/docs/theming/ */
     --ion-color-shoe-tint: #957e6d;
 }
 
-@media (prefers-color-scheme: light gray) {
+@media (prefers-color-scheme: gray) {
   /*
      * Dark Colors
      * -------------------------------------------

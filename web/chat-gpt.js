@@ -1,8 +1,8 @@
-import { schemePastel2 } from "d3-scale-chromatic";
-import { interpolateHsl } from "d3-interpolate";
+// import { schemePastel2 } from "d3-scale-chromatic";
+// import { interpolateHsl } from "d3-interpolate";
 import chroma from "chroma-js";
-import * as D3Node from "d3-node";
-const d3 = D3Node.d3;
+// import * as D3Node from "d3-node";
+// const d3 = D3Node.d3;
 import pluralize from "pluralize";
 // function generatePastelColors(numColors) {
 //   if (numColors < 1) {

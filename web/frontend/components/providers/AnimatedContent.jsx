@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { animate} from 'popmotion';
+
 import styler from 'stylefire';
 import { useInView } from 'react-intersection-observer';
 
