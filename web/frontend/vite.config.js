@@ -73,13 +73,10 @@ export default defineConfig({
     API_URL: JSON.stringify(host),
     "process.env.SHOPIFY_API_KEY": JSON.stringify(process.env.SHOPIFY_API_KEY),
   },
-  build: {
-    minify:false,
-   
-      // commonjsOptions: {
-      //   transformMixedEsModules: true,
-      // }
+  esbuild: {
+    pure: process.env.NODE_ENV === 'production' ? ['console.log', 'console.warn'] : [],
   },
+
   resolve: {
     preserveSymlinks: true,
   },
