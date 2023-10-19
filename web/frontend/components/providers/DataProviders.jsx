@@ -52,11 +52,11 @@ import { AnimatedContent } from "./";
 import { NavigationRefs } from "./";
 
 import {
-  honeyPot,
+
   beehive,
   readingTree,
   honeyCombGridDrop,
-  girlReading,
+
   readingBag,
 } from "../../assets";
 

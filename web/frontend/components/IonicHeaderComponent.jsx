@@ -18,7 +18,7 @@ import {
   aiIcon,
   pencilCase,
   newsPaperWorStation,
-  halfMoon,
+
   readingTree,
   honeyCombGridDrop,
   

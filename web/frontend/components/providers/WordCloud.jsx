@@ -3,7 +3,7 @@ import cloud from "d3-cloud";
 import * as d3 from "d3";
 import debounce from "lodash.debounce";
 import { IonRow, IonCol, IonButton, IonText } from "@ionic/react";
-import { beehive, honeyPot } from "../../assets";
+import { beehive } from "../../assets";
 
 import tinycolor from "tinycolor2";
 import { useDataProvidersContext, InformationIcon,DocumentImagery } from "../";

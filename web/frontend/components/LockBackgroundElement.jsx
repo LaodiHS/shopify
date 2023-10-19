@@ -1,4 +1,4 @@
-import  {beehive, honeyPot} from "../assets"
+import  {beehive} from "../assets"
 import {IonCard, IonCardContent} from "@ionic/react"
 import { useNavigate } from "react_router_dom"
 export function LockBackgroundElement ({contents}){

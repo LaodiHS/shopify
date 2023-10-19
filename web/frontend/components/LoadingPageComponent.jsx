@@ -15,10 +15,10 @@ import {
 
 import { IonicHeaderComponent } from "./IonicHeaderComponent";
 import {
-  honeyPot,
+ 
   readingTree,
   honeyCombGridDrop,
-  girlReading,
+
   readingBag,
   honeyDrop,
 } from "../assets";

@@ -34,7 +34,7 @@ import {
   exitOutline,
   informationCircle,
 } from "ionicons/icons";
-import { trash, pictures, beehive, honeyPot } from "../../assets";
+import { trash, pictures, beehive, } from "../../assets";
 
 import { Context, SharedData } from "../../utilities/data-context.js";
 import { shortenText } from "../../utilities/utility-methods";

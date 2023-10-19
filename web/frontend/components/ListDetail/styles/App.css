@@ -101,7 +101,7 @@ ion-accordion.accordion-expanded ion-item[slot='header'] {
 }
 
 .background-item {
-  /* background-image: url("../../../assets/half-moon.svg"); */
+
   background-size: contain;
   background-repeat: no-repeat;
   background-position: top left;
@@ -209,7 +209,7 @@ ion-title div {
 
 .info {
   grid-area: info;
-  background-image: url("../../../assets/half-moon.svg");
+
   background-size: contain;
   background-repeat: no-repeat;
   background-position: top left;

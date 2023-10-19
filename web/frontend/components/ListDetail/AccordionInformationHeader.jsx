@@ -20,11 +20,11 @@ import {
   aiIcon,
   pencilCase,
   newsPaperWorStation,
-  halfMoon,
+
   readingTree,
   honeyCombGridDrop,
   beehive,
-  honeyPot,
+
 } from "../../assets";
 
 export function AccordionInformationHeader({ lock, accordionName, boxName, note }) {
