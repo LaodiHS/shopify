@@ -15,13 +15,13 @@ const users = [
 ];
 
 // Function to get a user by their ID from the users table
-export async function getUserById(userId) {
-  return await readJSONFromFileAsync(userId);
+export async function getUserByShopName(shop_name) {
+  return await readJSONFromFileAsync(shop_name);
 }
 
 // Function to calculate the remaining usage limit for a user
-export async function getRemainingUsage(userId) {
-  const user = await getUserById(userId);
+export async function getRemainingUsage(shop_name) {
+  const user = await getUserByShopName(shop_name);
 
   if (!user) {
     throw new Error("User not found.");
@@ -36,46 +36,46 @@ export async function getRemainingUsage(userId) {
 }
 
 // Function to check if a user has exceeded their usage limit
-export async function hasExceededUsageLimit(userId, additionalTokens) {
-  const remainingUsage = await getRemainingUsage(userId);
+export async function hasExceededUsageLimit(shop_name, additionalTokens) {
+  const remainingUsage = await getRemainingUsage(shop_name);
  
   return additionalTokens > remainingUsage;
 }
 
 // Function to charge a user for additional tokens beyond their usage limit
-export async function chargeForAdditionalTokens(userId, additionalTokens) {
+export async function chargeForAdditionalTokens(shop_name, additionalTokens) {
   // Implement the logic to calculate the cost of additional tokens based on your pricing model
   const costPerToken = 0.5; // Example: $0.01 per token
   const totalCharge = additionalTokens * costPerToken;
 
   // In a real implementation, you might record the charge in a billing system or payment gateway
   // For this example, we'll simply log the charge
-  console.log(`Charging user ${userId} $${totalCharge.toFixed(2)}`);
+  console.log(`Charging user ${shop_name} $${totalCharge.toFixed(2)}`);
 
   // Update the user's current_usage to reflect the additional tokens used
-  const user = await getUserById(userId);
+  const user = await getUserByShopName(shop_name);
   user.current_usage += additionalTokens;
 
-  writeJSONToFileAsync(userId, user);
+  writeJSONToFileAsync(shop_name, user);
 }
 
 // Function to update a user's current_usage after processing a job
-export async function updateTokenUsageAfterJob(userId, tokensUsed) {
+export async function updateTokenUsageAfterJob(shop_name, tokensUsed) {
   console.log('toekns used', tokensUsed);
-  const user = await getUserById(userId);
+  const user = await getUserByShopName(shop_name);
   if (user.current_usage) {
     user.current_usage += tokensUsed;
   } else {
     user.current_usage = tokensUsed;
   }
 
-  writeJSONToFileAsync(userId, user);
+  writeJSONToFileAsync(shop_name, user);
 }
 
-export async function updateSubscription(userId, subscription_name) {
+export async function updateSubscription(shop_name, subscription_name) {
   if (Object.keys(monthlySubscriptionsTokens).includes(subscription_name)) {
-    const user = await getUserById(userId);
-    user.shop = userId;
+    const user = await getUserByShopName(shop_name);
+    user.shop = shop_name;
     const currentDate = new Date();
 
     if (!user.last_payment_date) {
@@ -96,7 +96,7 @@ export async function updateSubscription(userId, subscription_name) {
     }
 
     user.subscription_name = subscription_name;
-    await writeJSONToFileAsync(userId, user);
+    await writeJSONToFileAsync(shop_name, user);
     return user;
   }
 }

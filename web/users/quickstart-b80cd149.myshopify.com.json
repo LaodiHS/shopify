@@ -1,13 +1,16 @@
 {
-  "shop": "quickstart-b80cd149.myshopify.com",
-  "gptText": "",
-  "capped_usage": 328732,
+  "created_at": "2023-10-19T12:09:34-04:00",
   "current_usage": 0,
-  "subscription_name": "chestnut",
-  "created_at": "2023-10-14T11:13:08-04:00",
-  "currency": "USD",
   "capped_amount": 0,
-  "status": "DECLINED",
-  "updated_at": "2023-10-14T11:19:01-04:00",
-  "seen": false
+  "capped_usage": 1314930,
+  "updated_at": "2023-10-19T12:09:42-04:00",
+  "shop": "quickstart-b80cd149.myshopify.com",
+  "last_payment_date": "2023-09-24T19:51:13.741Z",
+  "currency": "USD",
+  "documentType": "text",
+  "seen": true,
+  "gptText": "",
+  "subscription_name": "acacia",
+  "status": "ACTIVE",
+  "usage_limit": 0
 }

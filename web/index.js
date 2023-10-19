@@ -16,7 +16,7 @@ import { connectToRedis } from "./redis.js";
 import { setupBullMQServer, serverSideEvent } from "./bull-queue.js";
 import { body, validationResult } from "express-validator";
 import { billingConfig, createUsageRecord, isTest } from "./billing.js";
-import { updateSubscription, getUserById } from "./subscriptionManager.js";
+import { updateSubscription,getUserByShopName } from "./subscriptionManager.js";
 import productTagger from "./product-tagger.js";
 import { contentGenerator } from "./shopifyContentGenerator.js";
 import { productSearch } from "./product-search.js";
@@ -35,6 +35,8 @@ import * as userStore from "./userStore.js";
 
 
 
+
+
 const { writeJSONToFileAsync } = userStore;
 
 const reconciliation = {};
@@ -48,6 +50,8 @@ const log = (message, obj) =>
       compact: true,
     })
   );
+
+
 
 async function startServer() {
   try {
@@ -103,6 +107,9 @@ async function startServer() {
           user = await updateSubscription(shop, subscription.name);
         }
 
+
+
+
         const activeSubscriptions = subscriptions.activeSubscriptions.map(
           (sub) => sub.name
         );
@@ -117,6 +124,7 @@ async function startServer() {
           });
 
           activeSubscriptions.push("free");
+          user = {shop, capped_usage:0, subscription_name: 'free', usage_limit: 0, capped_amount:0, seen:true }
         }
 
         res.status(200).json({
@@ -135,6 +143,7 @@ async function startServer() {
       }
     });
 
+    
     app.post(
       "/api/subscription/selection",
       [
@@ -269,7 +278,7 @@ async function startServer() {
       );
       console.log("shop: ", shop);
       try {
-        const user = await getUserById(shop);
+        const user = await getUserByShopName(shop);
         user.seen = true;
         await writeJSONToFileAsync(shop, user);
 

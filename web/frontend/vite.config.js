@@ -6,6 +6,7 @@ import react from "@vitejs/plugin-react";
 //import react from "@vitejs/plugin-react-swc";
 // import vue from "@vitejs/plugin-vue";
 // import eslintPlugin from 'vite-plugin-eslint'
+import vue from '@vitejs/plugin-vue'
 
 if (
   process.env.npm_lifecycle_event === "build" &&
@@ -53,10 +54,20 @@ export default defineConfig({
     react(
       //{ devTarget: "es2022" }
     ),
-    
- 
+    vue({
+      template: {
+        compilerOptions: {
+          // ...
+        },
+        transformAssetUrls: {
+          // ...
+        },
+      },
+    }),
   ],
-  
+  optimizeDeps: {
+    web: ['vue'], // Include relevant libraries
+  },
   define: {
     DEPLOYMENT_ENV: process.env.NODE_ENV === "production",
     API_URL: JSON.stringify(host),

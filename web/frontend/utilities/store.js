@@ -46,38 +46,50 @@ function decodeSingleDigit(num) {
 }
 
 // Encode and store data in the cache
-async function encode(key, pageObject) {
+async function encode(key, value) {
+  if (!key) {
+    throw new Error("no key provided", key);
+  }
+  if (!value ){
+    throw new Error("no value provided", value);
+  }
+
   try {
     let compressedKey = zip.compress(key, {
       outputEncoding: "StorageBinaryString",
     });
     let compressedData;
 
-    if (isInt(pageObject) || isFloat(pageObject)) {
-      ProductsMap.set(key, pageObject);
-      compressedData = zip.compress(encodeSingleDigit(pageObject), {
+    if (isInt(value) || isFloat(value)) {
+      ProductsMap.set(key, value);
+      compressedData = zip.compress(encodeSingleDigit(value), {
         outputEncoding: "StorageBinaryString",
       });
     } else {
       const pageString =
-        typeof pageObject !== "string"
-          ? JSON.stringify(pageObject)
-          : pageObject;
+        typeof(value) !== "string"
+          ? JSON.stringify(value)
+          : value;
       compressedData = zip.compress(pageString, {
         outputEncoding: "StorageBinaryString",
       });
 
       try {
-        if (typeof pageObject === "string") {
-          ProductsMap.set(key, pageObject);
+        if (typeof(value) === "string") {
+          ProductsMap.set(key, value);
         } else {
-          ProductsMap.set(key, JSON.parse(JSON.stringify(pageObject)));
+          ProductsMap.set(key, JSON.parse(JSON.stringify(value)));
         }
       } catch (error) {
         console.error("An error occurred while storing data:", error);
       }
     }
-
+    if (!compressedData) {
+      throw new Error(" no compressed data: ", compressedData);
+    }
+    if (!compressedKey) {
+      throw new Error(" no compressed key: ", compressedKey);
+    }
     await indexDb.db.setItem(compressedKey, compressedData);
   } catch (error) {
     console.error("An error occurred while encoding and storing data:", error);
@@ -87,7 +99,7 @@ async function encode(key, pageObject) {
 // Decode and retrieve data from the cache
 async function decode(key) {
   if (!key) {
-    throw new Error("Please provide a key to get the cache.");
+    throw new Error("Please provide a key to decode.", key);
   }
 
   try {
@@ -130,7 +142,7 @@ async function decode(key) {
 // Set data in the cache
 async function setCache(key, pageObject, isCursor = false) {
   if (!key) {
-    throw new Error("Please provide a key to set the cache.");
+    throw new Error("Please provide a key to set the cache.", key);
   }
 
   if (isCursor) {
@@ -163,7 +175,7 @@ async function removeCache(key) {
 
     // Also remove from ProductsMap if it exists
     if (ProductsMap.has(key)) {
-       ProductsMap.delete(key);
+      ProductsMap.delete(key);
     }
 
     // Also remove from cachedCursorKeys if it exists
@@ -182,18 +194,18 @@ async function hasCache(key) {
     throw new Error("Please provide a key to remove from the cache.");
   }
 
-  let hasKey;
+  let hasValue;
   try {
     if (ProductsMap.has(key)) {
-       hasKey = ProductsMap.has(key);
-       return hasKey;
+      hasValue = ProductsMap.has(key);
+      return hasValue;
     }
 
-    hasKey = await indexDb.db.hasItem(
+    hasValue = await indexDb.db.hasItem(
       zip.compress(key, { outputEncoding: "StorageBinaryString" })
     );
 
-    return hasKey;
+    return hasValue;
   } catch (error) {
     throw new Error(
       `An error occurred while removing data for key '${key}': ${error.message}`
@@ -202,7 +214,7 @@ async function hasCache(key) {
 }
 
 async function clearKey(key) {
-  productViewCache.remove(key);
+  await productViewCache.remove(key);
   ProductsMap.delete(key);
 }
 
@@ -250,8 +262,8 @@ class LHistory {
     }
   }
 
-  retrieveDataFromLocalStorage() {
-    const pageHistory = productViewCache.get(this.name);
+ async retrieveDataFromLocalStorage() {
+    const pageHistory = await productViewCache.get(this.name);
     try {
       return pageHistory;
     } catch (error) {
@@ -260,108 +272,108 @@ class LHistory {
     return null;
   }
 
-  validateAndSyncState(storedState) {
+  async validateAndSyncState(storedState) {
     const requiredKeys = ["index", "pagingState"];
 
     if (requiredKeys.every((key) => key in storedState)) {
       this.pageState = new Map(Object.entries(storedState));
-      this.saveState();
+     await this.saveState();
     } else {
       console.warn("Stored state is invalid. Resetting to default state.");
       this.resetToDefaultState();
     }
   }
 
-  resetToDefaultState() {
+  async resetToDefaultState() {
     this.pageState.set("index", 0);
     this.pageState.set("pagingState", []);
-    this.saveState();
+   await this.saveState();
   }
 
-  getFallbackPageState() {
-    return this.retrieveDataFromLocalStorage();
+  async getFallbackPageState() {
+    return await this.retrieveDataFromLocalStorage();
   }
 
-  checkFallbackState() {
+ async checkFallbackState() {
     if (!this.pageState.has("index") || !this.pageState.has("pagingState")) {
-      const fallbackState = this.getFallbackPageState();
+      const fallbackState = await this.getFallbackPageState();
       if (fallbackState) {
         this.validateAndSyncState(fallbackState);
       }
     }
   }
 
-  saveState() {
-    productViewCache.set(this.name, Object.fromEntries(this.pageState));
+ async saveState() {
+   await productViewCache.set(this.name, Object.fromEntries(this.pageState));
   }
 
-  push(item) {
-    this.checkFallbackState();
+  async push(item) {
+   await this.checkFallbackState();
     const pagingState = this.pageState.get("pagingState");
     pagingState.push(item);
     this.pageState.set("index", pagingState.length - 1);
-    this.saveState();
+    await this.saveState();
   }
 
-  includes(item) {
-    this.checkFallbackState();
+  async includes(item) {
+   await this.checkFallbackState();
     return this.pageState.get("pagingState").includes(item);
   }
 
-  getPreviousPage() {
-    this.checkFallbackState();
+ async getPreviousPage() {
+    await this.checkFallbackState();
     const index = this.pageState.get("index");
 
     if (index >= 0) {
       this.pageState.set("index", index - 1);
-      this.saveState();
+    await this.saveState();
       return this.pageState.get("pagingState")[index - 1];
     }
   }
 
-  getCurrentPage() {
-    this.checkFallbackState();
+  async getCurrentPage() {
+   await this.checkFallbackState();
     return this.pageState.get("pagingState")[this.pageState.get("index")];
   }
 
-  hasCurrentPage() {
-    this.checkFallbackState();
+  async hasCurrentPage() {
+    await this.checkFallbackState();
     return this.pageState.get("pagingState").length >= 1;
   }
 
-  hasNextPage() {
-    this.checkFallbackState();
+  async hasNextPage() {
+   await this.checkFallbackState();
     const index = this.pageState.get("index");
     return index < this.pageState.get("pagingState").length - 1;
   }
 
-  hasPreviousPage() {
-    this.checkFallbackState();
+ async hasPreviousPage() {
+    await this.checkFallbackState();
     return this.pageState.get("index") > 0;
   }
 
-  getNextPage() {
-    this.checkFallbackState();
+  async getNextPage() {
+    await this.checkFallbackState();
 
     if (this.hasNextPage()) {
       const index = this.pageState.get("index") + 1;
       this.pageState.set("index", index);
-      this.saveState();
+    await this.saveState();
       return this.pageState.get("pagingState")[index];
     }
   }
 
-  getCurrentIndex() {
-    this.checkFallbackState();
+  async getCurrentIndex() {
+   await this.checkFallbackState();
     return this.pageState.get("index");
   }
 }
 
 export { LHistory };
 async function clearAllCaches() {
-  cachedCursorKeys.forEach((key) => {
-    productViewCache.remove(key);
-  });
+ for(const key of  cachedCursorKeys) {
+  await productViewCache.remove(key);
+  };
   await indexDb.db.clear();
   cachedCursorKeys.clear();
   ProductsMap.clear();

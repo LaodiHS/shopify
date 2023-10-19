@@ -2,7 +2,7 @@
 
 name = "test-neuralnectar"
 client_id = "b2919712bc4555c05f978c56eb4f5750"
-application_url = "https://state-posts-pdas-boston.trycloudflare.com"
+application_url = "https://io-briefly-organized-horrible.trycloudflare.com"
 embedded = true
 
 [access_scopes]
@@ -11,9 +11,9 @@ scopes = "write_products,read_content,write_content"
 
 [auth]
 redirect_urls = [
-  "https://state-posts-pdas-boston.trycloudflare.com/auth/callback",
-  "https://state-posts-pdas-boston.trycloudflare.com/auth/shopify/callback",
-  "https://state-posts-pdas-boston.trycloudflare.com/api/auth/callback"
+  "https://io-briefly-organized-horrible.trycloudflare.com/auth/callback",
+  "https://io-briefly-organized-horrible.trycloudflare.com/auth/shopify/callback",
+  "https://io-briefly-organized-horrible.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

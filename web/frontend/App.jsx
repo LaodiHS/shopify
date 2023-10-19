@@ -34,7 +34,9 @@ import {
   readingTree,
   honeyCombGridDrop,
   beehive,
+  readingBag,
 } from "./assets";
+
 import { IonReactRouter } from "@ionic/react-router";
 import {
   setupIonicReact,
@@ -72,7 +74,9 @@ import {
   Search,
   Accordion,
   tinymceCustomPlugins,
-  ImageCacheWorker,
+  Workers,
+
+  ImageCachePre,
   TokenUsageComponent,
   IonicHeaderComponent,
   WinkDataProvider,
@@ -80,6 +84,7 @@ import {
   AnimatedContent,
 } from "./components";
 import ExitFrame from "./pages/ExitIframe";
+const svgAssets = import.meta.glob('./assets/*.svg')
 tinymceCustomPlugins(tinymce);
 setupIonicReact({ mode: "ios" });
 export default function App() {
@@ -112,17 +117,19 @@ export default function App() {
         <AppBridgeProvider>
           <QueryProvider>
             <NavigationDataProvider>
-              <NavigationMenu navigationLinks={navigationPanel} />
+              <NavigationMenu navigationLinks={navigationPanel} />   
+               <Workers >
               <TinyMCEDataProvider>
                 <WinkDataProvider>
                   <DataProvidersProvider>
                     <ProductDataProvider>
-                      <ImageCacheWorker />
+                  
                       <IonMenuNav />
                     </ProductDataProvider>
                   </DataProvidersProvider>
                 </WinkDataProvider>
               </TinyMCEDataProvider>
+              </Workers>
             </NavigationDataProvider>
           </QueryProvider>
         </AppBridgeProvider>
@@ -449,6 +456,15 @@ function IonMenuNav() {
     // console.log("pathname", location.pathname);
     setCurrentRoute(location.pathname);
   }, [location.pathname]);
+
+useEffect(async () => {
+console.log('svgAssets:',svgAssets)
+
+// await ImageCachePre(readingBag)
+
+},[])
+
+
   if (!sessionLoaded) return null;
   const tabs = {
     "/subscriptions": [
@@ -637,7 +653,7 @@ function IonMenuNav() {
           </Routes>
         </IonRouterOutlet>
         <IonTabBar
-          translucent={true}
+          translucent={false}
           style={{ "--background": "none" }}
           key="ionTabBar"
           slot="bottom"

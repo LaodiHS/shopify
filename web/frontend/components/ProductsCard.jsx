@@ -62,16 +62,17 @@ export function ProductsCard({ animationRef }) {
   }, [productsData.productsData]);
 
   const handleNextPage = async () => {
+    console.log('handleNextPage')
     setProductsLoading(true);
     if (productsData?.pageInfo?.hasNextPage) {
       const { endCursor } = productsData.pageInfo;
-      if (pagingHistory.hasNextPage()) {
-        const cached =  await pageIngCache.getPage(pagingHistory.getNextPage());
+      if (await pagingHistory.hasNextPage()) {
+        const cached =  await pageIngCache.getPage( await pagingHistory.getNextPage());
         const formattedData = cached;
   
        await setPaging(formattedData);
         setProductsLoading(false);
-        return;
+    
       }
 
       try {
@@ -103,19 +104,21 @@ export function ProductsCard({ animationRef }) {
     );
     console.log(
       "      pagingHistory?.hasPreviousPage()",
-      pagingHistory?.hasPreviousPage()
-    );
+      await pagingHistory?.hasPreviousPage()
+    );  
+    setProductsLoading(true);
     if (
       productsData?.pageInfo?.hasPreviousPage &&
-      pagingHistory?.hasPreviousPage()
+    await  pagingHistory?.hasPreviousPage()
     ) {
-      setProductsLoading(true);
-      const cachedData = await pageIngCache.getPage(pagingHistory.getPreviousPage());
+    
+      const cachedData = await pageIngCache.getPage(await pagingHistory.getPreviousPage());
       console.log("cachedData", cachedData);
       const formattedData = cachedData;
      await setPaging(formattedData);
-      setProductsLoading(false);
+ 
     }
+         setProductsLoading(false);
   };
 
   // console.log('isProductsLoading', isProductsLoading)
@@ -158,7 +161,7 @@ export function ProductsCard({ animationRef }) {
               className="ion-padding-start"
               onClick={handleNextPage}
               disabled={
-                !hasNextIndexPage || isProductsLoading || !products.length
+             isProductsLoading   ||   !hasNextIndexPage|| !products.length
               }
             >
               Next
@@ -188,8 +191,8 @@ function DisplayContents({}) {
   }
 
   if (products.length > 0) {
-    console.log("hit");
-    return <ListComponent />;
+   
+    return <ListComponent productsData={productsData.productsData} />;
   }
 
   if (products.length === 0) {

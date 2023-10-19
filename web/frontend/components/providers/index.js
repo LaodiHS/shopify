@@ -1,4 +1,4 @@
-export {ImageCache,ImageCacheWorker,ImageCachePre} from "./ImageCache";
+export {ImageCache,Workers, useWorkersContext, ImageCachePre, ImageCacheSrc} from "./ImageCache";
 export { NoImagePlaceHolder } from './NoImagePlaceHolder';
 export { TinyMCEDataProvider, useTinyMCEDataContext} from './TinyMCEDataProvider';
 export { useWinkDataContext, WinkDataProvider } from './WinkDataProvider';

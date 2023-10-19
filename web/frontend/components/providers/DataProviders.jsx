@@ -59,8 +59,16 @@ import {
   girlReading,
   readingBag,
 } from "../../assets";
+
+import {
+  useWorkersContext,
+  ImageCachePre,
+  ImageCacheSrc,
+} from "../../components";
 import { useAuthenticatedFetch } from "../../hooks";
+const svgAssets = import.meta.glob("../../assets/*.svg");
 // import {TRAINING_DATA} from 'https://storage.googleapis.com/jmstore/TensorFlowJS/EdX/TrainingData/fashion-mnist.js';
+// import { useWorkerContext } from './ImageCache';
 // async function loadYOLOModel() {
 //   const model = await loadGraphModel('path_to_yolo_model/model.json');
 //   return model;
@@ -148,6 +156,11 @@ import { useAuthenticatedFetch } from "../../hooks";
 //   };
 //   reader.readAsDataURL(blob);
 // }
+const DataProvidersContext = createContext(null);
+
+export function useDataProvidersContext() {
+  return useContext(DataProvidersContext);
+}
 
 function logShopifyResponse(errorCode) {
   switch (errorCode) {
@@ -332,12 +345,6 @@ function useMap(initialEntries = []) {
   return [mapStateForUseMap, mapActions];
 }
 
-const DataProvidersContext = createContext(null);
-
-export function useDataProvidersContext() {
-  return useContext(DataProvidersContext);
-}
-
 function modifyState(setter, updateOptions) {
   return setter((prevState) => {
     if (typeof updateOptions === "function") {
@@ -377,6 +384,7 @@ function createEventEmitter() {
   return { on, emit, removeListener };
 }
 const eventEmitter = createEventEmitter();
+
 export function DataProvidersProvider({ children }) {
   const [user, setUser] = useState({});
   const [subscriptions, setSubscriptions] = useState(["free"]);
@@ -445,87 +453,26 @@ export function DataProvidersProvider({ children }) {
   const context = useShopifyContext();
   const [dependenciesLoaded, setDependenciesLoaded] = useState({});
   const [AllDependenciesLoaded, setAllDependenciesLoaded] = useState(false);
+  const [assetsLoaded, setAssetsLoaded] = useState(false);
+  const [allAssets, setAllAssets] = useState({});
   const fetch = useAuthenticatedFetch(); // Make sure you have this hook defined somewhere
-
+  const { workersLoaded } = useWorkersContext();
   async function fetchDataWithCache({ url, method, body }) {
-    if(sessionLoaded){
+    if (sessionLoaded) {
+      const cached_url_method_body_parameters =
+        url + JSON.stringify(method) + JSON.stringify(body);
 
-   
-    const cached_url_method_body_parameters =
-      url + JSON.stringify(method) + JSON.stringify(body);
-
-    if (mapState.has(cached_url_method_body_parameters)) {
-      // console.log(
-      //   "This is a cached fetchDataWithCache call: ",
-      //   mapState.get(cached_url_method_body_parameters)
-      // );
-      return mapState.get(cached_url_method_body_parameters);
-    }
-
-    let retryCount = 3;
-    let success = false;
-
-    const options = {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-      },
-    };
-
-    if (body) {
-      try {
-        options.body = JSON.stringify(body);
-      } catch (error) {
-        console.log("json stringify error", error);
+      if (mapState.has(cached_url_method_body_parameters)) {
+        // console.log(
+        //   "This is a cached fetchDataWithCache call: ",
+        //   mapState.get(cached_url_method_body_parameters)
+        // );
+        return mapState.get(cached_url_method_body_parameters);
       }
-    }
 
-    while (!success && retryCount > 0) {
-      try {
-        const response = await fetch(url, options);
+      let retryCount = 3;
+      let success = false;
 
-        if (!response.ok) {
-          console.error("response ok", logShopifyResponse(response.status));
-        }
-
-        if (response.ok) {
-          const data = await response.json();
-          success = true;
-
-          if (response.status === 404) {
-            return [];
-          }
-          mapActions.set(cached_url_method_body_parameters, data.data);
-          return data.data;
-        } else {
-          retryCount--;
-          await new Promise((resolve) => setTimeout(resolve, 3000));
-        }
-      } catch (error) {
-        retryCount--;
-
-        if (retryCount === 0) {
-          presentToast({
-            message: "There was a network error! Please try again later.",
-            duration: 5000,
-            position: "middle",
-          });
-          await new Promise((resolve) => setTimeout(resolve, 3000));
-        }
-      }
-    }
-  }else{
-    console.error("call made outside session: ", url)
-  }
- }
-  async function uncachedFetchData({ url, method = "GET", body }) {
-    if(sessionLoaded){
-    if (!fetch) {
-      throw new Error("authenticated fetch required");
-    }
-
-    const boxed = { data: null, error: null };
-    try {
       const options = {
         method,
         headers: {
@@ -534,37 +481,104 @@ export function DataProvidersProvider({ children }) {
       };
 
       if (body) {
-        options.body = JSON.stringify(body);
+        try {
+          options.body = JSON.stringify(body);
+        } catch (error) {
+          console.log("json stringify error", error);
+        }
       }
 
-      const response_data = await fetch(url, options);
-      const data = await response_data.json();
+      while (!success && retryCount > 0) {
+        try {
+          const response = await fetch(url, options);
 
-      boxed.data = data?.data;
-      if (response_data.error) {
-        boxed.error = response_data.error;
-      }
-      if (data?.error) {
-        boxed.error = data.error;
-      }
-    } catch (error) {
-      console.error(logShopifyResponse(error));
-      presentToast({
-        message: "There was a network error! Please try again later.",
-        duration: 5000,
-        position: "middle", // top, bottom, middle
-        onDidDismiss: (e) => {
-          //setDisableButtons(false);
-        },
-      });
+          if (!response.ok) {
+            console.error("response ok", logShopifyResponse(response.status));
+          }
 
-      console.log("error", error);
-      boxed.error = error || null;
+          if (response.ok) {
+            const data = await response.json();
+            success = true;
+
+            if (response.status === 404) {
+              return [];
+            }
+            mapActions.set(cached_url_method_body_parameters, data.data);
+            return data.data;
+          } else {
+            retryCount--;
+            await new Promise((resolve) => setTimeout(resolve, 3000));
+          }
+        } catch (error) {
+          retryCount--;
+
+          if (retryCount === 0) {
+            presentToast({
+              message: "There was a network error! Please try again later.",
+              duration: 5000,
+              position: "middle",
+            });
+            await new Promise((resolve) => setTimeout(resolve, 3000));
+          }
+        }
+      }
+    } else {
+      console.error("call made outside session: ", url);
     }
-    return boxed;
-  }else{
-    console.error("call made outside session: ", url)
   }
+  async function uncachedFetchData({ url, method = "GET", body }) {
+    if (sessionLoaded) {
+      if (!fetch) {
+        throw new Error("authenticated fetch required");
+      }
+
+      const boxed = { data: null, error: null };
+      try {
+        const options = {
+          method,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        };
+
+        if (body) {
+          options.body = JSON.stringify(body);
+        }
+   
+        const response_data = await fetch(url, options);
+
+     if (!response_data.ok) {
+          console.error("response ok", logShopifyResponse(response.status));
+        }
+
+
+        const data = await response_data.json();
+
+        boxed.data = data?.data;
+        if (response_data.error) {
+          boxed.error = response_data.error;
+        }
+        if (data?.error) {
+          boxed.error = data.error;
+        }
+      } catch (error) {
+        console.error('fetch error:', error);
+        presentToast({
+          message: "There was a network error! Please try again later.",
+          duration: 5000,
+          position: "middle", // top, bottom, middle
+          onDidDismiss: (e) => {
+            //setDisableButtons(false);
+          },
+        });
+
+        console.log("error", error);
+        boxed.error = error || null;
+      }
+      return boxed;
+    } else {
+      console.error("call made outside session: ", url);
+    }
   }
   // useEffect(async () => {
   //   const token = await getSessionToken(app);
@@ -575,29 +589,65 @@ export function DataProvidersProvider({ children }) {
   // }, []);
 
   useEffect(async () => {
-console.log('indexDb: ', indexDb.db);
-
-    if (!indexDb.db) {
-      const db = await indexDb.startIndexDB();
-      setDependenciesLoaded((prev) => ({
-        ...prev,
-        IndexedSessionStorage: true,
-      }));
-      setPagingHistory(new LHistory("pagingHistory"));
-      setDependenciesLoaded((prev) => ({ ...prev, pagingHistory: true }));
-    }
-    return async () => {
-      if (indexDb.db) {
-        await indexDb.stopIndexDB();
+    if (workersLoaded) {
+     
+      if (!indexDb.db) {
+   
+        const db = await indexDb.startIndexDB();
+        if (!db) {
+          throw new Error("db is not started:", db);
+        }
         setDependenciesLoaded((prev) => ({
           ...prev,
-          IndexedSessionStorage: false,
+          IndexedSessionStorage: Boolean(db),
         }));
+
+        const assets = Object.entries(svgAssets);
+
+        for (const [src, svg] of assets) {
+          try {
+            const blobUrl = await ImageCachePre(
+              productViewCache,
+              src,
+              "image/svg+xml"
+            );
+
+            const assetName = src.slice().split("/").pop();
+
+          //  setAllAssets((pre) => ({ ...pre, [assetName]: blobUrl }));
+          allAssets[assetName] =blobUrl;
+          } catch (error) {
+            console.error("error preloading svg assets: ", error);
+          }
+        }
+      
+        setAssetsLoaded(true);
+        setPagingHistory(new LHistory("pagingHistory"));
+        setDependenciesLoaded((prev) => ({ ...prev, pagingHistory: true }));
       }
-    };
-  }, []);
+      return async () => {
+        console.log("closing db connection");
+        if (!indexDb) {
+          throw new Error("no db specified: ", indexDb.db);
+        }
+        if (indexDb.db) {
+          await indexDb.stopIndexDB();
+          setDependenciesLoaded((prev) => ({
+            ...prev,
+            IndexedSessionStorage: false,
+          }));
+        }
+      };
+    }
+  }, [workersLoaded]);
+
+  async function getSVGAsset(src, memType) {
+    return await ImageCacheSrc(productViewCache, src, memType);
+  }
 
   useEffect(() => {
+    console.log("hit number alldep: ", Object.entries(dependenciesLoaded));
+
     if (Object.values(dependenciesLoaded).length === 2) {
       setAllDependenciesLoaded(
         Object.values(dependenciesLoaded).every((val) => val === true)
@@ -620,10 +670,9 @@ console.log('indexDb: ', indexDb.db);
 
   useEffect(async () => {
     if (AllDependenciesLoaded) {
-           console.log('all dependencies loaded')
+      console.log("all dependencies loaded");
       const fetchDataSession = async () => {
         try {
-     
           setSubscriptionRetrievalLoading(true);
           const subscriptionsResponse = await fetch(
             "/api/current/subscription/status"
@@ -636,21 +685,13 @@ console.log('indexDb: ', indexDb.db);
             // navigation("/login");
             setSubscriptionRetrievalLoading(false);
 
-            setDependenciesLoaded((prev) => ({
-              ...prev,
-              sessionLoaded: sessionLoaded,
-            }));
-
             throw new Error("unable to find your subscription");
             return;
           }
           const data = await subscriptionsResponse.json();
           console.log("session loaded");
           setSessionLoaded(true);
-          setDependenciesLoaded((prev) => ({
-            ...prev,
-            sessionLoaded: sessionLoaded,
-          }));
+
           const { activeSubscriptions, session, user, redirectUri } = data;
           const redirect = Redirect.create(app);
           console.log("subscription redirectUri: ", redirectUri);
@@ -665,9 +706,12 @@ console.log('indexDb: ', indexDb.db);
           }
 
           if (!DEPLOYMENT_ENV) {
+            console.log("redirectUri  ", redirectUri);
             if (redirectUri) {
-              await productViewCache.clearAll();
+              // await productViewCache.clearAll();
             } else {
+              console.log("user", user);
+              console.log("plans", plans);
               await productViewCache.set("plans", data.plans);
               await productViewCache.set("user", user);
 
@@ -711,8 +755,8 @@ console.log('indexDb: ', indexDb.db);
       //     await fetchDataSession();
       //   }
       // } else {
-        
-        await fetchDataSession();
+
+      await fetchDataSession();
       // }
     }
     // fetchDataSession();
@@ -771,7 +815,7 @@ console.log('indexDb: ', indexDb.db);
         lockButton: (text) => (
           <IonList>
             <IonItem
-              className="ion-padding-top ion-text-capitalize"
+              className="ion-padding-top ion-text-capitalize ion-text-wrap"
               button="true"
               slot="start"
               fill="clear"
@@ -779,7 +823,7 @@ console.log('indexDb: ', indexDb.db);
               color="warning"
             >
               {requiredLabel && requiredLabel?.slice(0, 1)[0]}{" "}
-              <IonLabel slot="start" className="ion-padding-top">
+              <IonLabel slot="start" className="ion-text-wrap ion-padding-top">
                 Honey Members{" "}
               </IonLabel>{" "}
               <IonIcon size="large" slot="end" icon={beehive}></IonIcon>
@@ -791,9 +835,9 @@ console.log('indexDb: ', indexDb.db);
             style={{ cursor: "pointer" }}
             onClick={(e) => DataProviderNavigate("/subscriptions")}
             color="warning"
-            className="ion-text-capitalize"
+            className="ion-text-capitalize ion-text-wrap"
           >
-            {requiredLabel && requiredLabel?.slice(0, 1)[0]} Honey Members
+           With {requiredLabel && requiredLabel?.slice(0, 1)[0]} Honey 
           </IonText>
         ),
         some: () => (
@@ -801,9 +845,9 @@ console.log('indexDb: ', indexDb.db);
             style={{ cursor: "pointer" }}
             onClick={(e) => DataProviderNavigate("/subscriptions")}
             color="warning"
-            className="ion-text-capitalize"
+            className="ion-text-capitalize ion-text-wrap"
           >
-            Some Features Require A ${requiredLabel} Subscription.
+            Some Features Require A {requiredLabel.slice().join(", ") } Subscription.
           </IonText>
         ),
       };
@@ -1058,7 +1102,7 @@ console.log('indexDb: ', indexDb.db);
     setLegendReversed(formattedReversedLegend);
     console.log("formattedLegend:  ", formattedLegend);
   }
-  
+
   useEffect(() => {
     return () => {
       const handleBeforeUnload = (event) => {
@@ -1082,12 +1126,11 @@ console.log('indexDb: ', indexDb.db);
     };
   }, []);
 
-
-
-
-
-  
   const value = {
+
+    allAssets,
+    getSVGAsset,
+    assetsLoaded,
     AllDependenciesLoaded,
     modifyState,
     pagingHistory,

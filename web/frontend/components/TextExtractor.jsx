@@ -472,11 +472,11 @@ export function BarChartComponent({ text }) {
         >
           <IonCol className="legend-item">
             <div className="color-box color-1"></div>
-            <IonText className="legend-text">High Sentiment</IonText>
+            <IonText className="legend-text">High</IonText>
           </IonCol>
           <IonCol className="legend-item" size="6">
             <div className="color-box color-2"></div>
-            <IonText className="legend-text">Low Sentiment</IonText>
+            <IonText className="legend-text">Low</IonText>
           </IonCol>
         </IonRow>
       </IonCol>
@@ -728,11 +728,11 @@ export function ChartComponent({ text }) {
         >
           <IonCol className="legend-item">
             <div className="color-box color-1"></div>
-            <IonText className="legend-text">High Density</IonText>
+            <IonText className="legend-text">High</IonText>
           </IonCol>
           <IonCol className="legend-item" size="6">
             <div className="color-box color-2"></div>
-            <IonText className="legend-text">Low Density</IonText>
+            <IonText className="legend-text">Low</IonText>
           </IonCol>
         </IonRow>
       </IonCol>

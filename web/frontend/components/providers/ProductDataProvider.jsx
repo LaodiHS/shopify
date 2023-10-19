@@ -86,9 +86,9 @@ export function ProductDataProvider({ children }) {
   }
 
 
-  useEffect(() => {
+  useEffect(async () => {
     if (pagingHistory && sessionLoaded) {
-      setCurrentIndexPage(pagingHistory.getCurrentIndex());
+      setCurrentIndexPage(await pagingHistory.getCurrentIndex());
     }
   }, [pagingHistory,sessionLoaded]);
 
@@ -96,11 +96,11 @@ export function ProductDataProvider({ children }) {
     console.log('formattedData', formattedData);
     const { startCursor } = formattedData.pageInfo;
     await pageIngCache.setPage(startCursor, formattedData, true);
-    if (!pagingHistory.includes(startCursor)) {
-      pagingHistory.push(startCursor);
+    if (! await pagingHistory.includes(startCursor)) {
+      await pagingHistory.push(startCursor);
     }
     defineNextIndexPage(formattedData?.pageInfo?.hasNextPage);
-    defineCurrentIndexPage(pagingHistory.getCurrentIndex());
+    defineCurrentIndexPage(await pagingHistory.getCurrentIndex());
     defineProductsData(formattedData);
     const cashedProductIndex = await productViewCache.get("cashedProductIndex");
     const index = parseInt(cashedProductIndex, 10);
@@ -111,10 +111,10 @@ export function ProductDataProvider({ children }) {
 
   const fetchData = async () => {
     setProductsLoading(true);
-    if (pagingHistory.hasCurrentPage()) {
+    if (await pagingHistory.hasCurrentPage()) {
       
       const cachedData = await pageIngCache.getPage(
-        pagingHistory.getCurrentPage()
+        await pagingHistory.getCurrentPage()
       );
       if (cachedData) {
         console.log('cachedData  ', cachedData)

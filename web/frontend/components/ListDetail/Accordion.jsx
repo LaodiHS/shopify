@@ -927,8 +927,8 @@ function renderAccordionItem({
       key={index + 1}
       value={index + 2}
     >
-      <IonGrid key={index + 3}>
-        <IonGrid key={index + 4}>
+      <IonGrid style={{margin:"0px" ,padding:"0px"}} key={index + 3}>
+        <IonGrid style={{margin:"0px" ,padding:"0px"}} key={index + 4}>
           <IonRow key={index + 5}>
             {accordionId === "article" && (
               <BlogSelection
@@ -1082,11 +1082,11 @@ function renderAccordionItem({
                   note={`RealTime Document Analytics.`}
                 />
 
-                <IonGrid key={index + 12} slot="content">
-                  <IonRow key={index + 13}>
+                <IonGrid style={{margin:"0px" ,padding:"0px"}} key={index + 12} slot="content">
+                  <IonRow  key={index + 13}>
                     <IonCol key={index + 15} size-sm="12" 
                     size-md="6" 
-                    size="auto">
+                    size="12">
                       <IonRow key={index + 16}>
                         <IonCol size="12" key={index + 17}>
                           <ChartComponent key={index + 18} text={markupText} />
@@ -1101,7 +1101,7 @@ function renderAccordionItem({
                     </IonCol>
                     <IonCol size-sm="12" 
                     size-md="6"
-                     size="6" key={index + 20}>
+                     size="12" key={index + 20}>
                     
                         <IonCol size="12">
                                  <ReadabilityStats key={index + 21} checkFeatureAccess={checkFeatureAccess} text={markupText} />
@@ -1115,7 +1115,7 @@ function renderAccordionItem({
           </IonCol>
         </IonRow>
       </IonGrid>
-      <IonGrid>
+      <IonGrid style={{margin:"0px" ,padding:"0px"}}>
         <IonRow>
           <IonCol size="12">
             <IonItem lines="full">

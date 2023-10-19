@@ -1,8 +1,6 @@
-import React, { useEffect, useState} from "react";
-import {
-  IonImg,
-  IonSkeletonText
-} from "@ionic/react";
+import MyWorker from "../../utilities/imageWorker?worker";
+import React, { useEffect, useState, useContext, createContext } from "react";
+import { IonImg, IonSkeletonText } from "@ionic/react";
 import {
   useDataProvidersContext,
   useProductDataContext,
@@ -10,75 +8,110 @@ import {
 //navigator.hardwareConcurrency || 4; // Number of worker instances in the pool
 import { imagePlaceHolder } from "../../assets";
 import { productViewCache } from "../../utilities/store";
-function getOptimalNumThreads(defaultNumThreads = 3) {
-  if (navigator && navigator.hardwareConcurrency) {
-    // If hardwareConcurrency is available, use it as the number of threads
-    const hardwareThreads = navigator.hardwareConcurrency - 2;
-    return hardwareThreads > 0 ? hardwareThreads : defaultNumThreads;
+function getOptimalNumThreads(defaultNumThreads = 10) {
+  let optimalThreads;
+
+  if (
+    typeof defaultNumThreads !== "number" ||
+    defaultNumThreads <= 2 ||
+    !Number.isInteger(defaultNumThreads)
+  ) {
+    // If defaultNumThreads is not a positive integer greater than 2, set a sensible default value.
+    optimalThreads = 3;
   } else {
-    // If hardwareConcurrency is not available, use the default number of threads
-    return defaultNumThreads;
+    optimalThreads = defaultNumThreads;
   }
+
+  if (
+    navigator &&
+    navigator.hardwareConcurrency &&
+    typeof navigator.hardwareConcurrency === "number" &&
+    navigator.hardwareConcurrency > 2
+  ) {
+    // If hardwareConcurrency is available and reasonable, use it as the number of threads.
+    optimalThreads = Math.min(
+      optimalThreads,
+      navigator.hardwareConcurrency - 2
+    );
+  }
+
+  return Math.max(optimalThreads, 1); // Ensure at least 1 thread.
 }
-// Worker code as a string literal
-const workerCode = `
-self.addEventListener('message', async (event) => {
-    const { srcList } = event.data;
-
-    try {
-      const cache = await caches.open('image-cache');
-      const responses = [];
-
-      for (const src of srcList) {
-        try {
-          const cachedResponse = await cache.match(src);
-
-          if (cachedResponse) {
-            const blob = await cachedResponse.blob();
-            responses.push({ src, blob });
-          } else {
-            const response = await fetch(src);
-            await cache.put(src, response.clone());
-            const blob = await response.blob();
-            responses.push({ src, blob });
-          }
-        } catch (error) {
-          responses.push({ src, error: error.message });
-        }
-      }
-
-      self.postMessage(responses);
-    } catch (error) {
-      self.postMessage({ srcList, error: error.message });
-    }
-  });
-`;
-
+let threadId = 1;
 function createImageCacheWorker() {
-  const workerBlob = new Blob([workerCode], { type: "application/javascript" });
-  const worker = new Worker(URL.createObjectURL(workerBlob));
-  worker.isProcessing = false; // Initialize worker state
-  return worker;
+  try {
+    const worker = new MyWorker({ type: "module" });
+    worker.isProcessing = false; // Initialize worker state
+    return worker;
+  } catch (error) {
+    console.log("create worker error: ", error);
+    throw new Error("create worker error", error);
+  }
 }
 
 let workerPool;
 const taskQueue = [];
 
-export function ImageCacheWorker() {
-  const { sessionLoaded, indexDb } = useProductDataContext();
-  useEffect(() => {
-    if (sessionLoaded) {
-      workerPool = new Array(getOptimalNumThreads())
-        .fill(null)
-        .map(createImageCacheWorker);
+const CreateWorkers = createContext(null);
+export function useWorkersContext() {
+  return useContext(CreateWorkers);
+}
 
-      return () => {
-        workerPool.forEach((worker) => worker.terminate());
-      };
+export function Workers({ children }) {
+  const [workersLoaded, setWorkersLoaded] = useState(false);
+
+  let loadedWorkersCount = 0;
+
+  const checkAllWorkersLoaded = (optimalWorkersCount) => {
+    loadedWorkersCount++;
+    // console.log('loaded workers: ',  loadedWorkersCount, ' total workers: ', optimalWorkersCount);
+    if (loadedWorkersCount === optimalWorkersCount) {
+      console.log("all workers loaded");
+      setWorkersLoaded(true);
     }
-  }, [sessionLoaded]);
+  };
 
-  return null;
+  useEffect(() => {
+    try {
+      const optimalWorkersCount = getOptimalNumThreads();
+
+      workerPool = new Array(optimalWorkersCount).fill(null).map((_, index) => {
+        try {
+          const worker = createImageCacheWorker();
+          // Listen for 'message' event to determine when the worker has loaded
+          worker.postMessage({ id: index + 1 });
+
+          worker.onmessage = (event) => {
+            if (event.data.loaded) {
+              console.log("loaded :", event.data.id);
+              checkAllWorkersLoaded(optimalWorkersCount);
+            }
+          };
+          return worker;
+        } catch (error) {
+          console.error("error creating worker :", error);
+        }
+      });
+    } catch (error) {
+      setWorkersLoaded(false);
+      throw new Error("creating working pool error", error);
+    }
+    return () => {
+      try {
+        workerPool.forEach((worker) => worker.terminate());
+      } catch (error) {
+        throw new Error("error terminating worker pool", error);
+      }
+    };
+  }, []);
+
+  const values = {
+    workersLoaded,
+  };
+
+  return (
+    <CreateWorkers.Provider value={values}>{children}</CreateWorkers.Provider>
+  );
 }
 
 function getNextAvailableWorker() {
@@ -87,9 +120,11 @@ function getNextAvailableWorker() {
 function processTaskQueue() {
   const worker = getNextAvailableWorker();
   if (worker && taskQueue.length > 0) {
-    const { src, resolve } = taskQueue.shift();
+    const { elementObject, resolve } = taskQueue.shift();
+
     worker.isProcessing = true;
-    worker.postMessage({ srcList: [src] });
+
+    worker.postMessage({ srcList: [elementObject] });
 
     // Handle worker response
     worker.onmessage = (event) => {
@@ -98,7 +133,7 @@ function processTaskQueue() {
       if (Array.isArray(data)) {
         for (const item of data) {
           if (item.blob) {
-            resolve(URL.createObjectURL(item.blob));
+            resolve(item.blob);
             worker.isProcessing = false;
             processTaskQueue(); // Process the next task in the queue
             return;
@@ -113,27 +148,27 @@ function processTaskQueue() {
     };
   }
 }
-
-async function setImageMap(key, obj, productViewCaches) {
-  if (!key) {
-    throw new Error("image requires key");
-  }
-  if (!obj) {
-    throw new Error("image requires blob");
-  }
-  try {
-    await productViewCaches.set(key, obj);
-  } catch (error) {
-    throw new Error(`Error storing image`, error);
-  }
+async function convertDataUrlToBlobUrl(rawData) {
+  return URL.createObjectURL(await fetch(rawData).then((res) => res.blob()));
 }
+// async function setImageMap(urlKey, imageBlobUrl, productViewCache) {
+//   if (!urlKey) {
+//     throw new Error("image requires key");
+//   }
+//   if (!imageBlobUrl) {
+//     throw new Error("image requires blob");
+//   }
+//   try {
+//     await productViewCache.set(urlKey, imageBlobUrl);
+//   } catch (error) {
+//     throw new Error(`Error storing image`, error);
+//   }
+// }
 export function ImageCache({ src, style, alt, sliderImg, ...props }) {
-  const { productViewCaches } = useDataProvidersContext();
-  //  console.log('imageCache', imageCache)
+  const { productViewCache } = useDataProvidersContext();
   const [cachedSrc, setCachedSrc] = useState(null);
   const [imageLoading, setImageLoading] = useState(false);
   const [canLoad, setCanLoad] = useState(true);
-  // const loading = false;
 
   function imageDidLoad() {
     if (imageLoading) {
@@ -142,6 +177,7 @@ export function ImageCache({ src, style, alt, sliderImg, ...props }) {
   }
   useEffect(() => {
     return () => {
+      setImageLoading(false);
       setCanLoad(false);
     };
   }, []);
@@ -149,79 +185,99 @@ export function ImageCache({ src, style, alt, sliderImg, ...props }) {
   useEffect(async () => {
     setImageLoading(true);
     const preloadImages = async (src) => {
-      if (productViewCache.has(src)) {
-        const cachedImage = await productViewCache.get(src);
-
-        setCachedSrc(cachedImage);
+      if (await productViewCache.has(src)) {
+        const cachedImageBlob = await productViewCache.get(src);
+        const cachedBlobUrl = await convertDataUrlToBlobUrl(cachedImageBlob);
+        setCachedSrc(cachedBlobUrl);
         setImageLoading(false);
-        return;
+     
+      } else {
+      return await new Promise((resolve) => {
+          taskQueue.push({
+            elementObject: { src, memType: "image/png" },
+            resolve,
+          });
+          processTaskQueue();
+        }).then(async (blob) => {
+          if (blob) {
+            if (canLoad) {
+              const blobUrl = await convertDataUrlToBlobUrl(blob);
+              setCachedSrc(blobUrl);
+              setImageLoading(false);
+            }
+          }
+        });
       }
-
-      return new Promise((resolve) => {
-        taskQueue.push({ src, resolve });
-        processTaskQueue();
-      }).then(async (imageSrc) => {
-        if (imageSrc) {
-
-          await setImageMap(src, imageSrc, productViewCaches);
-
-          if (canLoad) {
-            setCachedSrc(imageSrc);
-          }
-
-          if (imageLoading) {
-            setImageLoading(false);
-          }
-        }
-      });
     };
     src !== imagePlaceHolder
       ? await preloadImages(src)
-      : setCachedSrc(imagePlaceHolder);
-  }, [src]);
+      : (setCachedSrc(imagePlaceHolder), setImageLoading(false));
 
- 
-  function SkeletonImage() {
-    return (
-      <IonSkeletonText
-        key= {src + "animatedPlace=holder"}
-        animated
-        style={{ ...style, display: !imageLoading ? "none" : "block" }}
-      />
-    );
-  }
+  }, [src]);
 
   return (
     <>
-      <SkeletonImage />
+     {imageLoading ? <IonSkeletonText
+        key={src + "animatedPlace=holder"}
+        animated
+        style={{ ...style, display: "block" }}
+      /> :
       <IonImg
-        onIonImgDidLoad={imageDidLoad()}
+       // onIonImgDidLoad={imageDidLoad()}
         style={{
           ...style,
-          display: imageLoading ? "none" : "block",
+          display:  "block",
         }}
-        key={cachedSrc || src || imagePlaceHolder}
-        src={cachedSrc || src || imagePlaceHolder}
-      
+        key={src}
+        src={cachedSrc}
         as="image"
         alt={alt}
         {...props}
-      />
+      />}
     </>
   );
 }
 
-export async function ImageCachePre(src) {
-  const { productViewCaches } = useDataProvidersContext();
-  if (productViewCaches.has(src)) {
-    return;
+export async function ImageCachePre(productViewCache, src, memType) {
+  if (!productViewCache || !src || !memType) {
+    throw new Error("missing productViewCache src cache or memType");
   }
-  await new Promise((resolve) => {
-    taskQueue.push({ src, resolve });
+  // const { productViewCache } = useDataProvidersContext();
+  if (await productViewCache.has(src)) {
+    const cachedBlob = await productViewCache.get(src);
+    const blobUrl = await convertDataUrlToBlobUrl(cachedBlob);
+    return blobUrl;
+  }
+  return await new Promise((resolve) => {
+    taskQueue.push({ elementObject: { src, memType }, resolve });
     processTaskQueue();
-  }).then((imageSrc) => {
-    if (imageSrc) {
-      productViewCaches.set(src, imageSrc);
+  }).then(async (imageBlob) => {
+    if (imageBlob) {
+      await productViewCache.set(src, imageBlob);
+      const blobUrl = await convertDataUrlToBlobUrl(imageBlob);
+      return blobUrl;
+    }
+  });
+}
+
+export async function ImageCacheSrc(productViewCache, src, memType) {
+  if (!productViewCache || !src || !memType) {
+    throw new Error("missing productViewCache src cache or memType");
+  }
+  // const { productViewCache } = useDataProvidersContext();
+  if (await productViewCache.has(src)) {
+    const cachedBlob = await productViewCache.get(src);
+    const blobUrl = await convertDataUrlToBlobUrl(cachedBlob);
+    return blobUrl;
+  }
+  return await new Promise((resolve) => {
+    taskQueue.push({ elementObject: { src, memType }, resolve });
+    processTaskQueue();
+  }).then(async (imageBlob) => {
+    if (imageBlob) {
+      const cachedBlob = await productViewCache.set(src, imageBlob);
+      const blobUrl = await convertDataUrlToBlobUrl(cachedBlob);
+      return blobUrl;
     }
   });
 }

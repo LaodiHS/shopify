@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   IonContent,
   IonHeader,
@@ -24,7 +24,17 @@ import {
   
 } from "../assets";
 export function IonicHeaderComponent({ centerText, left, right, progress = 100 , buffer=100, type="determinate"}) {
- 
+ const titleSize = useRef(null)
+const [fontSize, setFontSize] = useState("10px")
+useEffect(() => {
+let width;
+setTimeout(() => {
+  titleSize.offsetWidth
+}, 0);
+
+},[]);
+
+
 
   centerText = centerText || "neural nectar";
   return (
@@ -36,8 +46,9 @@ export function IonicHeaderComponent({ centerText, left, right, progress = 100 ,
        style={{"--background":"none"}}
       >
         {left}
-        <IonTitle    style={{
+        <IonTitle ref = {ref => { titleSize.current = ref} }   style={{
           backgroundImage: `url(${honeyCombGridDrop})`,
+          fontSize: "9px",
           backgroundPosition: "center",
           backgroundSize: "contain",
           backgroundRepeat: "no-repeat",

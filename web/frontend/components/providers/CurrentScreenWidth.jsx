@@ -1,48 +1,63 @@
+import { debounce } from "lodash";
 import React, {
   useState,
   useEffect,
   forwardRef,
   useRef,
+  useMemo,
   useImperativeHandle,
+  useCallback
 } from "react";
 import { useDataProvidersContext } from ".";
 
-
-
 export function useCurrentScreenWidth() {
   const [refArray, setRefArray] = useState({});
+  const [globalFontSize, setGlobalFontSize] = useState(null);
   const { eventEmitter } = useDataProvidersContext();
 
   useEffect(() => {
-    const handleResize = (event) => eventEmitter.emit("windowResizeSize", event);
-
+    const handleResize = (event) =>
+    eventEmitter.emit("windowResizeSize", event);
     window.addEventListener("resize", handleResize);
-
     return () => {
       window.removeEventListener("resize", handleResize);
       eventEmitter.removeListener("windowResizeSize", handleResize);
     };
-  }, [eventEmitter]);
-
+  }, []);
+  const debouncedSetRefArray = useCallback(
+    debounce((newRefArray) => {
+      setRefArray(newRefArray);
+    }, 100), // Adjust the debounce delay as needed
+    []
+  );
   return {
     getCardRef: (ref, index) => {
-      setRefArray((prev) => ({ ...prev, [index]: ref }));
+      debouncedSetRefArray((prev) => ({ ...prev, [index]: ref }));
     },
     GetFontSize: ({ index, Element }) => {
-      if (!Element) return null;
-
-      const [fontSize, setFontSize] = useState(null);
-
+       if (!Element) return null;
+      const [localFontSize, setLocalFontSize] = useState(globalFontSize)
       useEffect(() => {
         const ref = refArray[index];
 
         if (ref) {
-          setFontSize(Math.floor((10 / 100) * ref.offsetWidth));
+          const fontSize = Math.floor((10 / 100) * ref.offsetWidth);
 
+          if (!globalFontSize && fontSize) {
+            const font = fontSize + "px";
+  
+            setGlobalFontSize(font);
+            setLocalFontSize(font);
+          }
           const handleResize = (windowInnerWidth) => {
             if (ref) {
-              const font = Math.floor((10 / 100) * ref.offsetWidth) + "px";
-              setFontSize(font);
+              const fontSize = Math.floor((10 / 100) * ref.offsetWidth);
+        
+              if (fontSize && fontSize + "px" !== globalFontSize) {
+                const font = fontSize + "px";
+                setGlobalFontSize(font);
+                setLocalFontSize(font)
+              }
             }
           };
 
@@ -52,17 +67,26 @@ export function useCurrentScreenWidth() {
             eventEmitter.removeListener("windowResizeSize", handleResize);
           };
         }
-      }, [index, refArray, eventEmitter]);
+      }, [refArray]);
+      if (!localFontSize) {
+        return null;
+      }
 
-      return (
-        <>
-          {React.cloneElement(Element, { style: { ...Element.props.style, fontSize } })}
-        </>
-      );
+      return <DynamicFontElement Element={Element} fontSize={localFontSize} />;
     },
   };
 }
+function DynamicFontElement({ Element, fontSize }) {
+  const memoizedElement = useMemo(() => {
 
+
+  return React.cloneElement(Element, {
+    style: { ...Element.props.style, key: "dynamicFontSize", fontSize },
+  });
+  }, [Element, fontSize]);
+
+  return memoizedElement;
+}
 
 export function screenWidthElements() {
   return {
