@@ -8,7 +8,7 @@ import {
 import { enqueueApiRequest } from "./bull-queue.js";
 import { hasExceededUsageLimit } from "./subscriptionManager.js";
 import { countTokens } from "./tokenTools.js";
-
+import {getLegend} from "./testMethods.js"
 // Common function to handle different types of endpoints
 async function handleEndpoints(app, endpointType, queue) {
   const allowedEndpoints = [
@@ -66,7 +66,7 @@ async function handleEndpoints(app, endpointType, queue) {
         const tokenCount = countTokens(prompt);
         console.log("prompt token count", tokenCount);
         const exceedsLimit = await hasExceededUsageLimit(shop, tokenCount);
-
+          getLegend(legend);
         if (exceedsLimit) {
           return res
             .status(200)
@@ -78,6 +78,7 @@ async function handleEndpoints(app, endpointType, queue) {
             });
         } else {
           enqueueApiRequest({
+            legend,
             prompt,
             shop,
             documentType,

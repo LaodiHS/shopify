@@ -1,4 +1,5 @@
 export { ProductsCard } from "./ProductsCard";
+
 export { LoadingPageComponent } from "./LoadingPageComponent";
 export { LockBackgroundElement } from "./LockBackgroundElement";
 export { DocumentImagery } from "./providers/DocumentImagery";
@@ -44,3 +45,4 @@ export {
 // export {extractKeywords} from './TextExtractor';
 export { IonicHeaderComponent } from "./IonicHeaderComponent";
 export { useCurrentScreenWidth} from "./providers/CurrentScreenWidth";
+export {ShopifyOutage} from "./ShopifyOutage";

@@ -110,11 +110,11 @@ export const SubscriptionComponent = ({
           "You will be taken to the Shopify subscription page to approve your purchase..."
         );
         if (!DEPLOYMENT_ENV) {
-          await productViewCache.clearAll()
+          //await productViewCache.clearAll()
           // productViewCache.clear();
-          // productViewCache.clearKey("plans");
-          // productViewCache.clearKey("user");
-          // productViewCache.clearKey("activeSubscription");
+           productViewCache.clearKey("plans");
+           productViewCache.clearKey("user");
+           productViewCache.clearKey("activeSubscription");
         }
         handleRedirect(data.redirectUrl);
       } else if (response.ok && data.message) {

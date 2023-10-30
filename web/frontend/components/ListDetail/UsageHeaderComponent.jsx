@@ -33,10 +33,10 @@ console.log('tokenUsag', tokenUsage)
   }
 
   return (
-    <>
-      <p>
-        <IonProgressBar key="TokenUsageProgressBar" color={ (usage <= .70) ? "success" : "warning"  } value={usage}></IonProgressBar>
-      </p>
-    </>
+  
+     
+        <IonProgressBar style={{height:"7px"}} key="TokenUsageProgressBar" color={ (usage <= .70) ? "success" : "warning"  } value={usage}></IonProgressBar>
+    
+  
   );
 }

@@ -78,6 +78,7 @@ export function ListDetailComponent({ animationRef }) {
     subscriptions,
     currentSession,
     user,
+    lockAllTasks,
     handleSelectChange,
     DataProviderNavigate,
   } = useProductDataContext();
@@ -168,7 +169,7 @@ export function ListDetailComponent({ animationRef }) {
           centerText="Tailor Selections"
           left={
             <IonButtons key={"12"} onClick={navigateBack} slot="start">
-              <IonButton key={"13"} color="neural">
+              <IonButton key={"13"} disabled={lockAllTasks} color="neural">
                 <IonIcon key={"14"} icon={chevronBack} />
               </IonButton>
             </IonButtons>
@@ -187,13 +188,16 @@ export function ListDetailComponent({ animationRef }) {
         />
 
         <IonContent>
-          <div key={"16"} className="ion-padding">
-            {/* <PaidFeature /> */}
-          </div>
-
+    
+  
           <IonGrid key={"19"} fixed={true}>
             <IonRow key={"20"}>
+                <IonCol size="12" className="ion-text-center ion-padding">
+                  <IonText style={{fontFamily:"Baloo, sans-serif"}} color="shoe">
+                  Excited to get started with the AI-powered Neural Nectar! Let's prioritize the specific features of your product before diving into the workstation!</IonText>
+          </IonCol>
               <IonCol key={"21"} size="12">
+          
                 <ProductDetails
                   key={"22"}
                   serverOptions={SharedData.serverOptions}

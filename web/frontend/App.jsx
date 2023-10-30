@@ -14,7 +14,7 @@ import "animate.css";
 import "./components/ListDetail/styles/Chartist.css";
 import "./components/ListDetail/styles/App.css";
 // import "./components/ListDetail/styles/GridStack.css";
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { NavigationMenu } from "@shopify/app-bridge-react";
 import { BrowserRouter, Routes, Route, useLocation } from "react_router_dom";
 import {
@@ -58,6 +58,12 @@ import {
   IonText,
   useIonViewDidEnter,
   IonPopover,
+  IonInput,
+  IonTextarea,
+  IonSelect,
+  IonSelectOption,
+  IonItem,
+  IonAlert,
 } from "@ionic/react";
 import {
   ListDetailComponent,
@@ -65,7 +71,7 @@ import {
   SubscriptionComponent,
   AppBridgeProvider,
   QueryProvider,
-  // PolarisProvider,
+  PolarisProvider,
   ProductDataProvider,
   NavigationDataProvider,
   useNavigationDataContext,
@@ -75,7 +81,6 @@ import {
   Accordion,
   tinymceCustomPlugins,
   Workers,
-
   ImageCachePre,
   TokenUsageComponent,
   IonicHeaderComponent,
@@ -83,8 +88,10 @@ import {
   TinyMCEDataProvider,
   AnimatedContent,
 } from "./components";
+
+import { Email } from "./utilities/smtp";
 import ExitFrame from "./pages/ExitIframe";
-const svgAssets = import.meta.glob('./assets/*.svg')
+const svgAssets = import.meta.glob("./assets/*.svg");
 tinymceCustomPlugins(tinymce);
 setupIonicReact({ mode: "ios" });
 export default function App() {
@@ -107,6 +114,10 @@ export default function App() {
           label: "search",
           destination: "/search",
         },
+        {
+          label: "support-ticket",
+          destination: "/support-ticket",
+        },
       ]
     : [];
 
@@ -117,24 +128,23 @@ export default function App() {
         <AppBridgeProvider>
           <QueryProvider>
             <NavigationDataProvider>
-              <NavigationMenu navigationLinks={navigationPanel} />   
-               <Workers >
-              <TinyMCEDataProvider>
-                <WinkDataProvider>
-                  <DataProvidersProvider>
-                    <ProductDataProvider>
-                  
-                      <IonMenuNav />
-                    </ProductDataProvider>
-                  </DataProvidersProvider>
-                </WinkDataProvider>
-              </TinyMCEDataProvider>
+              <NavigationMenu navigationLinks={navigationPanel} />
+              <Workers>
+                <TinyMCEDataProvider>
+                  <WinkDataProvider>
+                    <DataProvidersProvider>
+                      <ProductDataProvider>
+                        <IonMenuNav />
+                      </ProductDataProvider>
+                    </DataProvidersProvider>
+                  </WinkDataProvider>
+                </TinyMCEDataProvider>
               </Workers>
             </NavigationDataProvider>
           </QueryProvider>
         </AppBridgeProvider>
       </BrowserRouter>
-      {/* </PolarisProvider> */}
+      <PolarisProvider> </PolarisProvider>
     </IonApp>
   );
 }
@@ -310,7 +320,8 @@ function Description() {
   const {
     refDictionary,
     DataProviderNavigate,
-    serverSentEventLoading,
+
+    lockAllTasks,
     contentSaved,
     user,
   } = useDataProvidersContext();
@@ -323,7 +334,7 @@ function Description() {
           <IonButtons key={"12"} slot="start">
             <IonButton
               color="neural"
-              disabled={serverSentEventLoading}
+              disabled={lockAllTasks}
               onClick={async () => {
                 await DataProviderNavigate("/product-details");
               }}
@@ -342,7 +353,7 @@ function Description() {
                 size="small"
                 slot="end"
               >
-                saved
+                saving
               </IonButton>
             )}
             <IonButton
@@ -376,6 +387,7 @@ function Article() {
     refDictionary,
     DataProviderNavigate,
     serverSentEventLoading,
+    lockAllTasks,
     contentSaved,
   } = useDataProvidersContext();
 
@@ -387,7 +399,7 @@ function Article() {
             <IonButton
               color="neural"
               key="IonButtons/article"
-              disabled={serverSentEventLoading}
+              disabled={ lockAllTasks}
               onClick={() => {
                 DataProviderNavigate("/product-details");
               }}
@@ -399,10 +411,10 @@ function Article() {
         centerText={"Article Workstation"}
         right={
           <>
-            {contentSaved && (
+            {lockAllTasks && (
               <IonButton
                 fill="clear"
-                color={contentSaved && "success"}
+                color={lockAllTasks && "success"}
                 size="small"
                 slot="end"
                 key="contentSaved"
@@ -435,6 +447,138 @@ function Article() {
   );
 }
 
+// Import SMTP.js library
+
+const BugReportPage = (React.FC = () => {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    bugType: "",
+    bugDescription: "",
+  });
+
+  const [showAlert, setShowAlert] = useState(false);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Validations (You can add more specific validations)
+    if (
+      formData.name === "" ||
+      formData.email === "" ||
+      formData.bugType === "" ||
+      formData.bugDescription === ""
+    ) {
+      setShowAlert(true);
+      return;
+    }
+
+    // Sending email using SMTP.js
+    const emailToSend = {
+      SecureToken: "376ee0cd-ab84-414e-a207-3ec8ca2d89bd", //2A4E18C4EE14D83137B68735833A9ED3B1D21FB887E521E76D9FCBC83FDDEE99802E471273AB80D3DC7C79AA9FB518DB
+      //smtp password support@techsolutionsforge.com    8B5199E49BC1B7CFCCD4560DF930D755BDFE  2525
+      // 2bef0aef-b2cc-4074-8cff-f291ce935b1b 
+      To: "hasanseirafi69@gmail.com",
+      From: "admin.shopify.com",
+      Subject: `Bug Report `,
+      Body: `
+        Name: ${formData.name}
+        Email: ${formData.email}
+        Bug Type: ${formData.bugType}
+        Bug Description: ${formData.bugDescription}
+      `,
+    };
+
+    await Email.send(emailToSend);
+
+    // Reset form data after submission
+    // setFormData({
+    //   name: "",
+    //   email: "",
+    //   bugType: "",
+    //   bugDescription: "",
+    // });
+
+    // Show success message or redirect to a thank you page
+    // (you can implement this as per your application flow)
+  };
+
+  return (
+    <IonPage>
+      <IonContent className="ion-padding">
+        <form onSubmit={handleSubmit}>
+          <IonItem>
+            <IonLabel position="floating">Name</IonLabel>
+            <IonInput
+              type="text"
+              name="name"
+              value={formData.name}
+              onIonChange={handleInputChange}
+              required
+            />
+          </IonItem>
+
+          <IonItem>
+            <IonLabel position="floating">Email</IonLabel>
+            <IonInput
+              type="email"
+              name="email"
+              value={formData.email}
+              onIonChange={handleInputChange}
+              required
+            />
+          </IonItem>
+
+          <IonItem>
+            <IonLabel>Bug Type</IonLabel>
+            <IonSelect
+              name="bugType"
+              value={formData.bugType}
+              onIonChange={handleInputChange}
+              required
+            >
+              <IonSelectOption value="UI/UX">UI/UX</IonSelectOption>
+              <IonSelectOption value="Functionality">
+                Functionality
+              </IonSelectOption>
+              <IonSelectOption value="Performance">Performance</IonSelectOption>
+              <IonSelectOption value="Other">Other</IonSelectOption>
+            </IonSelect>
+          </IonItem>
+
+          <IonItem>
+            <IonLabel position="floating">Bug Description</IonLabel>
+            <IonTextarea
+              rows={6}
+              name="bugDescription"
+              value={formData.bugDescription}
+              onIonChange={handleInputChange}
+              required
+            />
+          </IonItem>
+
+          <IonButton type="submit" expand="block">
+            Submit
+          </IonButton>
+        </form>
+
+        <IonAlert
+          isOpen={showAlert}
+          onDidDismiss={() => setShowAlert(false)}
+          header={"Error"}
+          message={"All fields are required."}
+          buttons={["OK"]}
+        />
+      </IonContent>
+    </IonPage>
+  );
+});
+
 function IonMenuNav() {
   const [currentRoute, setCurrentRoute] = useState("/");
   const location = useLocation();
@@ -448,6 +592,7 @@ function IonMenuNav() {
     refDictionary,
     DataProviderNavigate,
     serverSentEventLoading,
+    lockAllTasks,
     contentSaved,
     sessionLoaded,
   } = useDataProvidersContext();
@@ -457,13 +602,11 @@ function IonMenuNav() {
     setCurrentRoute(location.pathname);
   }, [location.pathname]);
 
-useEffect(async () => {
-console.log('svgAssets:',svgAssets)
+  useEffect(async () => {
+    console.log("svgAssets:", svgAssets);
 
-// await ImageCachePre(readingBag)
-
-},[])
-
+    // await ImageCachePre(readingBag)
+  }, []);
 
   if (!sessionLoaded) return null;
   const tabs = {
@@ -494,8 +637,8 @@ console.log('svgAssets:',svgAssets)
         disabled: false,
         label: "Description Assist",
         icon: aiIcon,
-        clickHandler: (event) => {
-          assistRequest(aiWorkStation);
+        clickHandler: async (event) => {
+          await assistRequest(aiWorkStation);
         },
       },
       {
@@ -503,8 +646,8 @@ console.log('svgAssets:',svgAssets)
         disabled: false,
         label: "Clear Description",
         icon: clear,
-        clickHandler: (event) => {
-          clearAssistResult(aiWorkStation);
+        clickHandler: async (event) => {
+          await clearAssistResult(aiWorkStation);
         },
       },
       {
@@ -513,8 +656,8 @@ console.log('svgAssets:',svgAssets)
         label: "Save Description",
         saveSignal: true,
         icon: save,
-        clickHandler: (event) => {
-          updateArticleMethod(aiWorkStation, markupText);
+        clickHandler: async (event) => {
+          await updateArticleMethod(aiWorkStation, markupText);
         },
       },
     ],
@@ -524,8 +667,8 @@ console.log('svgAssets:',svgAssets)
         disabled: false,
         label: "Description Selection",
         icon: pencilCase,
-        clickHandler: (event) => {
-          DataProviderNavigate("/product-details", { target: "host" });
+        clickHandler: async (event) => {
+          await DataProviderNavigate("/product-details", { target: "host" });
         },
       },
       {
@@ -533,8 +676,8 @@ console.log('svgAssets:',svgAssets)
         disabled: false,
         label: "Description Assist",
         icon: aiIcon,
-        clickHandler: (event) => {
-          assistRequest(aiWorkStation);
+        clickHandler: async (event) => {
+          await assistRequest(aiWorkStation);
         },
       },
       {
@@ -542,8 +685,8 @@ console.log('svgAssets:',svgAssets)
         disabled: false,
         label: "Clear Description",
         icon: clear,
-        clickHandler: (event) => {
-          clearAssistResult(aiWorkStation);
+        clickHandler: async (event) => {
+          await clearAssistResult(aiWorkStation);
         },
       },
       {
@@ -552,8 +695,8 @@ console.log('svgAssets:',svgAssets)
         label: "Save Description",
         saveSignal: true,
         icon: save,
-        clickHandler: (event) => {
-          updateArticleMethod(aiWorkStation, markupText);
+        clickHandler: async (event) => {
+          await updateArticleMethod(aiWorkStation, markupText);
         },
       },
     ],
@@ -649,6 +792,11 @@ console.log('svgAssets:',svgAssets)
             />
             <Route key="/article" path="/article" element={<Article />} />
             <Route key="exitframe" path="/exitiframe" element={<ExitFrame />} />
+            <Route
+              key="/support-ticket"
+              path="/support-ticket"
+              element={<BugReportPage />}
+            />
             <Route key="noMatch" path="/*" element={<div>No page found</div>} />
           </Routes>
         </IonRouterOutlet>
@@ -665,7 +813,8 @@ console.log('svgAssets:',svgAssets)
               <IonTabButton
                 size="large"
                 id={buttonId}
-                disabled={serverSentEventLoading || tab.disabled}
+                disabled={(contentSaved && tab.saveSignal ) ? false :  (lockAllTasks || tab.disabled) }
+             color={contentSaved && tab.saveSignal ? "success" : "neural"}
                 key={index}
                 tab={currentRoute}
                 onClick={(e) =>
@@ -681,15 +830,22 @@ console.log('svgAssets:',svgAssets)
                 />
                 <IonLabel
                   key={index}
-                  color={tab.access.hasAccess ? "primary" : "danger"}
+                  color={(contentSaved && tab.saveSignal )? "success" : tab.access.hasAccess ? "primary" : "danger"}
                 >
-                  {serverSentEventLoading}
-                  {tab.access.message(tab.label)}
+             
+                {(contentSaved && tab.saveSignal ) ? "Saving" : tab.access.message(tab.label)}
                 </IonLabel>
               </IonTabButton>
             );
           })}
         </IonTabBar>
+        <IonButton id="context-menu-trigger">Right-Click Me</IonButton>
+        {/* <IonPopover trigger="context-menu-trigger" triggerAction="context-menu">
+        <IonContent class="ion-padding">Hello World!</IonContent>
+      </IonPopover>
+      <IonPopover trigger="context-menu-trigger" triggerAction="click">
+        <IonContent class="ion-padding">Hello World!</IonContent>
+      </IonPopover> */}
       </IonTabs>
     </IonReactRouter>
   );

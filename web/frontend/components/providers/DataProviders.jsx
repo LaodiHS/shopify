@@ -52,11 +52,9 @@ import { AnimatedContent } from "./";
 import { NavigationRefs } from "./";
 
 import {
-
   beehive,
   readingTree,
   honeyCombGridDrop,
-
   readingBag,
 } from "../../assets";
 
@@ -390,8 +388,7 @@ export function DataProvidersProvider({ children }) {
   const [subscriptions, setSubscriptions] = useState(["free"]);
   const [currentSession, setCurrentSession] = useState({});
   const [sessionLoaded, setSessionLoaded] = useState(false);
-  const [subscriptionRetrievalLoading, setSubscriptionRetrievalLoading] =
-    useState(false);
+  const [subscriptionRetrievalLoading, setSubscriptionRetrievalLoading] = useState(false);
   const [contextualOptions, setContextualOptions] = useState({});
   const [selectedCollections, setSelectedCollections] = useState([]);
   const [presentToast] = useIonToast();
@@ -445,18 +442,33 @@ export function DataProvidersProvider({ children }) {
   const [legend, setLegend] = useState({});
   const [contentSaved, setContentSaved] = useState(false);
   const [serverSentEventLoading, setServerSentEventLoading] = useState(false);
+  const [lockAllTasks, setLockAllTasks] = useState(false);
   const [updateArticleMethod, setUpdateArticleMethod] = useState(null);
   const [markupText, setMarkupText] = useState("");
   const navigate = useNavigate();
   const [plans, setPlans] = useState({});
   const app = useAppBridge();
   const context = useShopifyContext();
+  const [shopifyDown, setShopifyDown] = useState(false);
+
+  const [retrySession, setRetrySession] = useState(false);
+
   const [dependenciesLoaded, setDependenciesLoaded] = useState({});
   const [AllDependenciesLoaded, setAllDependenciesLoaded] = useState(false);
   const [assetsLoaded, setAssetsLoaded] = useState(false);
   const [allAssets, setAllAssets] = useState({});
   const fetch = useAuthenticatedFetch(); // Make sure you have this hook defined somewhere
+
+  function defineShopifyDown( retryValue) {
+   return modifyState(setRetrySession, retryValue);
+  }
+
+
+
+
   const { workersLoaded } = useWorkersContext();
+
+
   async function fetchDataWithCache({ url, method, body }) {
     if (sessionLoaded) {
       const cached_url_method_body_parameters =
@@ -544,13 +556,12 @@ export function DataProvidersProvider({ children }) {
         if (body) {
           options.body = JSON.stringify(body);
         }
-   
+
         const response_data = await fetch(url, options);
 
-     if (!response_data.ok) {
+        if (!response_data.ok) {
           console.error("response ok", logShopifyResponse(response.status));
         }
-
 
         const data = await response_data.json();
 
@@ -562,7 +573,7 @@ export function DataProvidersProvider({ children }) {
           boxed.error = data.error;
         }
       } catch (error) {
-        console.error('fetch error:', error);
+        console.error("fetch error:", error);
         presentToast({
           message: "There was a network error! Please try again later.",
           duration: 5000,
@@ -590,9 +601,7 @@ export function DataProvidersProvider({ children }) {
 
   useEffect(async () => {
     if (workersLoaded) {
-     
       if (!indexDb.db) {
-   
         const db = await indexDb.startIndexDB();
         if (!db) {
           throw new Error("db is not started:", db);
@@ -614,15 +623,17 @@ export function DataProvidersProvider({ children }) {
 
             const assetName = src.slice().split("/").pop();
 
-          //  setAllAssets((pre) => ({ ...pre, [assetName]: blobUrl }));
-          allAssets[assetName] =blobUrl;
+            //  setAllAssets((pre) => ({ ...pre, [assetName]: blobUrl }));
+            allAssets[assetName] = blobUrl;
           } catch (error) {
             console.error("error preloading svg assets: ", error);
           }
         }
-      
+
         setAssetsLoaded(true);
-        setPagingHistory(new LHistory("pagingHistory"));
+        const pageHistory = new LHistory("pagingHistory");
+        pageHistory.getPagingState();
+        setPagingHistory(pageHistory);
         setDependenciesLoaded((prev) => ({ ...prev, pagingHistory: true }));
       }
       return async () => {
@@ -646,7 +657,7 @@ export function DataProvidersProvider({ children }) {
   }
 
   useEffect(() => {
-    console.log("hit number alldep: ", Object.entries(dependenciesLoaded));
+    console.log("hit number allDep: ", Object.entries(dependenciesLoaded));
 
     if (Object.values(dependenciesLoaded).length === 2) {
       setAllDependenciesLoaded(
@@ -677,7 +688,7 @@ export function DataProvidersProvider({ children }) {
           const subscriptionsResponse = await fetch(
             "/api/current/subscription/status"
           );
-
+       
           if (!subscriptionsResponse.ok) {
             // If the response status is not ok (e.g., 401 Unauthorized or 403 Forbidden),
             // it means the user is not authenticated or doesn't have access.
@@ -686,8 +697,8 @@ export function DataProvidersProvider({ children }) {
             setSubscriptionRetrievalLoading(false);
 
             throw new Error("unable to find your subscription");
-            return;
           }
+          setShopifyDown(false);
           const data = await subscriptionsResponse.json();
           console.log("session loaded");
           setSessionLoaded(true);
@@ -708,6 +719,8 @@ export function DataProvidersProvider({ children }) {
           if (!DEPLOYMENT_ENV) {
             console.log("redirectUri  ", redirectUri);
             if (redirectUri) {
+              await productViewCache.remove("user");
+              await productViewCache.remove("plans");
               // await productViewCache.clearAll();
             } else {
               console.log("user", user);
@@ -725,9 +738,11 @@ export function DataProvidersProvider({ children }) {
           redirect.dispatch(Redirect.Action.REMOTE, { url: redirectUri });
         } catch (err) {
           // Handle network errors or other unexpected errors here.
+          setShopifyDown(true);
           setPlans(err.plans);
-          const retryInterval = 4000; // 4 seconds
-          setTimeout(fetchDataSession, retryInterval);
+          // const retryInterval = 4000; // 4 seconds
+          // setTimeout(fetchDataSession, retryInterval);
+
           console.error("Error fetching data", err);
         }
         setSubscriptionRetrievalLoading(false);
@@ -760,7 +775,7 @@ export function DataProvidersProvider({ children }) {
       // }
     }
     // fetchDataSession();
-  }, [AllDependenciesLoaded]);
+  }, [AllDependenciesLoaded, retrySession]);
 
   const freeOptions = ["free", "chestnut", "sourwood", "acacia", "premiere"];
 
@@ -837,7 +852,7 @@ export function DataProvidersProvider({ children }) {
             color="warning"
             className="ion-text-capitalize ion-text-wrap"
           >
-           With {requiredLabel && requiredLabel?.slice(0, 1)[0]} Honey 
+            With {requiredLabel && requiredLabel?.slice(0, 1)[0]} Honey
           </IonText>
         ),
         some: () => (
@@ -847,7 +862,8 @@ export function DataProvidersProvider({ children }) {
             color="warning"
             className="ion-text-capitalize ion-text-wrap"
           >
-            Some Features Require A {requiredLabel.slice().join(", ") } Subscription.
+            Some Features Require A {requiredLabel.slice().join(", ")}{" "}
+            Subscription.
           </IonText>
         ),
       };
@@ -990,7 +1006,8 @@ export function DataProvidersProvider({ children }) {
       const selImages = { ...prev };
       sel_images.length = 0;
       selected_images.forEach((image) => {
-        const symbol_name = compressString(image, all_product_images) + "_jpg";
+        const symbol_name =
+          "image: " + compressString(image, all_product_images) + "_.jpg";
 
         sel_images.push(symbol_name);
         selImages[symbol_name] = {
@@ -1083,6 +1100,19 @@ export function DataProvidersProvider({ children }) {
     modifyState(setServerSentEventLoading, updateOption);
   }
 
+
+
+useEffect(()=>{
+  const lockEvents = [serverSentEventLoading, contentSaved ]
+if(lockEvents .some(event =>  event === true )){
+   setLockAllTasks (true); 
+}
+if(lockEvents.every(event => event === false)){
+  setLockAllTasks(false);
+}
+
+},[serverSentEventLoading, contentSaved])
+
   function assignContentSaved(updateOptions) {
     modifyState(setContentSaved, updateOptions);
     setTimeout(() => {
@@ -1114,7 +1144,7 @@ export function DataProvidersProvider({ children }) {
 
       const clearLocalStorage = async () => {
         if (DEPLOYMENT_ENV) {
-          await productViewCache.clearAll();
+          // await productViewCache.clearAll();
         }
       };
 
@@ -1127,7 +1157,8 @@ export function DataProvidersProvider({ children }) {
   }, []);
 
   const value = {
-
+    shopifyDown,
+    defineShopifyDown,
     allAssets,
     getSVGAsset,
     assetsLoaded,
@@ -1147,6 +1178,7 @@ export function DataProvidersProvider({ children }) {
     contentSaved,
     setContentSaved: assignContentSaved,
     setServerSentEventLoading: assignServerSentEventLoading,
+    lockAllTasks,
     serverSentEventLoading,
     languageOptions,
     productDetailOptions,

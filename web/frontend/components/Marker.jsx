@@ -8,50 +8,66 @@ import {
   IonItem,
   IonImg,
   IonChip,
+  IonCard,
+  IonCardContent,
+  IonCardTitle,
+  IonCardHeader,
+  IonSkeletonText,
 } from "@ionic/react";
-import { useDataProvidersContext, NoImagePlaceHolder } from "../components";
-import { darkenHexColor } from "../utilities/darkenHexColor";
+// import { useDataProvidersContext, NoImagePlaceHolder } from "../components";
+// import { darkenHexColor } from "../utilities/darkenHexColor";
+// import { imagePlaceHolder } from "../assets";
 
-
-const Marker = ({ requirementText, color, size, selectedImageMap}) => {
-  // const { selectedImageMap } = useDataProvidersContext();
+const Marker = ({ markerType, label, color, size, loadingStream, imageSrc }) => {
   if (
-    (requirementText && typeof requirementText !== "string") ||
+    (label && typeof label !== "string") ||
     (color && typeof color !== "string")
   ) {
     throw Error("Invalid argument types");
   }
 
-  let verifiedReq = requirementText;
-  if (requirementText.includes("_jpg")) {
-    return (
-      <IonRow>
-        <IonCol size="12" className="ion-align-self-center">
-          <IonItem lines="none">
+  
+    return markerType ==="img" ? <PlaceImage color={color} imageSrc = {imageSrc} size={size} loadingStream ={loadingStream} /> : <PlaceIonChip label={label} color={color} /> ;
+};
+
+function PlaceImage({ color, imageSrc, size, loadingStream }) {
+  return (
+    <IonRow key={color + "Row"}>
+      <IonCol key={color + "col"} size="12" className="ion-align-self-center">
+        <IonItem key={color + "IonItem"} lines="none">
+         
+         {loadingStream ? (<IonCard animated={true} style={{
+          // width:"140px", height:"140px",
+          "background": color }} ><IonCardHeader><IonCardTitle 
+          style={{fontFamily:"Baloo, sans-serif"}}
+          >Loading Image...</IonCardTitle></IonCardHeader></IonCard>) : (
           <IonThumbnail
+            key={"thumb" + color}
             aria-hidden="true"
             slot="start"
-            key={"thumb" + color}
             style={{
-              "--size": (size - 20) + "px",
+              "--size": size - 20 + "px",
               "--borderRadius": "14px",
+              "border": '6px solid' +  color
             }}
           >
             <img
-              key={"img" + color}
+              key={color + "IonImg"}
               alt="Image Requirement"
-              src={
-                selectedImageMap[requirementText]?.url ||
-                <NoImagePlaceHolder />
-              }
+              src={imageSrc}
+              loading="eager"
+              width="140" 
+              height="140"
             />
           </IonThumbnail>
-          </IonItem>
-        </IonCol>
-      </IonRow>
-    );
-  }
+          )}
+        </IonItem>
+      </IonCol>
+    </IonRow>
+  );
+}
 
+function PlaceIonChip({ label, color }) {
   return (
     <IonChip
       key={"sub" + color}
@@ -60,13 +76,14 @@ const Marker = ({ requirementText, color, size, selectedImageMap}) => {
         // verticalAlign: "super",
         fontSize: "20px",
         fontFamily: "'Baloo', sans-serif",
+        color:"black",
         background: color,
         borderRadius: "2px",
       }}
     >
-      {verifiedReq}
+      {label}
     </IonChip>
   );
-};
+}
 
 export { Marker };

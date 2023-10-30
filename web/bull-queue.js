@@ -178,7 +178,7 @@ export function serverSideEvent(app, redisClient, queue) {
       res.setHeader("Cache-Control", "no-cache");
       res.setHeader("Connection", "keep-alive");
       res.setHeader("Access-Control-Allow-Origin", "*");
-
+      res.flushHeaders();
       const { shop } = req.query;
       if (!shop) {
         res.end();

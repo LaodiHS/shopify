@@ -49,6 +49,7 @@ const {fetchData}= useDataProvidersContext();
     const fetchDataAndSetState = async () => {
       try {
         const fetchedData = await fetchData({url, method, body},fetch); // Call the memoized fetch function
+        console.log('fetched data', fetchedData);
         setData(fetchedData); // Set the fetched data
         setLoading(false);
       } catch (error) {

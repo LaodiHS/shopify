@@ -16,7 +16,10 @@ import { connectToRedis } from "./redis.js";
 import { setupBullMQServer, serverSideEvent } from "./bull-queue.js";
 import { body, validationResult } from "express-validator";
 import { billingConfig, createUsageRecord, isTest } from "./billing.js";
-import { updateSubscription,getUserByShopName } from "./subscriptionManager.js";
+import {
+  updateSubscription,
+  getUserByShopName,
+} from "./subscriptionManager.js";
 import productTagger from "./product-tagger.js";
 import { contentGenerator } from "./shopifyContentGenerator.js";
 import { productSearch } from "./product-search.js";
@@ -25,17 +28,21 @@ import { dirname } from "path";
 import { fileURLToPath } from "url";
 import { request } from "./cache-to-file.js";
 import compression from "compression";
+
+import dnscache from "dnscache";
 import {
   handleDescriptionEndpoints,
   handleArticleEndpoints,
   handlePostEndpoints,
 } from "./description-requests.js";
-
+import { sendEmail } from "./sendEmail.js";
 import * as userStore from "./userStore.js";
 
-
-
-
+const dnsCache = dnscache({
+  enable: true,
+  // "ttl" : 300,
+  cachesize: 1000, // Set TTL to 5 minutes (300 seconds)
+});
 
 const { writeJSONToFileAsync } = userStore;
 
@@ -51,8 +58,6 @@ const log = (message, obj) =>
     })
   );
 
-
-
 async function startServer() {
   try {
     const redisClient = await connectToRedis();
@@ -61,7 +66,6 @@ async function startServer() {
     await userStore.createUsersFolderAsync();
     const { queue, worker } = await setupBullMQServer(redisClient);
 
-    
     // Middleware to handle async function errors
     // const asyncErrorHandler = (asyncFn) => (req, res, next) => {
     //   asyncFn(req, res, next).catch(next);
@@ -81,12 +85,46 @@ async function startServer() {
 
     const app = await authentication();
     // const csp = "frame-ancestors 'self' neuralnectar.fly.dev";
-   
+
     serverSideEvent(app, redisClient, queue);
+    app.use(compression({ threshold: 9 }));
     handleDescriptionEndpoints(app, queue);
     handleArticleEndpoints(app, queue);
     handlePostEndpoints(app, queue);
 
+    app.post("/api/bug/report", async (req, res) => {
+      let status = 200;
+      let error = null;
+      let data = null;
+      let required = ["text", "subject", "to", "from"].every(
+        (key) => key in req.body
+      );
+      if (required) {
+        const { text, subject, to, from } = req.body;
+        let data = req.body;
+        try {
+          sendEmail({
+            text,
+            subject,
+            to,
+            from,
+            callback: (error, info) => {
+              if (error) {
+                error = error;
+              } else {
+                data = info;
+              }
+            },
+          });
+        } catch (err) {
+          status = 500;
+          error = err;
+          data = null;
+        }
+
+        res.status(status).send({ success: status === 200, data, error });
+      }
+    });
     app.get("/api/current/subscription/status", async (req, res) => {
       try {
         const session = res.locals.shopify.session;
@@ -107,13 +145,10 @@ async function startServer() {
           user = await updateSubscription(shop, subscription.name);
         }
 
-
-
-
         const activeSubscriptions = subscriptions.activeSubscriptions.map(
           (sub) => sub.name
         );
-        
+
         let redirectUri = null;
 
         if (activeSubscriptions.length === 0) {
@@ -124,7 +159,14 @@ async function startServer() {
           });
 
           activeSubscriptions.push("free");
-          user = {shop, capped_usage:0, subscription_name: 'free', usage_limit: 0, capped_amount:0, seen:true }
+          user = {
+            shop,
+            capped_usage: 0,
+            subscription_name: "free",
+            usage_limit: 0,
+            capped_amount: 0,
+            seen: true,
+          };
         }
 
         res.status(200).json({
@@ -132,7 +174,7 @@ async function startServer() {
           activeSubscriptions,
           plans: billingConfig,
           session: res.locals.shopify.session,
-         // redirectUri,
+          // redirectUri,
         });
       } catch (error) {
         console.error(error);
@@ -143,7 +185,6 @@ async function startServer() {
       }
     });
 
-    
     app.post(
       "/api/subscription/selection",
       [
@@ -331,18 +372,20 @@ async function startServer() {
         };
         // Step through pagination
         do {
-          try{
-          const products = await client?.get(params) || {body:{products:[]}};
-          // Check tags
-          // @ts-ignore
-          for (const product of products?.body?.products) {
-            await productTagger(client, product);
+          try {
+            const products = (await client?.get(params)) || {
+              body: { products: [] },
+            };
+            // Check tags
+            // @ts-ignore
+            for (const product of products?.body?.products) {
+              await productTagger(client, product);
+            }
+            // @ts-ignore
+            params = products?.pageInfo?.nextPage;
+          } catch (err) {
+            console.log("error products tags", err);
           }
-          // @ts-ignore
-          params = products?.pageInfo?.nextPage;
-        }catch(err){
-console.log('error products tags', err);
-        }
         } while (params !== undefined);
         // Keep track of the last time this process runs
         reconciliation[session.shop] = new Date().toISOString();
@@ -354,11 +397,10 @@ console.log('error products tags', err);
       }
     });
 
-    
     productSearch(app);
     app.get("/api/inventory-item/", async (_req, res) => {
       // @ts-ignore
-      if ( _req.params && _req.params?.id && _req.params?.id !== "") {
+      if (_req.params && _req.params?.id && _req.params?.id !== "") {
         const item = await shopify.api.rest.InventoryItem.find({
           session: res.locals.shopify.session,
           // @ts-ignore
@@ -406,6 +448,7 @@ console.log('error products tags', err);
     app.post("/api/product/variant/metafields", async (req, res) => {
       let status = 200;
       let error = null;
+      let data = null;
       try {
         if (req.body.variantId && req.body.metafields) {
           const { variantId, metafieldsArray } = req.body;
@@ -419,7 +462,7 @@ console.log('error products tags', err);
         status = 500;
         error = e.message;
       }
-      res.status(status).send({ success: status === 200, error });
+      res.status(status).send({ success: status === 200, data, error });
     });
 
     app.get("/api/products/all", async (_req, res) => {
@@ -526,6 +569,7 @@ console.log('error products tags', err);
     //   res.status(status).send({ success: status === 200, error });
     // });
     const dir_name = dirname(fileURLToPath(import.meta.url));
+ 
 
     const completePath = path
       .join(dir_name, "node_modules", "tinymce")
@@ -535,7 +579,7 @@ console.log('error products tags', err);
     app.use("/tinymce", express.static(completePath));
 
     app.use(shopify.cspHeaders());
-   
+
     // setting the index to true will fail, because it is checked by shopify.
     app.use(serveStatic(STATIC_PATH, { index: false }));
 
@@ -555,32 +599,32 @@ console.log('error products tags', err);
 
     // app.use("/*", shopify.ensureInstalledOnShop());
 
-    
+    app.use(
+      "/*",
+      (req, res, next) => {
+        console.log("query:==>", req.query);
+        console.log("body:==>", req.body);
+        console.log("query:==>", req.params);
+        console.log("url:==>", req.url);
+        console.log("originalurl:==>", req.originalUrl);
 
-    app.use("/*", ( (req, res, next) => {
-console.log('query:==>',req.query)
-console.log('body:==>',req.body)
-console.log('query:==>',req.params)
-console.log('url:==>',req.url)
-console.log('originalurl:==>',req.originalUrl)
-    
-next()
-    } ), 
-    shopify.ensureInstalledOnShop(),
-     async (_req, res, _next) => {
-      // console.log('middleware', shopify.ensureInstalledOnShop())
+        next();
+      },
+      shopify.ensureInstalledOnShop(),
+      async (_req, res, _next) => {
+        // console.log('middleware', shopify.ensureInstalledOnShop())
 
-      return res
-        .status(200)
-        .set("Content-Type", "text/html")
-        .send(readFileSync(join(STATIC_PATH, "index.html")));
-    });
+        return res
+          .status(200)
+          .set("Content-Type", "text/html")
+          .send(readFileSync(join(STATIC_PATH, "index.html")));
+      }
+    );
 
     app.listen(PORT);
   } catch (error) {
     console.error("Error starting the server:", error);
   }
 }
-
 
 startServer();

@@ -1,6 +1,10 @@
 import { GraphqlQueryError } from "@shopify/shopify-api";
 import {shopify} from "./shopify.js";
-
+import {
+  BillingInterval,
+  LATEST_API_VERSION,
+  LogSeverity,
+} from "@shopify/shopify-api";
 import {isProduction} from "./dev_production_vars.js"
 
 
@@ -123,7 +127,7 @@ const PRODUCTS_QUERY = `query Products($first: Int = 5, $after: String, $variant
 }`;
 
 export default async function getProducts(session, first = 5, after = null, before = null, variantsFirst = 5, imagesFirst = 5) {
-  const client = new shopify.api.clients.Graphql({ session });
+  const client = new shopify.api.clients.Graphql({ session, apiVersion: LATEST_API_VERSION });
 
   console.log('api-version', client.apiVersion)
 

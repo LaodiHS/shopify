@@ -2,8 +2,9 @@ import React, { createContext, useState, useEffect, useContext } from "react";
 import { useLocation, useNavigate } from "react_router_dom";
 
 import { useAuthenticatedFetch } from "../../hooks";
-import { useDataProvidersContext} from "../../components";
+import { useDataProvidersContext } from "../../components";
 import { LoadingPageComponent } from "../../components";
+import { ShopifyOutage } from "../../components";
 const ProductDataContext = createContext(null);
 
 export function useProductDataContext() {
@@ -12,6 +13,9 @@ export function useProductDataContext() {
 
 export function ProductDataProvider({ children }) {
   const {
+    shopifyDown,
+    lockAllTasks,
+    defineShopifyDown,
     selectedImageMap,
     uncachedFetchData,
     sessionLoaded,
@@ -42,16 +46,14 @@ export function ProductDataProvider({ children }) {
     modifyState,
   } = useDataProvidersContext();
 
-
   const location = useLocation();
   const navigate = useNavigate();
 
   const [isProductsLoading, setIsProductsLoading] = useState(false);
   const [currentIndexPage, setCurrentIndexPage] = useState(null);
   const [hasNextIndexPage, setNextIndexPage] = useState(false);
-  const [displayContents, setDisplayContents] = useState(false)
+  const [displayContents, setDisplayContents] = useState(false);
   const productsPerPage = 10;
-
   const [productsData, setProductsData] = useState({});
   const [productData, setProductData] = useState(null);
 
@@ -74,7 +76,7 @@ export function ProductDataProvider({ children }) {
     }
   }
   function defineCurrentIndexPage(currentIndexPage) {
-    modifyState(setCurrentIndexPage,currentIndexPage);
+    modifyState(setCurrentIndexPage, currentIndexPage);
   }
 
   function defineNextIndexPage(hasNextIndexPage) {
@@ -82,21 +84,20 @@ export function ProductDataProvider({ children }) {
   }
 
   function setProductsLoading(loading) {
-    modifyState(setIsProductsLoading,loading);
+    modifyState(setIsProductsLoading, loading);
   }
-
 
   useEffect(async () => {
     if (pagingHistory && sessionLoaded) {
       setCurrentIndexPage(await pagingHistory.getCurrentIndex());
     }
-  }, [pagingHistory,sessionLoaded]);
+  }, [pagingHistory, sessionLoaded]);
 
   async function setPaging(formattedData) {
-    console.log('formattedData', formattedData);
+    console.log("formattedData", formattedData);
     const { startCursor } = formattedData.pageInfo;
-    await pageIngCache.setPage(startCursor, formattedData, true);
-    if (! await pagingHistory.includes(startCursor)) {
+    await pageIngCache.setPage(startCursor, formattedData);
+    if (!(await pagingHistory.includes(startCursor))) {
       await pagingHistory.push(startCursor);
     }
     defineNextIndexPage(formattedData?.pageInfo?.hasNextPage);
@@ -112,12 +113,10 @@ export function ProductDataProvider({ children }) {
   const fetchData = async () => {
     setProductsLoading(true);
     if (await pagingHistory.hasCurrentPage()) {
-      
-      const cachedData = await pageIngCache.getPage(
-        await pagingHistory.getCurrentPage()
-      );
+      const currentPage = await pagingHistory.getCurrentPage();
+      const cachedData = await pageIngCache.getPage(currentPage);
       if (cachedData) {
-        console.log('cachedData  ', cachedData)
+        console.log("cachedData  ", cachedData);
         await setPaging(cachedData);
         setProductsLoading(false);
         return;
@@ -133,9 +132,9 @@ export function ProductDataProvider({ children }) {
           after: null,
         },
       });
-  
+
       const data = response;
-      const format = formatProducts(data);
+      const format = await formatProducts(data);
       await setPaging(format);
       setProductsLoading(false);
     } catch (error) {
@@ -144,18 +143,16 @@ export function ProductDataProvider({ children }) {
     }
   };
 
-
-
   function defineProductsData(productsData) {
     setProductsData({ ...productsData });
   }
 
   useEffect(async () => {
-    if (sessionLoaded) {
-      if (location.pathname === "/product-details") {
+    if (sessionLoaded &&  location.pathname === "/product-details") {
+    
         if (!productsData) {
-         await  fetchData();
-console.log('products data fetched' )
+          await fetchData();
+          console.log("products data fetched");
 
           return;
         }
@@ -167,8 +164,8 @@ console.log('products data fetched' )
         // If both productData and cashedProductData are unavailable and the current route is "product-detail"
 
         if (productsData === null && location.pathname === "/product-details") {
-         await fetchData();
-          console.log('product data fetched' )
+          await fetchData();
+          console.log("product data fetched");
           const index = await productViewCache.get("cashedProductIndex");
           console.log("product Index:", index);
           if (index >= 0) {
@@ -183,9 +180,19 @@ console.log('products data fetched' )
           const index = parseInt(cashedProductIndex, 10);
           await defineProductData(index);
         }
-      }
+      
     }
   }, [location.pathname, navigate, pagingHistory, sessionLoaded]);
+
+
+useEffect(async () =>{
+if(sessionLoaded){
+await pagingHistory.runSyncDataFetcher(uncachedFetchData, productsPerPage);
+}
+
+},[ sessionLoaded]);
+
+
 
   async function updateProductProperty(prop, value) {
     const updatedProduct = { ...productData, [prop]: value };
@@ -201,7 +208,8 @@ console.log('products data fetched' )
   }
 
   const value = {
-  
+    lockAllTasks,
+    selectedImageMap,
     pagingHistory,
     productViewCache,
     pageIngCache,
@@ -241,22 +249,18 @@ console.log('products data fetched' )
     updateProductProperty,
     setPaging,
     fetchData,
-    AllDependenciesLoaded
+    AllDependenciesLoaded,
   };
-
-
 
   useEffect(async () => {
     let id;
-    if ( sessionLoaded ) {
-      console.log('sessionLoaded: ', sessionLoaded)
+    if (sessionLoaded) {
+      console.log("sessionLoaded: ", sessionLoaded);
       await fetchData();
-      console.log('fetched product data')
-    id = setTimeout(()=>{
-
-    setDisplayContents(true);
-
-      },10000)
+      console.log("fetched product data");
+      id = setTimeout(() => {
+        setDisplayContents(true);
+      }, 10000);
 
       return () => {
         clearTimeout(id);
@@ -265,15 +269,9 @@ console.log('products data fetched' )
     }
   }, [sessionLoaded]);
 
-  
-
-
-  
-
   return (
     <ProductDataContext.Provider value={value}>
-
-     { (displayContents)  ? children : < LoadingPageComponent /> }
+      {shopifyDown ? <ShopifyOutage retrySession={defineShopifyDown} /> : displayContents ? children : <LoadingPageComponent />}
     </ProductDataContext.Provider>
   );
 }

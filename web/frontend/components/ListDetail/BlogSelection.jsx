@@ -25,7 +25,7 @@ import {
 import {
   useDataProvidersContext,
   DataFetchingComponent,
-  AnimatedContent
+  AnimatedContent,
 } from "../../components";
 
 function HumanReadableDate(ISO_8601) {
@@ -90,9 +90,9 @@ const BlogSelection = forwardRef(({ article, currentBox }, ref) => {
   const [newArticleName, setNewArticleName] = useState("");
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-
+  const [blogList, setBlogList] = useState([]);
   const [presentAlert] = useIonAlert();
-  const { async_fetchData , setContentSaved} = useDataProvidersContext();
+  const { async_fetchData, setContentSaved } = useDataProvidersContext();
   const showReceptModal = (selectedArticle) => {
     presentAlert({
       header: `Article Post Confirmation: `,
@@ -121,7 +121,7 @@ const BlogSelection = forwardRef(({ article, currentBox }, ref) => {
         presentToast({
           message: "You Have Not Selected a Blog or Article Name",
           duration: 3000,
-          color:"warning",
+          color: "warning",
           position: "middle", // top, bottom, middle
           onDidDismiss: (e) => {
             //setDisableButtons(false);
@@ -141,7 +141,7 @@ const BlogSelection = forwardRef(({ article, currentBox }, ref) => {
           ...(selectedBlog ? [] : [[newBlogTitle, selectNewBlogRef]]),
           [newArticleName, selectArticleRef],
         ];
-        
+
         missingValues.forEach(([value, ref]) => {
           if (!value) {
             AnimatedContent(ref, "shakeX", { duration: 1.0 });
@@ -240,12 +240,22 @@ const BlogSelection = forwardRef(({ article, currentBox }, ref) => {
       body: createArticleBody,
     });
   }
+  const [loadingBlogList, setLoadingBlogList] = useState(false);
+  useState(async () => {
+    setLoadingBlogList(true);
+    const { data, error } = await async_fetchData({
+      url: "api/blog/list",
+      method: "GET",
+    });
 
-  let {
-    data: blogList,
-    loading,
-    error,
-  } = DataFetchingComponent({ url: "/api/blog/list" });
+    if (error === null) {
+      setBlogList(data);
+    } else {
+      handleNetworkError();
+    }
+    setLoadingBlogList(false);
+  }, []);
+
 
   const handleBlogChange = (event) => {
     const selectedBlog = event.target.value;

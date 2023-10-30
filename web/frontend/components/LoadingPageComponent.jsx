@@ -14,14 +14,7 @@ import {
 } from "@ionic/react";
 
 import { IonicHeaderComponent } from "./IonicHeaderComponent";
-import {
- 
-  readingTree,
-  honeyCombGridDrop,
-
-  readingBag,
-  honeyDrop,
-} from "../assets";
+import { honeyDrop } from "../assets";
 import { useDataProvidersContext } from "../components";
 const svgAssets = import.meta.glob("./assets/reading-bag.svg");
 export function LoadingPageComponent({ progress, type }) {
@@ -30,7 +23,7 @@ export function LoadingPageComponent({ progress, type }) {
   const [readingBagSVG, setReadingBagSVG] = useState("");
   const arrowRef = useRef();
 
-  const { assetsLoaded, allAssets} = useDataProvidersContext();
+  const { assetsLoaded, allAssets } = useDataProvidersContext();
 
   useEffect(() => {
     setCloudAnimationHeight(window.innerHeight + "px");
@@ -42,9 +35,65 @@ export function LoadingPageComponent({ progress, type }) {
   }, []);
 
   if (!assetsLoaded) {
-    console.log("quick assetsLoaded from view: ", allAssets)
+    // console.log("quick assetsLoaded from view: ", allAssets)
     // console.log('all assets React: ',allAssets )
-    return <div></div>;
+    return (
+      <IonPage key="IonPage">
+        <IonContent key="nectarContainers" style={{ "--background": "none" }}>
+          <IonGrid key="nectarContainerGrid">
+            <IonRow
+              style={{ paddingTop: "250px" }}
+              key="nectarContainerRow"
+              className="ion-align-items-center"
+            >
+              <IonCol
+                key="nectarContainerRowCol"
+                size="5"
+                className="ion-text-end ion-margin-top"
+              >
+                <IonText
+                  key="nectarContainerRowColText"
+                  style={{
+                    color: "#ef8561",
+                    letterSpacing: "1.9vw",
+                    fontFamily: "'Baloo', sans-serif",
+                    fontSize: "5vw",
+                    whiteSpace: "nowrap" /* Prevents wrapping */,
+                    overflow: "hidden" /* Clips content that overflows */,
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  neural
+                </IonText>
+              </IonCol>
+              <IonCol key="nectarContainerRowColEmblem" size="2"></IonCol>
+              <IonCol
+                key="nectarContainerRowColRightCol"
+                size="5"
+                className="ion-text-start ion-margin-top"
+              >
+                <IonText
+                  key="nectarContainerRowColRightText"
+                  style={{
+                    color: "#ef8561",
+                    letterSpacing: "1.7vw",
+                    marginTop: iconSize + 50 + "px",
+                    fontFamily: "'Baloo', sans-serif",
+                    fontSize: "5vw",
+                    whiteSpace: "nowrap" /* Prevents wrapping */,
+                    overflow: "hidden" /* Clips content that overflows */,
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  nectar<sub style={{fontFamily:  "'Baloo', sans-serif",letterSpacing:"none", position:"relative",
+                    fontSize: "small", top:"-5.7em" ,linSpacing:"1.5px", color:"tangerine"}}>AI</sub>
+                </IonText>
+              </IonCol>
+            </IonRow>
+          </IonGrid>
+        </IonContent>
+      </IonPage>
+    );
   }
 
   return (
@@ -104,8 +153,13 @@ export function LoadingPageComponent({ progress, type }) {
                   height: iconSize + "px",
                 }}
               ></IonCol>
-              <IonCol key="nectarContainerRowColRightCol"  size="5" className="ion-text-start ion-margin-top">
-                <IonText key="nectarContainerRowColRightText" 
+              <IonCol
+                key="nectarContainerRowColRightCol"
+                size="5"
+                className="ion-text-start ion-margin-top"
+              >
+                <IonText
+                  key="nectarContainerRowColRightText"
                   style={{
                     color: "#ef8561",
                     letterSpacing: "1.7vw",
@@ -117,14 +171,27 @@ export function LoadingPageComponent({ progress, type }) {
                     textOverflow: "ellipsis",
                   }}
                 >
-                  nectar
+                  nectar<sub style={{fontFamily:  "'Baloo', sans-serif",letterSpacing:"2px", position:"relative",
+                    fontSize: "30px", top:"-1.7em" ,linSpacing:"1.5px"}}>AI</sub>
                 </IonText>
               </IonCol>
 
-              <IonCol key="nectarContainerLeaves"  style={{ padding: "0px", margin: "0px" }}>
-                <div className="full-wh"  key="nectarContainerLeavesContainerWidth" >
-                  <div key="nectarContainerLeavesContainerWidthAnimationContainer" className="bg-animation">
-                    <div key="nectarContainerLeavesContainerWidthAnimationContainerLeavesId" id="leaves">
+              <IonCol
+                key="nectarContainerLeaves"
+                style={{ padding: "0px", margin: "0px" }}
+              >
+                <div
+                  className="full-wh"
+                  key="nectarContainerLeavesContainerWidth"
+                >
+                  <div
+                    key="nectarContainerLeavesContainerWidthAnimationContainer"
+                    className="bg-animation"
+                  >
+                    <div
+                      key="nectarContainerLeavesContainerWidthAnimationContainerLeavesId"
+                      id="leaves"
+                    >
                       <i key="l11"></i>
                       <i key="l12"></i>
                       <i key="l13"></i>
@@ -154,7 +221,8 @@ export function LoadingPageComponent({ progress, type }) {
                   </div>
                 </div>
               </IonCol>
-              <IonCol key="Colgrid1"
+              <IonCol
+                key="ColGrid1"
                 style={{
                   display: "grid",
 
@@ -165,25 +233,28 @@ export function LoadingPageComponent({ progress, type }) {
                 size="12"
                 // className="ion-hide-sm-down"
               >
-                <h3 key="LoadingText"
+                <h3
+                  key="LoadingText"
                   style={{
                     justifySelf: "end",
                     alignSelf: "center",
                     fontSize: "2.5vw",
                     fontFamily: "Baloo, san serif",
+                    color: "black",
                   }}
                 >
                   Reading Your Catalog And Product Data
                 </h3>
-                <div key="LoaderIconContainer"
-                  className="ion-hide-sm-down"
+                <div
+                  key="LoaderIconContainer"
+                  // className="ion-hide-sm-down"
                   style={{
                     justifySelf: "start",
                     placeItems: "center",
                     display: "grid",
                   }}
                 >
-                  <div  key="LoaderIconContainerIcon" className="loader"></div>
+                  <div key="LoaderIconContainerIcon" className="loader"></div>
                 </div>
               </IonCol>
             </IonRow>

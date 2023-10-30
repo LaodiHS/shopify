@@ -18,12 +18,14 @@ if (
   );
 }
 
+
 const proxyOptions = {
   target: `http://127.0.0.1:${process.env.BACKEND_PORT}`,
   changeOrigin: false,
   secure: true,
   ws: false,
 };
+
 
 const host = process.env.HOST
   ? process.env.HOST.replace(/https?:\/\//, "")
@@ -66,15 +68,19 @@ export default defineConfig({
     }),
   ],
   optimizeDeps: {
-    web: ['vue'], // Include relevant libraries
+    // web: ['vue'], // Include relevant libraries
   },
   define: {
     DEPLOYMENT_ENV: process.env.NODE_ENV === "production",
     API_URL: JSON.stringify(host),
     "process.env.SHOPIFY_API_KEY": JSON.stringify(process.env.SHOPIFY_API_KEY),
   },
+  build: {
+    sourcemap:true,
+  },
   esbuild: {
     pure: process.env.NODE_ENV === 'production' ? ['console.log', 'console.warn'] : [],
+    sourcemap:true,
   },
 
   resolve: {

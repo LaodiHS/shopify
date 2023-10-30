@@ -15,31 +15,38 @@ import pluralize from "pluralize";
 // }
 // Example usage:
 
-function getColor() {
-  return (
-    "hsl(" +
-    360 * Math.random() +
-    "," +
-    (25 + 70 * Math.random()) +
-    "%," +
-    (85 + 10 * Math.random()) +
-    "%)"
-  );
-}
+function generateColorPalette(numIterations) {
+  let set = new Set();
+  let colors = [];
+  let numColors = Math.pow(2, numIterations + 1) * 3;
+  let k = 1;
+  while (k <= numIterations) {
+    let iterativeCount = k * 6;
+    let i = 0;
 
-function generateComplementaryScheme(numColors) {
-  numColors = 100;
+    while (i < iterativeCount) {
+      let color = i * (360 / iterativeCount);
+      i++;
+      if (set.has(color)) continue;
+      set.add(color);
+      colors.push(
+        chroma("hsl(" +
+          color + // Hue range from 0 to 360 (full spectrum)
+          "," +
+          Math.floor(50 + 40 * Math.random()) + // Saturation range from 40 to 90
+          "%," +
+          Math.floor(50 + 20 * Math.random()) + // Lightness range from 40 to 70
+          "%)").hex()
+      );
+    }
 
-  const set = new Set();
-  for (let i = 0; i < numColors; i++) {
-    let hsl = getColor();
-
-    let hex = chroma(hsl).hex();
-
-    set.add(hex);
+    k++;
   }
-  return [...set];
+
+  return colors;
 }
+
+
 
 // Set up the API endpoint URL
 
@@ -831,9 +838,7 @@ export async function generateReport({
   return prompt;
 }
 
-const colors = generateComplementaryScheme("#A66F2E", 200);
-
-
+const colors = generateColorPalette(23);
 
 function toSingular(word) {
   if (!word) {
@@ -859,8 +864,8 @@ const filterElement = (label) => {
   label = label
     .replace(/inventory/g, "")
     .replace(/:/g, "")
-    .trim()
-    .toLowerCase();
+    .trim();
+  // .toLowerCase();
   return label;
 };
 
@@ -894,8 +899,11 @@ function focusRequirements(productData, details, requirements) {
 
   const addProductDescription = (exampleDetails, exampleStyles) => {
     const exampleDetailsStr = exampleDetails
-      .slice(-1)
-      .map(([key, value]) => `(${key.trim()} - ${value})`)
+      .slice(-1) // rewrite split slice join logic;
+      .map(
+        ([key, value]) =>
+          `(${key.trim().split(" ").slice(1).join(" ")} - ${value})`
+      )
       .join(", ");
 
     const exampleStylesStr = exampleStyles
@@ -906,7 +914,7 @@ function focusRequirements(productData, details, requirements) {
     addLineFront(
       `Compose a narrative that introduces the ${title} and creatively incorporates the following product details using the narrative stylistic requirements below. In this document are unique identifiers; they look like this ${addQuotes(
         exampleDetailsStr
-      )}. These are all requirements. Reference them in the composition as labels, where you fulfill a requirement. Examples: ${addQuotes(
+      )}. These are all requirements. Reference them in the composition as label notes below the passage; where you fulfill the requirement. Examples: ${addQuotes(
         exampleStylesStr
       )}  ${addQuotes(exampleDetailsStr)}`
     );
@@ -927,7 +935,7 @@ function focusRequirements(productData, details, requirements) {
             if (key === "collections") {
               legend.push([element.title, color]);
               exampleDetails.push([element.title, id]);
-              line = `\n\t${index + 1}. (${element.title}: ${id}).`;
+              line = `\n\t${index + 1}. (${element.title} - ${id}).`;
             } else if (key === "images") {
               legend.push([element, color]);
               exampleDetails.push([element, id]);

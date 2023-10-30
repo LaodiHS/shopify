@@ -373,7 +373,7 @@ export function ListComponent({productsData}) {
                               src={mainDisplayImages[productIndex]?.img}
                             />
                           </IonCol>
-                          <IonCol
+                          <IonCol className="ion-padding"
                             key={
                               productIndex + "displayContainer" + parentKeyScope
                             }

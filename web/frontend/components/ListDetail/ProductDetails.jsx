@@ -86,7 +86,8 @@ const {Editor} = useTinyMCEDataContext()
 
   return (
     <>
-      <IonGrid style={{ padding: 0, margin: 0 }}>
+      <IonGrid style={{ padding: 0, margin: 0 }}>  
+   
         <IonRow>
           <IonCol>
             <IonRow>
@@ -143,6 +144,7 @@ const {Editor} = useTinyMCEDataContext()
               </IonCol>
             </IonRow>
           </IonCol>
+        
           <IonCol key="second" size="12" size-md="7">
             <IonRow>
               <IonCol size="12">

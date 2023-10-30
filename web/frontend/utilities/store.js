@@ -2,7 +2,6 @@ import { indexDb } from "./IndexDB";
 import * as zip from "lzutf8";
 
 const ProductsMap = new Map();
-const cachedCursorKeys = new Set();
 
 // Check if a value can be parsed into JSON
 function isJson(item) {
@@ -50,7 +49,7 @@ async function encode(key, value) {
   if (!key) {
     throw new Error("no key provided", key);
   }
-  if (!value ){
+  if (!value) {
     throw new Error("no value provided", value);
   }
 
@@ -67,15 +66,13 @@ async function encode(key, value) {
       });
     } else {
       const pageString =
-        typeof(value) !== "string"
-          ? JSON.stringify(value)
-          : value;
+        typeof value !== "string" ? JSON.stringify(value) : value;
       compressedData = zip.compress(pageString, {
         outputEncoding: "StorageBinaryString",
       });
 
       try {
-        if (typeof(value) === "string") {
+        if (typeof value === "string") {
           ProductsMap.set(key, value);
         } else {
           ProductsMap.set(key, JSON.parse(JSON.stringify(value)));
@@ -145,10 +142,6 @@ async function setCache(key, pageObject, isCursor = false) {
     throw new Error("Please provide a key to set the cache.", key);
   }
 
-  if (isCursor) {
-    cachedCursorKeys.add(key);
-  }
-
   await encode(key, pageObject);
 }
 
@@ -176,11 +169,6 @@ async function removeCache(key) {
     // Also remove from ProductsMap if it exists
     if (ProductsMap.has(key)) {
       ProductsMap.delete(key);
-    }
-
-    // Also remove from cachedCursorKeys if it exists
-    if (cachedCursorKeys.has(key)) {
-      cachedCursorKeys.delete(key);
     }
   } catch (error) {
     throw new Error(
@@ -218,14 +206,32 @@ async function clearKey(key) {
   ProductsMap.delete(key);
 }
 
-async function clearCursorKey(key) {
-  if (cachedCursorKeys.has(key)) {
-    cachedCursorKeys.delete(key);
-    removeCache(key);
-    ProductsMap.delete(key);
+function compressData(inputData) {
+  try {
+    // Perform compression
+    return zip.compress(inputData, {
+      compressionLevel: 9,
+      outputEncoding: "StorageBinaryString",
+    });
+  } catch (error) {
+    console.error("Error during compression:", error);
+    // Handle the error (e.g., show a user-friendly message)
+    return null;
   }
 }
 
+function decompressData(compressedData) {
+  try {
+    // Perform decompression
+    return zip.decompress(compressedData, {
+      inputEncoding: "StorageBinaryString",
+    });
+  } catch (error) {
+    console.error("Error during decompression:", error);
+    // Handle the error (e.g., show a user-friendly message)
+    return null;
+  }
+}
 export const productViewCache = {
   set: setCache,
   get: getCache,
@@ -233,36 +239,40 @@ export const productViewCache = {
   remove: removeCache,
   clearAll: clearAllCaches,
   clearKey,
+  compress: (str) => compressData(str),
+  decompress: (str) => decompressData(str),
 };
 // for product cursors look for setPage
 export const pageIngCache = {
   setPage: setCache,
   getPage: getCache,
   clearAllCaches,
-  clearCursorKey,
 };
-
-export const urlCache = {
-  setCache,
-  getCache,
-  clearAllCaches,
-  clearCursorKey,
-};
-
+let hit = false;
 class LHistory {
   constructor(name) {
     this.name = name;
     this.pageState = new Map();
+    
+  }
+  async getPagingState() {
+    try {
+      let pageHistoryPromise = await this.retrieveDataFromLocalStorage();
+      if (pageHistoryPromise) {
+        await this.validateAndSyncState(pageHistoryPromise);
+      } else {
+        await this.resetToDefaultState();
+      }
 
-    const pageHistory = this.retrieveDataFromLocalStorage();
-    if (pageHistory) {
-      this.validateAndSyncState(pageHistory);
-    } else {
-      this.resetToDefaultState();
+      console.log("pageHistory: ", pageHistoryPromise);
+      console.log("this.state: ", this.pageState);
+      return this;
+    } catch (error) {
+      console.log("error: ", error);
     }
   }
 
- async retrieveDataFromLocalStorage() {
+  async retrieveDataFromLocalStorage() {
     const pageHistory = await productViewCache.get(this.name);
     try {
       return pageHistory;
@@ -277,7 +287,7 @@ class LHistory {
 
     if (requiredKeys.every((key) => key in storedState)) {
       this.pageState = new Map(Object.entries(storedState));
-     await this.saveState();
+      await this.saveState();
     } else {
       console.warn("Stored state is invalid. Resetting to default state.");
       this.resetToDefaultState();
@@ -287,14 +297,14 @@ class LHistory {
   async resetToDefaultState() {
     this.pageState.set("index", 0);
     this.pageState.set("pagingState", []);
-   await this.saveState();
+    await this.saveState();
   }
 
   async getFallbackPageState() {
     return await this.retrieveDataFromLocalStorage();
   }
 
- async checkFallbackState() {
+  async checkFallbackState() {
     if (!this.pageState.has("index") || !this.pageState.has("pagingState")) {
       const fallbackState = await this.getFallbackPageState();
       if (fallbackState) {
@@ -303,12 +313,12 @@ class LHistory {
     }
   }
 
- async saveState() {
-   await productViewCache.set(this.name, Object.fromEntries(this.pageState));
+  async saveState() {
+    await productViewCache.set(this.name, Object.fromEntries(this.pageState));
   }
 
   async push(item) {
-   await this.checkFallbackState();
+    await this.checkFallbackState();
     const pagingState = this.pageState.get("pagingState");
     pagingState.push(item);
     this.pageState.set("index", pagingState.length - 1);
@@ -316,23 +326,27 @@ class LHistory {
   }
 
   async includes(item) {
-   await this.checkFallbackState();
+    await this.checkFallbackState();
     return this.pageState.get("pagingState").includes(item);
   }
 
- async getPreviousPage() {
+  async getPreviousPage() {
     await this.checkFallbackState();
     const index = this.pageState.get("index");
 
     if (index >= 0) {
       this.pageState.set("index", index - 1);
-    await this.saveState();
+      await this.saveState();
       return this.pageState.get("pagingState")[index - 1];
     }
   }
 
   async getCurrentPage() {
-   await this.checkFallbackState();
+    await this.checkFallbackState();
+    console.log(
+      "current page",
+      this.pageState.get("pagingState")[this.pageState.get("index")]
+    );
     return this.pageState.get("pagingState")[this.pageState.get("index")];
   }
 
@@ -342,12 +356,12 @@ class LHistory {
   }
 
   async hasNextPage() {
-   await this.checkFallbackState();
+    await this.checkFallbackState();
     const index = this.pageState.get("index");
     return index < this.pageState.get("pagingState").length - 1;
   }
 
- async hasPreviousPage() {
+  async hasPreviousPage() {
     await this.checkFallbackState();
     return this.pageState.get("index") > 0;
   }
@@ -358,28 +372,131 @@ class LHistory {
     if (this.hasNextPage()) {
       const index = this.pageState.get("index") + 1;
       this.pageState.set("index", index);
-    await this.saveState();
+      await this.saveState();
       return this.pageState.get("pagingState")[index];
     }
   }
 
   async getCurrentIndex() {
-   await this.checkFallbackState();
+    await this.checkFallbackState();
     return this.pageState.get("index");
   }
-}
+  async sync_push(item) {
+    await this.checkFallbackState();
+    const pagingState = this.pageState.get("pagingState");
+    pagingState.push(item);
 
+    await this.saveState();
+  }
+  sync_getCurrentCursors() {
+    return this.pageState.get("pagingState");
+  }
+
+  async *sync_fetchSyncData(uncachedFetchData, productsPerPage) {
+    const existingCursors = this.sync_getCurrentCursors();
+    console.log("existing cursors", existingCursors);
+    let cost;
+    if (existingCursors.length > 0) {
+      for (const cursor of existingCursors) {
+        try {
+          const response = await uncachedFetchData({
+            url: "/api/products/paging",
+            method: "POST",
+            body: {
+              first: productsPerPage,
+              after: cursor,
+            },
+          });
+          console.log("sync fetch data", response);
+          const { data, error } = response;
+          console.log("data", data);
+          if (error !== null) throw new Error(error);
+          cost = data?.body?.extensions?.cost;
+          const formattedData = await formatProducts(response);
+          productViewCache.set(cursor, formattedData);
+        } catch (error) {
+          console.log("error", error);
+        }
+        yield cost;
+      }
+    }
+  }
+  async runSyncDataFetcher(uncachedFetchData, productsPerPage) {
+    let restoreTime;
+    const initialTimeout = 20000;
+    console.log("hit sync");
+
+    const syncDataGenerator = this.sync_fetchSyncData(
+      uncachedFetchData,
+      productsPerPage
+    );
+
+    while (true) {
+      try {
+        await new Promise((resolve) =>
+          setTimeout(resolve, restoreTime || initialTimeout)
+        );
+
+        const next = await syncDataGenerator.next();
+        if (!next.value) break;
+        console.log("next:", next.value);
+        restoreTime = this.calculateNextInterval(next.value);
+        if (next.done) {
+          console.log("done");
+          break;
+        }
+      } catch (error) {
+        console.log("error:", error);
+      }
+    }
+  }
+
+  calculateNextInterval({
+    throttleStatus,
+    actualQueryCost,
+    safetyMargin = 20,
+  }) {
+    if (
+      typeof throttleStatus !== "object" ||
+      typeof actualQueryCost !== "number" ||
+      typeof safetyMargin !== "number"
+    ) {
+      throw new Error(
+        "Invalid input. Ensure throttleStatus is an object, actualQueryCost is a number, and safetyMargin is a number."
+      );
+    }
+
+    const remainingQueries =
+      throttleStatus.currentlyAvailable - actualQueryCost;
+    if (remainingQueries < 0) {
+      // return seven min if negative;
+      return 7 * 60000;
+    }
+    // Calculate interval based on remainingQueries
+    const nextInterval =
+      (1 / remainingQueries) * actualQueryCost * safetyMargin;
+
+    const adaptiveRestoreTime = nextInterval * 1000; // Convert seconds to milliseconds
+    console.log("adaptive restore time: ", adaptiveRestoreTime);
+
+    return adaptiveRestoreTime;
+  }
+
+
+
+
+
+
+
+}
 export { LHistory };
 async function clearAllCaches() {
- for(const key of  cachedCursorKeys) {
-  await productViewCache.remove(key);
-  };
   await indexDb.db.clear();
-  cachedCursorKeys.clear();
+
   ProductsMap.clear();
 }
 
-export const formatProducts = (productData, key) => {
+export const formatProducts = async (productData, key) => {
   if (
     productData.data &&
     productData.data.body &&
@@ -460,7 +577,7 @@ export const formatProducts = (productData, key) => {
     return productsObject;
   } else {
     if (key) {
-      urlCache.clearCursorKey(key);
+      await productViewCache.clearKey(key);
     }
     throw new Error("Invalid Products object");
   }
@@ -486,13 +603,13 @@ const handlePopulate = async () => {
   }
 };
 
-const l = {
-  antanaclasis: "The repeated use of a word in different senses or meanings.",
-  oxymoron: "The juxtaposition of two contradictory terms or ideas.",
-  chiasmus: "The reversal of the order of words in two parallel clauses.",
-  antithesis:
-    "The juxtaposition of contrasting ideas in a balanced or parallel structure.",
-};
+// const l = {
+//   antanaclasis: "The repeated use of a word in different senses or meanings.",
+//   oxymoron: "The juxtaposition of two contradictory terms or ideas.",
+//   chiasmus: "The reversal of the order of words in two parallel clauses.",
+//   antithesis:
+//     "The juxtaposition of contrasting ideas in a balanced or parallel structure.",
+// };
 
 // function store(key, input) {
 //   if (!key || !input) {

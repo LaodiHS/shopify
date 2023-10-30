@@ -66,14 +66,19 @@ export function ProductsCard({ animationRef }) {
     setProductsLoading(true);
     if (productsData?.pageInfo?.hasNextPage) {
       const { endCursor } = productsData.pageInfo;
-      if (await pagingHistory.hasNextPage()) {
-        const cached =  await pageIngCache.getPage( await pagingHistory.getNextPage());
+   const hasNextPage =    await pagingHistory.hasNextPage()
+   console.log('hasNextPage: ', hasNextPage)
+      if (hasNextPage) {
+        const nextPage = await pagingHistory.getNextPage()
+        console.log('nextPage: ', nextPage)
+        const cached =  await pageIngCache.getPage( nextPage);
+        console.log('cached: ', cached)
         const formattedData = cached;
   
        await setPaging(formattedData);
         setProductsLoading(false);
     
-      }
+      }else{
 
       try {
         const response = await uncachedFetchData({
@@ -86,14 +91,15 @@ export function ProductsCard({ animationRef }) {
         });
         console.log("data", response);
         const data = await response;
-        const format = formatProducts(data);
-      await setPaging(format);
+        const format = await formatProducts(data);
+        await setPaging(format);
 
         setProductsLoading(false);
       } catch (error) {
         console.error("There was an Error getting the Data:", error);
         setProductsLoading(false);
       }
+    }
     }
   };
 
@@ -111,8 +117,8 @@ export function ProductsCard({ animationRef }) {
       productsData?.pageInfo?.hasPreviousPage &&
     await  pagingHistory?.hasPreviousPage()
     ) {
-    
-      const cachedData = await pageIngCache.getPage(await pagingHistory.getPreviousPage());
+    const previousPage  =  await pagingHistory.getPreviousPage();
+      const cachedData = await pageIngCache.getPage(previousPage);
       console.log("cachedData", cachedData);
       const formattedData = cachedData;
      await setPaging(formattedData);

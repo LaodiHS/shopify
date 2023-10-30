@@ -1,5 +1,10 @@
-import debounce from "lodash.debounce";
-import React, { useEffect, useState, useRef, useMemo } from "react";
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useMemo,
+  useCallback,
+} from "react";
 import {
   IonGrid,
   IonRow,
@@ -10,8 +15,15 @@ import {
   IonChip,
 } from "@ionic/react";
 import { VariableSizeList } from "react-window";
-import { Marker, useDataProvidersContext, NoImagePlaceHolder } from "../components";
-
+// import InfiniteLoader from "react-window-infinite-loader";
+import {
+  Marker,
+  // useDataProvidersContext,
+  // NoImagePlaceHolder,
+} from "../components";
+import { imagePlaceHolder } from "../assets";
+import { debounce, throttle } from "lodash";
+// import { Image } from "@react-pdf/renderer";
 function SentenceHighlight({ text, color }) {
   return (
     <IonChip
@@ -21,7 +33,6 @@ function SentenceHighlight({ text, color }) {
         position: "relative",
         borderRadius: "2px",
         fontFamily: "'Baloo', sans-serif",
-
         background: `${color}`,
       }}
     >
@@ -42,15 +53,18 @@ function wrapSubstringInPTags({
       if (colorSet[subString + id]) {
         continue;
       }
-      const index = mainString.toLowerCase().indexOf(subString.toLowerCase());
+
+      let keyTerm = ` ${subString.toLowerCase()} `;
+
+      const index = mainString.toLowerCase().indexOf(keyTerm);
 
       if (index !== -1) {
         const before = mainString.slice(0, index);
-        const after = mainString.slice(index + subString.length);
+        const after = mainString.slice(index + subString.length + 1);
         const wrappedString = (
           <SentenceHighlight
             key={"wordHighlight" + id}
-            text={mainString.slice(index, index + subString.length)}
+            text={mainString.slice(index, index + subString.length + 1)}
             color={id}
           />
         );
@@ -76,26 +90,37 @@ function wrapSubstringInPTags({
       parts.push({
         size: size,
         type: "content",
-        variant: mainString+ sentenceEnd,
+        variant: mainString + sentenceEnd,
       });
     }
   }
 }
 
-function parseText(
+function parseText({
   text,
   mappedLegend,
   variableListItemHeight,
   variableListItemImageHeight,
-  selectedImageMap
-) {
+
+  selectedImageMapPureKeys,
+
+  processedSentences,
+  processedImages,
+  loadingStream,
+}) {
+  // console.log('text: ',text)
   const idWithBracketsRegex =
     /\(([^)]+)\s*-\s*#([0-9A-Fa-f]{6})\)|\{([^}]+)\s*-\s*#([0-9A-Fa-f]{6})\}|\[([^\]]+)\s*-\s*#([0-9A-Fa-f]{6})\]|#([0-9A-Fa-f]{6})/g;
   const remove_artifacts = text.replace(/\)\,/g, ")");
   const colorSet = {};
 
   const sentences = remove_artifacts.split(". ").map((sentence, index) => {
+    if (processedSentences[sentence]) {
+      return processedSentences[sentence]; // Return the processed result if sentence has been processed before
+    }
+
     // Removing trailing punctuation marks to avoid breaking links
+
     let cleanedSentence = sentence.replace(/[.,!?]$/, "").trim();
     const parts = [];
     let lastIndex = 0;
@@ -131,24 +156,61 @@ function parseText(
       }
 
       // Add the anchor tag with the matched ID and label
-      const markerSize = label.includes("_jpg")
+      const markerSize = label.includes("_.jpg")
         ? variableListItemImageHeight
         : variableListItemHeight;
-      const markerLabel = label.includes("_jpg") ? "img" : "label";
+      const markerType = label.includes("_.jpg") ? "img" : "label";
 
-      parts.push({
+      const imageLabel =
+        markerType === "img"
+          ? label
+              .split(" ")
+              .filter((image) => image.includes("_.jpg"))
+              .pop()
+          : null;
+
+      let ImageSrc = imagePlaceHolder;
+
+      const result = mappedLegend.slice().find(([key, id]) => {
+        if (id && id.includes("#" + idValue)) {
+          if (key.includes("_.jpg")) {
+            let imageKey = key.split(" ")[1];
+            ImageSrc =
+              selectedImageMapPureKeys[imageKey]?.url || imagePlaceHolder;
+            return true;
+          } else {
+            ImageSrc = key;
+            return true;
+          }
+        }
+        return false;
+      });
+
+      const color = (result && result[1]) || "none";
+      const key = (result && result[0]) || "KeyError";
+
+      const element = {
         variant: (
           <Marker
-            selectedImageMap={selectedImageMap}
+            loadingStream={loadingStream}
+            imageSrc={ImageSrc}
             size={markerSize}
-            requirementText={label}
-            color={"#" + idValue}
+            label={key}
+            color={color || "#" + idValue}
+            markerType={markerType}
           />
         ),
         size: markerSize,
-        type: markerLabel,
-        color: "#" + idValue,
-      });
+        type: markerType,
+        color: color || "#" + idValue,
+      };
+      let hashImageElement = label + markerSize + idValue;
+      if (!processedImages[hashImageElement]) {
+        processedImages[hashImageElement] = element;
+        parts.push(element);
+      } else {
+        parts.push(processedImages[hashImageElement]);
+      }
 
       lastIndex = idWithBracketsRegex.lastIndex;
     }
@@ -173,62 +235,248 @@ function parseText(
       }
       return true;
     });
+    if (sentence.includes(".")) {
+      processedSentences[sentence] = part;
+      // console.log('sentences', processedSentences);
+    }
     return part;
   });
 
   return sentences.flat(Infinity);
 }
-function SentenceRow({ index, style, data, refs, length, elementStyles }) {
-  const [sentence, setSentence] = useState(data[index % length]);
+const SentenceRow = React.memo(
+  ({ index, style, variant, refs }) => {
+    // console.log('index:',index)
 
-  //  style.height =   sentence.size + "px"
+    useEffect(() => {
+      if (!refs.has(index)) {
+        refs.set(index, React.createRef());
+      }
 
-  useEffect(() => {
-    if (!refs.has(index % length)) {
-      refs.set(index % length, React.createRef());
-    }
-    const colRef = refs.get(index % length);
+      return () => {};
+    }, [index, variant, refs]);
 
-    return () => {};
-  }, [index, length, refs, elementStyles]);
+    return (
+      <IonItem
+        key={"item-key" + index}
+        lines="none"
+        ref={refs.get(index)}
+        className="ion-text-start ion-text-wrap"
+        style={{
+          ...style,
+        }}
+      >
+        {variant}
+      </IonItem>
+    );
+  },
+  (prevProps, nextProps) => {
+    return prevProps.variant !== nextProps.variant;
+  }
+);
 
-  return (
-    <IonItem
-      key={"item-key" + (index % length)}
-      lines="none"
-      ref={refs.get(index % length)}
-      className="ion-text-start ion-text-wrap"
-      style={{
-        ...style,
-      }}
-    >
-      {sentence.variant}
-    </IonItem>
-  );
-}
+const VirtualList = React.memo(
+  ({
+    variableListItemHeight,
+    variableListItemImageHeight,
+    sentences: streamData,
+    variableSizeListRef,
+    colRefs,
+  }) => {
+    const [userScrollDetected, setUserScrollDetected] = useState(false);
 
+    const getSize = (sentence) => {
+      if (typeof sentence === "string") {
+        const length = sentence.length;
+
+        if (sentence.includes("_.jpg")) {
+          return 45;
+        } else {
+          return variableListItemHeight + 20;
+        }
+      }
+      if (sentence && sentence.type && sentence.type === "img") {
+        return variableListItemImageHeight;
+      } else {
+        return variableListItemHeight + 20;
+      }
+    };
+
+    // useEffect(() => {
+    //   let isUserScrolling = false;
+
+    //   const handleScroll = () => {
+    //     console.log("wheeling");
+    //     if (isUserScrolling) {
+    //       setUserScrollDetected(true);
+    //     }
+    //   };
+    //   const handleMouseMove = () => {
+    //     console.log("mousemove");
+    //     isUserScrolling = true;
+    //   };
+    //   if (listRef.current) {
+    // listRef is not a dom element but a VariableList object
+    //     console.log('DomElement',listRef.current)
+    //     listRef.current.addEventListener("wheel", handleScroll);
+    //     listRef.current.addEventListener("mousemove", handleMouseMove);
+    //   }
+    //   return () => {
+
+    //     listRef.current.removeEventListener("wheel", handleScroll);
+    //     listRef.current.removeEventListener("mousemove", handleMouseMove);
+    //   };
+    // }, [listRef]);
+
+    useEffect(() => {
+      console.log("component refreshed");
+      if (variableSizeListRef.current) {
+        if (!userScrollDetected) {
+          variableSizeListRef.current.scrollToItem(
+            streamData.length - 3,
+            "start"
+          );
+
+          // 'start' is the alignment option
+        }
+      }
+    }, [streamData]);
+
+    const RowRenderer = ({ index, style, data }) => {
+      return (
+        <SentenceRow
+          key={index % data.sentences.length}
+          index={index % data.sentences.length}
+          style={style}
+          variant={data.sentences[index % data.sentences.length]?.variant}
+          refs={data.refs}
+          // elementStyles={elementStyles}
+        />
+      );
+    };
+
+    return (
+      // <InfiniteLoader
+      //   isItemLoaded={(index) => index < streamData.length}
+      //   itemCount={streamData.length}
+      // >
+      //   {({ onItemsRendered, ref }) => (
+      <VariableSizeList
+        key="FixedSizeList-Requirements-text"
+        height={600} // Set an appropriate height
+        width={"100%"}
+        ref={variableSizeListRef}
+        overscanCount={20}
+        //  onItemsRendered={handleItemsRendered}
+
+        itemSize={(index) => getSize(streamData[index % streamData.length])}
+        itemCount={streamData.length}
+        // rowHeight={(index) =>  Math.random() * (100 - 75) + 44
+        // } // Set an appropriate item size
+        // onItemsRendered={onItemsRendered}
+        itemData={{
+          sentences: streamData,
+          refs: colRefs.current,
+          // length: sentences.length,
+          // elementStyles,
+        }}
+        initialScrollOffset={streamData.length * 27}
+      >
+        {RowRenderer}
+      </VariableSizeList>
+      //   )}
+      // </InfiniteLoader>
+    );
+  },
+  (prevProps, nextProps) => {
+    // console.log('rendering', nextProps.sentences[nextProps.sentences.length -1])
+    // return   Boolean(nextProps.sentences[nextProps.sentences.length -1]?.variant.includes("_.jpg") )
+  }
+);
+
+let dataStreamArray = [];
+let processedSentences = {};
+let processedImages = {};
 function TextWithMarkers({
   eventEmitter,
   assignClearAssistMethod,
   mappedLegend,
   selectedImageMap,
 }) {
-  const [variableListItemHeight, setVariableListItemHeight] = useState(45);
+  const [streamData, setStreamData] = useState([]);
+  const variableSizeListRef = useRef(null);
+  const [clearVirtualList, setClearVirtualList] = useState(false);
+  const [imageKeys, setImageKeys] = useState(Object.keys(selectedImageMap));
+  const [selectedImageMapPureKeys, setSelectedImageMapPureKeys] = useState(
+    Object.entries(selectedImageMap).reduce((acc, [key, value]) => {
+      acc[key.split(" ")[1]] = value;
+      return acc;
+    }, {})
+  );
 
-  const [variableListItemImageHeight, setVariableListItemImageHeight] =
-    useState(160);
-  const colRefs = useRef(new Map());
-  const listRef = useRef({});
+  const [labelArray, setLabelArray] = useState(
+    mappedLegend.map((label) => label[0]) || []
+  );
+
+  const [variableListItemHeight, setVariableListItemHeight] = useState(45);
+  const variableListItemImageHeight = 160;
+
   const [elementStyles, setElementStyles] = useState({});
 
-  const [streamData, setStreamData] = useState([]);
+  const colRefs = useRef(new Map());
+  const listRef = useRef({});
+  const [loadingStream, setLoadingStream] = useState(false);
+  const sentences = useMemo(
+    () =>
+      parseText({
+        text: streamData.join(""),
+        mappedLegend,
+        labelArray,
+        variableListItemHeight,
+        variableListItemImageHeight,
+        selectedImageMap,
+        selectedImageMapPureKeys,
+        imageKeys,
+        processedSentences,
+        processedImages,
+        loadingStream,
+      }) || [][streamData]
+  );
 
-  // const {
-  //   eventEmitter,
-  //   assignClearAssistMethod,
+  function clearSentences() {
+    setStreamData([]);
+    dataStreamArray.length = 0;
+    processedSentences = {};
+    processedImages = {};
+    dataStreamArray = [];
+    setClearVirtualList((prev) => !prev);
+    variableSizeListRef.current.resetAfterIndex(0);
+  }
+  const throttleSetRefArray = useCallback(
+    throttle(
+      (newRefArray, processIncompleteDataWithBrackets) => {
+        const result = processIncompleteDataWithBrackets(newRefArray);
 
-  //   mappedLegend,
-  // } = useDataProvidersContext();
+        if (result.length) {
+          setStreamData([...result]);
+        }
+      },
+      60,
+      {
+        leading: true,
+        trailing: true,
+      }
+    ), // Adjust the debounce delay as needed
+    []
+  );
+  useEffect(() => {
+    console.log("sentences", sentences);
+    // listRef.current.scrollToItem(sentences.length - 1, "smooth");
+  }, [sentences]);
+
+  useEffect(() => {
+    assignClearAssistMethod("clearSentences", clearSentences);
+  }, []);
 
   useEffect(() => {
     const breakpoints = [
@@ -237,62 +485,106 @@ function TextWithMarkers({
     ].reverse();
 
     const handleResize = () => {
-      console.log("currentColWidth: ", window.innerWidth);
       const width = window.innerWidth;
       const matchedBreakpoint = breakpoints.find(
         (breakpoint) => width > breakpoint.width
       );
 
       if (matchedBreakpoint) {
-        console.log("matcheBreakpoint.height", matchedBreakpoint.height);
         setVariableListItemHeight(matchedBreakpoint.height);
       }
     };
 
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      processedSentences = {};
+      processedImages = {};
+      dataStreamArray = [];
+    };
   }, []);
 
   useEffect(() => {
-    let incompleteBuffer = "";
+    let currentElement = "";
+    let openBrackets = 0;
+    let i = 0;
+    let result = [];
+    function processIncompleteDataWithBrackets(incomingData) {
+      const fragments = processIncompleteSections(incomingData);
 
-    function processIncomingData(incomingData) {
-      const words = incomingData.split(" ");
+      for (; i < fragments.length; i++) {
+        const fragment = fragments[i];
 
-      const completeWords = [];
+        for (const letter of fragment) {
+          if (letter === "(") {
+            openBrackets++;
+            if (openBrackets === 1) {
+              currentElement += letter;
+            }
+          } else if (letter === ")") {
+            openBrackets--;
+            if (openBrackets === 0) {
+              currentElement += letter;
+            }
+          } else {
+            currentElement += letter;
+          }
+        }
 
-      if (incompleteBuffer) {
-        const firstWord = words.shift();
-        const completeWord = incompleteBuffer + firstWord;
-        completeWords.push(completeWord);
-        incompleteBuffer = "";
-      }
-
-      for (let i = 0; i < words.length - 1; i++) {
-        completeWords.push(words[i]);
-      }
-
-      const lastWord = words[words.length - 1];
-
-      if (lastWord) {
-        if (lastWord.endsWith(" ")) {
-          completeWords.push(lastWord.trim());
-        } else {
-          incompleteBuffer = lastWord;
+        if (openBrackets === 0) {
+          result.push(currentElement);
+          currentElement = "";
         }
       }
 
-      return completeWords;
+      return result;
     }
 
+    let completeSections = [];
+    let k = 0;
+    function processIncompleteSections(incomingData) {
+      incomingData.length - 1;
+
+      completeSections.push(
+        incomingData.slice(k, incomingData.length - 1).join("")
+      );
+      k = incomingData.length - 1;
+
+      return completeSections;
+    }
+
+    let loadingStr = false;
     const streamDataHandler = (eventData) => {
-      const delta = eventData.delta;
-      const result = processIncomingData(delta.content);
-      if (result.length) {
-        setStreamData((prev) => [...prev, result.join(" ")]);
+      if (!loadingStr) {
+        loadingStr = true;
+        setLoadingStream(true);
       }
+      const delta = eventData.delta;
+      dataStreamArray[dataStreamArray.length] = eventData.delta.content;
+
+      throttleSetRefArray(
+        dataStreamArray,
+        // processIncomingData,
+        processIncompleteDataWithBrackets
+      );
+
       const finish_reason = delta.finish_reason;
       if (finish_reason) {
+        console.log("finish_reason", finish_reason);
+        processedSentences = {};
+        processedImages = {};
+        completeSections = [];
+        k = 0;
+        currentElement = "";
+        openBrackets = 0;
+        i = 0;
+        result = [];
+        if (loadingStr) {
+          loadingStr = false;
+          setLoadingStream(false);
+          console.log("loadingStream", loadingStream);
+          console.log("loadingStr", loadingStr);
+        }
       }
     };
 
@@ -300,102 +592,27 @@ function TextWithMarkers({
 
     return () => {
       setStreamData([]);
-      eventEmitter.removeListener("someEvent", streamDataHandler);
+      dataStreamArray.length = 0;
+      eventEmitter.removeListener("streamData", streamDataHandler);
       // eventEmitter.off("streamData", streamDataHandler);
       // Clearing streamData when component is unmounted
     };
   }, []);
 
-  const sentences = useMemo(
-    () =>
-      parseText(
-        streamData.join(""),
-        mappedLegend,
-        variableListItemHeight,
-        variableListItemImageHeight,
-        selectedImageMap
-      ) || [],
-    [streamData.join("")]
-  );
-
-  function clearSentences() {
-    setStreamData([]);
-  }
-  useEffect(() => {
-    assignClearAssistMethod("clearSentences", clearSentences);
-  }, []);
-
-  useEffect(() => {
-    listRef.current.scrollToItem(sentences.length - 1, "smooth");
-  }, [sentences]);
-
-  const getSize = (index, length) => {
-    const sentence = sentences[index % length];
-    if (!sentence) {
-      return 0;
-    }
-
-    const sentenceObject = sentence.variant;
-    if (typeof sentenceObject === "string") {
-      const length = sentenceObject.length;
-
-      if (sentenceObject.includes("jpg")) {
-        return variableListItemImageHeight ;
-      } else {
-        return variableListItemHeight + 20;
-      }
-    }
-    if (sentenceObject.type === "img") {
-      return variableListItemImageHeight;
-    } else {
-      return variableListItemHeight + 20;
-    }
-  };
-
   return (
     <IonGrid key="Requirements-text">
-      <IonRow
-        key="Requirements-text-row"
-        className="
-        // ion-align-items-center ion-justify-content-start
-        "
-      >
+      <IonRow key="Requirements-text-row">
         <IonCol key={"requirements-col"} size="12">
-          <IonList>
-            <VariableSizeList
-              key="FixedSizeList-Requirements-text"
-              height={500} // Set an appropriate height
-              width={"100%"}
-              ref={listRef}
-              overscanCount={20}
-              onItemsRendered={(index) => {
-                // console.log('index', index)
-              }}
-              itemSize={(index) => getSize(index, sentences.length)}
-              itemCount={sentences.length}
-              // rowHeight={(index) =>  Math.random() * (100 - 75) + 44
-              // } // Set an appropriate item size
-
-              itemData={{
-                sentences,
-                refs: colRefs.current,
-                length: sentences.length,
-                elementStyles,
-              }}
-              initialScrollOffset={sentences.length * 27}
-            >
-              {({ index, style }) => (
-                <SentenceRow
-                  key={index}
-                  index={index}
-                  style={style}
-                  data={sentences}
-                  refs={colRefs.current}
-                  length={sentences.length}
-                  elementStyles={elementStyles}
-                />
-              )}
-            </VariableSizeList>
+          <IonList key="ionListVariableSizeList">
+            <VirtualList
+              // key={clearVirtualList ? "rerender" : "no-rerender"}
+              variableListItemHeight={variableListItemHeight}
+              colRefs={colRefs}
+              variableSizeListRef={variableSizeListRef}
+              variableListItemImageHeight={variableListItemImageHeight}
+              sentences={sentences}
+              listRef={listRef}
+            />
           </IonList>
         </IonCol>
       </IonRow>
@@ -403,9 +620,16 @@ function TextWithMarkers({
   );
 }
 
-const cleanText = (text, selectedImageMap) => {
+const cleanText = ({ str, selectedImageMap, mappedLegend }) => {
+  const selectedImageMapPureKeys = Object.entries(selectedImageMap).reduce(
+    (acc, [key, value]) => {
+      acc[key.split(" ")[1]] = value;
+      return acc;
+    },
+    {}
+  );
   // Regular expression to match IDs surrounded by brackets
-  text = text.replace(/\)\,/g, ")");
+  str = str.replace(/\)\,/g, ")");
 
   const idWithBracketsRegex =
     /\(([^)]+)\s*-\s*#([0-9A-Fa-f]{6})\)|\{([^}]+)\s*-\s*#([0-9A-Fa-f]{6})\}|\[([^\]]+)\s*-\s*#([0-9A-Fa-f]{6})\]|#([0-9A-Fa-f]{6})/g;
@@ -437,12 +661,25 @@ const cleanText = (text, selectedImageMap) => {
         const idValue = roundId || curlyId || squareId || id;
         const label = labelRaw.replace(/#/g, "").trim();
 
-        if (label.includes("_jpg")) {
-          parts.push(
-            selectedImageMap[label]?.url ? <img src={
-              selectedImageMap[label]?.url} />  
-               : <NoImagePlaceHolder />
-          );
+        if (label.includes("_.jpg")) {
+          let ImageSrc;
+          mappedLegend.slice().find(([key, id]) => {
+            console.log("key: ", key);
+            console.log("id: ", id);
+            if (id && id.includes("#" + idValue)) {
+              if (key.includes("_.jpg")) {
+                let imageKey = key.split(" ")[1];
+                ImageSrc = selectedImageMapPureKeys[imageKey]?.url;
+                return true;
+              } else {
+                ImageSrc = "";
+                return false;
+              }
+            }
+            return false;
+          });
+          console.log("imageSrc: ", ImageSrc);
+          parts.push(`<img src=${ImageSrc || ""}  />`);
         }
 
         lastIndex = idWithBracketsRegex.lastIndex;
@@ -455,7 +692,7 @@ const cleanText = (text, selectedImageMap) => {
     });
     return sentences;
   };
-  const str_join = parseText(text).flat(Infinity).join(" ");
+  const str_join = parseText(str).flat(Infinity).join(" ");
 
   return str_join;
 };

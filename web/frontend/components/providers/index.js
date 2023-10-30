@@ -10,8 +10,9 @@ export { DataFetchingComponent} from "./DataServices";
 export {NavigationRefs} from "./NavigationRefs"
 export { AppBridgeProvider } from "./AppBridgeProvider";
 export { QueryProvider } from "./QueryProvider";
-// export { PolarisProvider } from "./PolarisProvider";
+ export { PolarisProvider } from "./PolarisProvider";
 export {ShopifyProvider } from "./ShopifyContext";
+
 // export { customHistoryProvider } from "./CustomHistoryProvider";
 export {useProductDataContext, ProductDataProvider } from "./ProductDataProvider";
 export {useNavigationDataContext, NavigationDataProvider } from "./NavigationDataProvider";

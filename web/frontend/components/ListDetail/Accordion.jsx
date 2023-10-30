@@ -70,8 +70,7 @@ import {
   WordCloud,
   useTinyMCEDataContext,
 } from "../../components";
-
-
+import { select } from "d3";
 
 export function Accordion({
   setAccordionModalPopUp,
@@ -79,7 +78,6 @@ export function Accordion({
   setAccordionLoadingState,
   //currentSession,
 }) {
-
   const [legend, setLegend] = useState([]);
 
   const [alertHeader, setAlertHeader] = useState();
@@ -113,15 +111,10 @@ export function Accordion({
 
   const [displayDocumentType, setDisplayDocumentType] = useState("text");
   const blogSelectionRef = useRef(null);
-  const location = useLocation();
-  const navigate = useNavigate();
-  const app = useAppBridge();
-  const fetch = useAuthenticatedFetch();
-  const shopifySession = useShopifyContext();
 
   const {
     productData,
-    updateProductProperty, 
+    updateProductProperty,
     selectedImageMap,
     checkFeatureAccess,
     subscriptions,
@@ -136,16 +129,22 @@ export function Accordion({
     setMarkupText,
     setServerSentEventLoading,
     setContentSaved,
-    eventEmitter,  
+    eventEmitter,
     assignClearAssistMethod,
     mappedLegend,
     isProductsLoading,
     pageIngCache,
-   formatProducts 
-   } = useProductDataContext();
-  
+    formatProducts,
+    lockAllTasks,
+  } = useProductDataContext();
 
+  const location = useLocation();
+  const navigate = useNavigate();
+  const app = useAppBridge();
+  const fetch = useAuthenticatedFetch();
+  const shopifySession = useShopifyContext();
 
+  console.log("selectedImageMap: ", selectedImageMap);
 
   const Popover = () => (
     <IonContent className="ion-padding">Hello World!</IonContent>
@@ -153,6 +152,17 @@ export function Accordion({
   const [present, dismiss] = useIonPopover(Popover, {
     onDismiss: (data, role) => dismiss(data, role),
   });
+
+
+  useEffect(() => {
+    if (productData) {
+      setWords([productData.description]);
+      setMarkupText(productData.description);
+    } else {
+      location.pathname = "/";
+    }
+  }, []);
+
 
   useEffect(() => {
     // console.log("aiworkstation", aiWorkStation);
@@ -167,19 +177,8 @@ export function Accordion({
     // setHashBlogName(blogName);
   }, []);
 
-
-
   useEffect(() => {
     assignUpdateArticleMethod(() => handleUpdateClick);
-  }, []);
-  useEffect(() => {
-if(productData){
-    setWords([productData.description]);
-    setMarkupText(productData.description);
-}else{
-  location.pathname = "/"
-}
- 
   }, []);
 
   useEffect(() => {
@@ -197,6 +196,8 @@ if(productData){
   useEffect(() => {
     assignAssistRequest(() => handleNonSelectedItems);
   }, []);
+
+
   useEffect(() => {
     assignClearAssistMethod("handleClearClick", handleClearClick);
   }, []);
@@ -271,9 +272,16 @@ if(productData){
     },
   };
 
-  async function eventSource(accordionId, eventEmitter) {
+  async function eventSource({
+    accordionId,
+    eventEmitter,
+    selectedImageMap,
+    mappedLegend,
+  }) {
     // Check if the EventSource is already initialized and return the existing Promise if available
-
+if(!mappedLegend){
+  throw new Error('no mappedLegend', mappedLegend);
+}
     setServerWords([]);
     const local = { ...currentSession };
     const locals = JSON.stringify(local);
@@ -353,7 +361,6 @@ if(productData){
       }, 20000);
 
       eventEmitter.on("error", (error) => {
-     
         clearTimeout(activityTimeoutId);
         eventSource.close();
         setServerSentEventLoading(false);
@@ -371,7 +378,7 @@ if(productData){
       });
 
       let str = "";
-
+      console.log("mappedLegend-: ", mappedLegend.mappedLegend);
       eventSource.addEventListener("message", (event) => {
         // Handle the received SSE message
 
@@ -394,7 +401,8 @@ if(productData){
 
           if (finish_reason) {
             console.log("finish_reason", finish_reason);
-            const pureText = cleanText(str, selectedImageMap);
+            console.log("mappedLegend: ", mappedLegend);
+            const pureText = cleanText({ str, selectedImageMap, mappedLegend: mappedLegend.mappedLegend });
             setMarkupText((pre) => pre.concat(pureText));
             str = "";
             //  eventEmitter.emit("description_assist", pureText);
@@ -522,16 +530,31 @@ if(productData){
     }
   }
 
-  async function setDataListener(accordionId, template, language) {
-    const listenerSet = await eventSource(accordionId, eventEmitter);
-    console.log("listenerSet", listenerSet);
-    const focus = productDetailOptions;
+  async function setDataListener({
+    accordionId,
+    template,
+    languageOptions,
+    selectedImageMap,
+    mappedLegend,
+  }) {
+const Legend = {}
+    if(!mappedLegend){
+      throw new Error("no mapped legend", mappedLegend);
+    }
+    const listenerSet = await eventSource({
+      accordionId,
+      eventEmitter,
+      selectedImageMap,
+      mappedLegend: Legend,
+    });
+    console.log("listenerSet: ", listenerSet);
+
     if (listenerSet.active) {
       const promptTextAndLegend = await aiRequest(
         {
           productData,
-          focus,
-          language,
+          focus: productDetailOptions,
+          language: languageOptions,
           accordionId,
         },
         accordionId,
@@ -579,7 +602,9 @@ if(productData){
           cssClass: "custom-toast",
         });
       } else {
+               Legend["mappedLegend"] = promptTextAndLegend.legend;
         setLegend(promptTextAndLegend.legend);
+ 
         console.log("legend", promptTextAndLegend.legend);
       }
     } else {
@@ -626,13 +651,19 @@ if(productData){
   }
 
   async function handleNonSelectedItems(accordionId) {
-    const route = accordionId;
-
     const showAlert = async (title, message, template) => {
       const confirm = await showConfirmAlert(title, message);
-
+if(!mappedLegend ){
+  throw new Error('no mapped legend found')
+}
       if (confirm) {
-        await setDataListener(accordionId, template, languageOptions);
+        await setDataListener({
+          accordionId,
+          template,
+          languageOptions,
+          selectedImageMap,
+          mappedLegend,
+        });
       }
       return null;
     };
@@ -661,7 +692,13 @@ if(productData){
       );
     }
 
-    setDataListener(accordionId, "focus-language-options", languageOptions);
+    await setDataListener({
+      accordionId,
+      template: "focus-language-options",
+      languageOptions,
+      selectedImageMap,
+      mappedLegend,
+    });
   }
 
   async function handleUpdateClick(type, markupText) {
@@ -688,10 +725,10 @@ if(productData){
         const { descriptionHtml } = product;
         setContentSaved(true);
         console.log("save");
-       await updateProductProperty("description", descriptionHtml);
+        await updateProductProperty("description", descriptionHtml);
         setMarkupText(descriptionHtml);
         console.log("current Cursor", productData.currentCursor);
-       await pageIngCache.clearCursorKey(productData.currentCursor);
+   
         console.log("product updated");
       }
     } else if (type === "article" && markupText.length) {
@@ -798,14 +835,17 @@ if(productData){
       },
       productData,
     },
-  ].map(accordion => Object.assign(accordion, {
-    eventEmitter,  
-    assignClearAssistMethod,
-    mappedLegend,
-    selectedImageMap,
-    checkFeatureAccess
-  }
-  )).filter((acc) => acc.accordionId === aiWorkStation);
+  ]
+    .map((accordion) =>
+      Object.assign(accordion, {
+        eventEmitter,
+        assignClearAssistMethod,
+        mappedLegend,
+        selectedImageMap,
+        checkFeatureAccess,
+      })
+    )
+    .filter((acc) => acc.accordionId === aiWorkStation);
 
   return (
     <IonRow key="IonRow">
@@ -875,7 +915,6 @@ if(productData){
   );
 }
 
-
 function renderAccordionItem({
   index,
   accordionId,
@@ -886,14 +925,13 @@ function renderAccordionItem({
   addToAccordionRefs,
   blogSelectionRef,
   serverWords,
-  eventEmitter,  
+  eventEmitter,
   assignClearAssistMethod,
   mappedLegend,
-  selectedImageMap,
-  
+  // selectedImageMap,
 }) {
   const [markupViewLock, setMarkupViewLock] = useState(null);
- const {Editor} = useTinyMCEDataContext()
+  const { Editor } = useTinyMCEDataContext();
   const {
     checkFeatureAccess,
     markupText,
@@ -903,7 +941,8 @@ function renderAccordionItem({
     DataProviderNavigate,
     // assignClearAssistMethod,
     // mappedLegend,
-    // selectedImageMap,
+    selectedImageMap,
+    lockAllTasks
   } = useDataProvidersContext();
 
   useEffect(() => {
@@ -915,9 +954,8 @@ function renderAccordionItem({
   }
 
   async function autosaveContent(editor) {
-   
     const content = editor.getContent();
-   await productViewCache.set("autosaveContent", content);
+    await productViewCache.set("autosaveContent", content);
     console.log(" Editor Content autosaved to localStorage:");
   }
 
@@ -927,8 +965,8 @@ function renderAccordionItem({
       key={index + 1}
       value={index + 2}
     >
-      <IonGrid style={{margin:"0px" ,padding:"0px"}} key={index + 3}>
-        <IonGrid style={{margin:"0px" ,padding:"0px"}} key={index + 4}>
+      <IonGrid style={{ margin: "0px", padding: "0px" }} key={index + 3}>
+        <IonGrid style={{ margin: "0px", padding: "0px" }} key={index + 4}>
           <IonRow key={index + 5}>
             {accordionId === "article" && (
               <BlogSelection
@@ -943,6 +981,7 @@ function renderAccordionItem({
         <IonRow key={index + 6}>
           <IonCol key={index + 7} size="12">
             <IonAccordionGroup
+ 
               expand="inset"
               ref={(el) => {
                 addToAccordionRefs(accordionId, el);
@@ -958,7 +997,11 @@ function renderAccordionItem({
                 />
 
                 <div className="ion-padding" slot="content">
-                  <TextWithMarkers eventEmitter={eventEmitter} assignClearAssistMethod={assignClearAssistMethod} mappedLegend={mappedLegend} selectedImageMap={selectedImageMap} 
+                  <TextWithMarkers
+                    eventEmitter={eventEmitter}
+                    assignClearAssistMethod={assignClearAssistMethod}
+                    mappedLegend={mappedLegend}
+                    selectedImageMap={selectedImageMap}
                   />
                 </div>
               </IonAccordion>
@@ -1009,10 +1052,10 @@ function renderAccordionItem({
                 // disabled={!markupViewLock.hasAccess}
                 value="present"
                 readonly={!markupViewLock.hasAccess}
-                onClick={ async(e) => {
+                onClick={async (e) => {
                   if (!markupViewLock.hasAccess) {
                     console.log("e=---->", e);
-                   await DataProviderNavigate("/subscriptions");
+                    await DataProviderNavigate("/subscriptions");
                   }
                 }}
               >
@@ -1040,7 +1083,7 @@ function renderAccordionItem({
                     }
                     init={{
                       branding: false,
-                      
+
                       promotion: false,
                       theme: false,
                       skin: false,
@@ -1062,6 +1105,7 @@ function renderAccordionItem({
               </IonAccordion>
               <IonAccordion
                 key={index + 11}
+                disabled={lockAllTasks}
                 value="seo"
                 readonly={!markupViewLock.hasAccess}
                 onClick={async (e) => {
@@ -1078,15 +1122,18 @@ function renderAccordionItem({
                       : markupViewLock.message(`SEO Analytics`)
                   }
                   boxName={aiWorkStation}
+                
                   lock={markupViewLock.hasAccess}
                   note={`RealTime Document Analytics.`}
                 />
 
-                <IonGrid style={{margin:"0px" ,padding:"0px"}} key={index + 12} slot="content">
-                  <IonRow  key={index + 13}>
-                    <IonCol key={index + 15} size-sm="12" 
-                    size-md="6" 
-                    size="12">
+                <IonGrid
+                  style={{ margin: "0px", padding: "0px" }}
+                  key={index + 12}
+                  slot="content"
+                >
+                  <IonRow key={index + 13}>
+                    <IonCol key={index + 15} size-sm="12" size-md="6" size="12">
                       <IonRow key={index + 16}>
                         <IonCol size="12" key={index + 17}>
                           <ChartComponent key={index + 18} text={markupText} />
@@ -1099,14 +1146,14 @@ function renderAccordionItem({
                         </IonCol>
                       </IonRow>
                     </IonCol>
-                    <IonCol size-sm="12" 
-                    size-md="6"
-                     size="12" key={index + 20}>
-                    
-                        <IonCol size="12">
-                                 <ReadabilityStats key={index + 21} checkFeatureAccess={checkFeatureAccess} text={markupText} />
-                        </IonCol>
-                      
+                    <IonCol size-sm="12" size-md="6" size="12" key={index + 20}>
+                      <IonCol size="12">
+                        <ReadabilityStats
+                          key={index + 21}
+                          checkFeatureAccess={checkFeatureAccess}
+                          text={markupText}
+                        />
+                      </IonCol>
                     </IonCol>
                   </IonRow>
                 </IonGrid>
@@ -1115,7 +1162,7 @@ function renderAccordionItem({
           </IonCol>
         </IonRow>
       </IonGrid>
-      <IonGrid style={{margin:"0px" ,padding:"0px"}}>
+      <IonGrid style={{ margin: "0px", padding: "0px" }}>
         <IonRow>
           <IonCol size="12">
             <IonItem lines="full">
@@ -1209,7 +1256,7 @@ function renderAccordionItem({
                   init={{
                     branding: false,
                     promotion: false,
-                    content_security_policy:"default-src '*'",
+                    content_security_policy: "default-src '*'",
                     // theme: false,
                     // content_css:
                     //   "tinymce/skins/content/tinymce-5/content.min.css",

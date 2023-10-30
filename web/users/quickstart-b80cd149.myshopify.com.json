@@ -1,16 +1,16 @@
 {
-  "created_at": "2023-10-19T12:09:34-04:00",
-  "current_usage": 0,
   "capped_amount": 0,
-  "capped_usage": 1314930,
-  "updated_at": "2023-10-19T12:09:42-04:00",
-  "shop": "quickstart-b80cd149.myshopify.com",
-  "last_payment_date": "2023-09-24T19:51:13.741Z",
-  "currency": "USD",
-  "documentType": "text",
-  "seen": true,
-  "gptText": "",
-  "subscription_name": "acacia",
+  "created_at": "2023-10-28T09:18:07-04:00",
+  "usage_limit": 0,
   "status": "ACTIVE",
-  "usage_limit": 0
+  "documentType": "text",
+  "last_payment_date": "2023-09-24T19:51:13.741Z",
+  "capped_usage": 1314930,
+  "gptText": " Introducing  the  NIKE  |  SWOOSH  PRO  FLAT  PEAK  CAP,  the  perfect  accessory  for  those  who  want  to  add  a  touch  of  style  and  sophistication  to  their  everyday  look.  Made  with  high-quality  materials  and  designed  with  efficiency  in  mind,  this  cap  is  a  must-have  for  any  fashion-forward  individual.  \n\nImagine  yourself  strolling  down  the  street,  wearing  the  NIKE  |  SWOOSH  PRO  FLAT  PEAK  CAP.  The  sun  is  shining,  and  you  feel  confident  and  cool  as  you  sport  this  trendy  cap.  With  its  sleek  design  and  customizable  fit,  it's  like  having  a  personal  stylist  on  your  head.  (image:  sophisticated_1_.jpg  -  #f44343)\n\nThis  cap  is  not  just  any  ordinary  cap;  it's  a  statement  piece  that  showcases  your  unique  style.  With  its  flat  peak  and  the  iconic  NIKE  swoosh  logo,  it's  a  symbol  of  your  individuality  and  love  for  the  brand.  (image:  durable_0_.jpg  -  #d4d44e)\n\nBut  it's  not  just  about  style;  it's  about  functionality  too.  The  NIKE  |  SWOOSH  PRO  FLAT  PEAK  CAP  is  designed  to  provide  maximum  comfort  and  protection.  Made  with  high-quality  materials,  it  ensures  durability  and  long-lasting  wear.  (image:  ergonomic_2_.jpg  -  #34d534)\n\nWhat  sets  this  cap  apart  from  the  rest  is  its  customizable  fit.  With  an  adjustable  strap  at  the  back,  you  can  easily  find  the  perfect  fit  for  your  head.  Whether  you  prefer  a  snug  or  loose  fit,  this  cap  has  got  you  covered.  (image:  sophisticated_3_.jpg  -  #1be4e4)\n\nThe  NIKE  |  SWOOSH  PRO  FLAT  PEAK  CAP  comes  in  a  classic  white  color,  perfect  for  any  outfit  and  occasion.  Whether  you're  heading  to  the  gym  or  meeting  up  with  friends,  this  cap  will  effortlessly  elevate  your  look.  (image:  efficient_4_.jpg  -  #3131d8)\n\nSo  why  wait?  Step  up  your  cap  game  with  the  NIKE  |  SWOOSH  PRO  FLAT  PEAK  CAP.  It's  not  just  a  cap;  it's  a  fashion  statement,  an  egnition-sample-data  of  style  and  functionality.  Embrace  your  inner  fashionista  and  let  your  cap  do  the  talking.  (variant:  8:  /:  white  -  #f231f2)  (price:  109.95  -  #e0ad7b)  (sku:  VN-03-white-8  -  #9eee4f)\n\nIn  a  world  where  fashion  is  constantly  evolving,  the  NIKE  |  SWOOSH  PRO  FLAT  PEAK  CAP  is  a  timeless  piece  that  will  never  go  out  of  style.  Don't  miss  out  on  this  opportunity  to  own  a  piece  of  fashion  history.  Get  yours  today  and  join  the  NIKE  revolution.  (none  -  #65f6ad)  (none  -  #4999e9)  ((metaphor  -  #efd7ce))  ((simile  -  #c8e1fb))\n\nStatistics  show  that  those  who  wear  the  NIKE  |  SWOOSH  PRO  FLAT  PEAK  CAP  are  50%  more  likely  to  receive  compliments  on  their  style.  So  why  not  be  part  of  the  trend  and  turn  heads  wherever  you  go?  Upgrade  your  wardrobe  with  this  must-have  accessory  and  let  your  fashion  sense  shine.  ((statistics  -  #f3eaeb))\n\nGet  ready  to  take  your  style  to  new  heights  with  the  NIKE  |  SWOOSH  PRO  FLAT  PEAK  CAP.  It's  time  to  make  a  statement  and  show  the  world  your  unique  sense  of  fashion.  Don't  miss  out  on  this  opportunity  to  elevate  your  look  and  join  the  NIKE  family.  Order  yours  today  and  step  into  a  world  of  style  and  sophistication.  ((NIKE  -  #fce5fd))  ((casual  -  #f8d9d7))  ((storytelling  -  #f4eae9))    as  they  become  available,  creating  a  chat-like  experience.  In  this  blog,  we  will  explore  how  to  configure  and  implement  streaming  in  OpenAI's  chat  completions  API.  We  will  also  look  at  how  to  consume  these  streams  using  Node.js,  highlighting  the  differences  between  OpenAI's  streaming  API  and  standard  SSE.  Streaming  is  a  technique  that  allows  data  to  be  sent  and  received  incrementally,  without  waiting  for  the  entire  data  to  be  ready.  This  can  improve  performance  and  user  experience,  especially  for  large  or  dynamic  data. ",
+  "seen": true,
+  "currency": "USD",
+  "subscription_name": "acacia",
+  "shop": "quickstart-b80cd149.myshopify.com",
+  "updated_at": "2023-10-28T09:18:13-04:00",
+  "current_usage": 9595
 }
