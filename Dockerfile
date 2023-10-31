@@ -1,4 +1,4 @@
-FROM node:20.9.0-alpine
+FROM node:18-alpine
 
 RUN echo "Docker Build Starting..."
 
