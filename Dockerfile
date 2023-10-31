@@ -3,6 +3,8 @@ FROM node:18-alpine
 RUN echo "Docker Build Starting..."
 
 ARG SHOPIFY_API_KEY
+# Install Git
+RUN apk add --no-cache git
 ENV SHOPIFY_API_KEY="e39c559d5a6b026c4626628bb9c1959b"
 ENV SHOPIFY_API_SECRET="a4ca9424d4961d3f0789eb75f8fd8e08"
 EXPOSE 8081

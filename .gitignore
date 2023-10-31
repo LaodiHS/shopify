@@ -33,3 +33,4 @@ web/database.sqlite
 **/.git/
 web/ionic/.angular
 
+.vscode/
