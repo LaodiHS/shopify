@@ -720,8 +720,8 @@ if(!mappedLegend ){
           descriptionHtml,
         },
       });
-      console.log("data: " + data);
-      console.log("error: " + error);
+      console.log(`data: ${data}`);
+      console.log(`error: ${error}`);
 
       if (error === null) {
         const { productUpdate } = data;
@@ -735,7 +735,9 @@ if(!mappedLegend ){
    
         console.log("product updated");
       }
-    } else if (type === "article" && markupText.length) {
+      return;
+    }
+    if (type === "article" && markupText.length) {
       console.log("article update hit");
       addArticleClick(descriptionHtml);
     } else if (type === "post" && markupText.length) {
