@@ -82,14 +82,14 @@ export function ListComponent({productsData}) {
     if (cardWidthRef.current.length > 0) {
       let i = 0;
       for (const ref of cardWidthRef.current) {
-        imgContainerHeight[i] = 0.7202 * ref.offsetWidth + "px";
+        imgContainerHeight[i] = `${0.7202 * ref.offsetWidth}px`;
         i++;
       }
 
       setMainImageStyle((prev) => ({
         ...prev,
-        maxHeight: 0.7162 * cardWidthRef.current[0].offsetWidth + "px",
-        minHeight: 0.7162 * cardWidthRef.current[0].offsetWidth + "px",
+        maxHeight: `${0.7162 * cardWidthRef.current[0].offsetWidth}px`,
+        minHeight: `${0.7162 * cardWidthRef.current[0].offsetWidth}px`,
       }));
       setImgContainerHeight((prev) => [...imgContainerHeight]);
     }
@@ -158,9 +158,9 @@ export function ListComponent({productsData}) {
   }
 
   return (
-    <IonContent key={parentKeyScope + "ionContent"}>
-      <IonGrid key={parentKeyScope + "ionGrid"}>
-        <IonRow key={parentKeyScope + "ionRow"}>
+    <IonContent key={`${parentKeyScope}ionContent`}>
+      <IonGrid key={`${parentKeyScope}ionGrid`}>
+        <IonRow key={`${parentKeyScope}ionRow`}>
           {products.map((product, productIndex) => {
             if (!mainDisplayImages[productIndex]?.img) {
               return (
@@ -323,20 +323,20 @@ export function ListComponent({productsData}) {
                     cardWidthRef.current[productIndex] = ref;
                     }
                   }}
-                  key={productIndex + "ionCard"}
+                  key={`${productIndex}ionCard`}
                 >
-                  <IonCardHeader key={productIndex + "ionCardHeader"}>
+                  <IonCardHeader key={`${productIndex}ionCardHeader`}>
                     <GetFontSize
                       key="fontSize"
                       index={productIndex }
                       Element={
                         <IonCardTitle
-                          key={productIndex + "ionCardTitle"}
+                          key={`${productIndex}ionCardTitle`}
                           style={cardTitleStyle}
                           className="ion-padding ion-text-capitalize"
                         >
                           {product.title.length > 100
-                            ? product.title.substring(0, 100) + "..."
+                            ? `${product.title.substring(0, 100)}...`
                             : product.title}
                         </IonCardTitle>
                       }
@@ -348,9 +348,9 @@ export function ListComponent({productsData}) {
                       SEO Health: {sentiment.status}{" "}
                     </IonCardSubtitle>
                   </IonCardHeader>
-                  <IonCardContent key={productIndex + "cardContent"}>
+                  <IonCardContent key={`${productIndex}cardContent`}>
                     <IonGrid key={`imageProductTitleImageGrid_${productIndex}`}>
-                      <IonRow key={productIndex + "row"}>
+                      <IonRow key={`${productIndex}row`}>
                         <IonCol
                           key={productIndex + "col"}
                           size="12"
@@ -375,7 +375,7 @@ export function ListComponent({productsData}) {
                           </IonCol>
                           <IonCol className="ion-padding"
                             key={
-                              productIndex + "displayContainer" + parentKeyScope
+                              `${productIndex}displayContainer${parentKeyScope}`
                             }
                             size="12"
                             style={{
@@ -405,7 +405,7 @@ export function ListComponent({productsData}) {
                               };
 
                               return (
-                                <IonCol key={imageIndex + "thumbnailPick"} size= "1"  style={sliderImageStyles}>
+                                <IonCol key={`${imageIndex}thumbnailPick`} size= "1"  style={sliderImageStyles}>
                                 <ImageCache 
                                   sliderImg={true}
                                   key={`thumbnail_${imageIndex}`}
@@ -418,12 +418,11 @@ export function ListComponent({productsData}) {
                                 }}
                                   // style={sliderImageStyles}
                                   onClick={() => {
-                                    image.transformedSrc !==
-                                      mainDisplayImages[productIndex]?.img &&
-                                      handleThumbnailClick(
-                                        productIndex,
-                                        imageIndex
-                                      );
+                                    if (image.transformedSrc !==
+                                    mainDisplayImages[productIndex]?.img) handleThumbnailClick(
+                                      productIndex,
+                                      imageIndex
+                                    );
                                   }}
                                 />
                                 </IonCol>
@@ -442,11 +441,11 @@ export function ListComponent({productsData}) {
                             className="ion-text-wrap"
                           >
                             {product.description.length > 100
-                              ? product.description.substring(0, 100) + "..."
+                              ? `${product.description.substring(0, 100)}...`
                               : product.description}
                           </p>
                           <h4
-                            key={productIndex + "sentiment"}
+                            key={`${productIndex}sentiment`}
                             className="ion-padding-top"
                           >
                             Description Analysis:
@@ -474,14 +473,14 @@ export function ListComponent({productsData}) {
                           </IonItem>
                           {(product?.tags?.length || "") && (
                             <h4
-                              key={productIndex + "Tags ion-padding-bottom"}
+                              key={`${productIndex}Tags ion-padding-bottom`}
                               className="ion-padding-bottom ion-padding-top"
                             >
                               Tags :
                             </h4>
                           )}
                           <IonBadge
-                            key={"tags" + productIndex + "ionBadge"}
+                            key={`tags${productIndex}ionBadge`}
                             style={{ wordBreak: "break-word" }}
                             className="ion-text-wrap"
                             color="secondary"
@@ -491,7 +490,7 @@ export function ListComponent({productsData}) {
                           </IonBadge>
 
                           <h4
-                            key={productIndex + "TagsMatch"}
+                            key={`${productIndex}TagsMatch`}
                             className="ion-padding-top"
                           >
                             Tag Match:
@@ -522,13 +521,13 @@ export function ListComponent({productsData}) {
                           </IonItem>
 
                           <h4
-                            key={productIndex + "variants"}
+                            key={`${productIndex}variants`}
                            
                           >
                             Variants:
                           </h4>
                           <ul
-                            key={productIndex + "wordBreak"}
+                            key={`${productIndex}wordBreak`}
                             style={{ wordBreak: "break-word" }}
                           >
                             {product.variants.slice(0, 5).map((variant) => (
@@ -539,9 +538,9 @@ export function ListComponent({productsData}) {
                             ))}
                             {product.variants.length > 5 && <li>...</li>}
                           </ul>
-                          <h4 key={productIndex + "Options3232"}>Options:</h4>
+                          <h4 key={`${productIndex}Options3232`}>Options:</h4>
                           <ul
-                            key={productIndex + "break-word"}
+                            key={`${productIndex}break-word`}
                             style={{ wordBreak: "break-word" }}
                           >
                             {product.options.slice(0, 5).map((option, indx) => (
@@ -553,7 +552,7 @@ export function ListComponent({productsData}) {
                               <li key={productIndex + indx + 2}>...</li>
                             )}
                           </ul>
-                          <h4 key={productIndex + "Collections"}>
+                          <h4 key={`${productIndex}Collections`}>
                             Collections:
                           </h4>
                           <ul
@@ -586,7 +585,7 @@ export function ListComponent({productsData}) {
                               justifyContent: "flex-end",
                             }}
                           >
-                            <IonButtons key={productIndex + "IonButtons"}>
+                            <IonButtons key={`${productIndex}IonButtons`}>
                               <IonButton
                                 fill="clear"
                                 disabled={true}
