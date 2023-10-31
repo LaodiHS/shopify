@@ -125,9 +125,7 @@ const height = computedHeight < 200 ? 200 : computedHeight;
 
       .style("font", (d) => d.font)
       .style("font-size", (d) => `${ScaleFontValueToRange(d.value)}px`)
-      .attr("transform", function (d) {
-        return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
-      })
+      .attr("transform", (d) => `translate(${[d.x, d.y]})rotate(${d.rotate})`)
       .style(
         "fill",
         (d) =>
