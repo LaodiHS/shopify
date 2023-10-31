@@ -1,14 +1,20 @@
 
 
-import React from 'react';
-import { IonContent, IonPage, IonButton } from '@ionic/react';
+import React,{useState} from 'react';
+import { IonContent, IonPage, IonButton, IonLoading } from '@ionic/react';
 
 export const ShopifyOutage = ({retrySession}) => {
-
+const [loading, setLoading] = useState(true)
   const handleRetry = () => {
     retrySession((prev) => !prev);
     // Add any retry logic here, e.g., redirect to another page, refresh the page, etc.
   }
+
+setTimeout(() => {
+setLoading(false)
+}, 10_000)
+
+if (loading)return null;
 
   return (
     <IonPage>
@@ -16,10 +22,10 @@ export const ShopifyOutage = ({retrySession}) => {
         <div className="ion-text-center">
           <img src="shopify_logo.png" alt="Shopify" style={{ width: '150px', marginBottom: '20px' }} />
           <h1>We're Sorry!</h1>
-          <p>We are experiencing some technical difficulties at the moment. <h1 style={{fontFamily:"Baloo, san-serif", letterSpacing:"3px"}} >neural nectar<sub style={{fontFamily:  "'Baloo', sans-serif", letterSpacing:"none", position:"relative",
+          <p>We are experiencing some technical difficulties at the moment. </p><h1 style={{fontFamily:"Baloo, san-serif", letterSpacing:"3px"}} >neural nectar<sub style={{fontFamily:  "'Baloo', sans-serif", letterSpacing:"none", position:"relative",
           fontSize: "small", top:"-0.3em" ,linSpacing:"1.5px", 
-          color:"tangerine"}}>AI</sub></h1>will be back up and running soon.</p>
-          <p></p>
+          color:"tangerine"}}>AI</sub></h1><p>will be back up and running soon.</p>
+          
           <IonButton color="primary" onClick={handleRetry}>Retry</IonButton>
         </div>
       </IonContent>

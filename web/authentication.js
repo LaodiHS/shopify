@@ -84,6 +84,7 @@ export async function authentication() {
         }
       },
       // Load the app otherwise
+      
       shopify.redirectToShopifyOrAppRoot()
     );
     app.post(

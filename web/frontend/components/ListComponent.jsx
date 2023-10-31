@@ -312,7 +312,7 @@ export function ListComponent({productsData}) {
                 sizeLg="auto"
                 sizeMd="6"
                 sizeSm="12"
-                sizeXl="3"
+                sizeXl="4"
                 sizeXs="auto"
               >
                 <IonCard

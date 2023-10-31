@@ -1,4 +1,4 @@
-export {ImageCache,Workers, useWorkersContext, ImageCachePre, ImageCacheSrc} from "./ImageCache";
+export {ImageCache,Workers, useWorkersContext, CreateWorkers, ImageCachePre, ImageCacheSrc} from "./ImageCache";
 export { NoImagePlaceHolder } from './NoImagePlaceHolder';
 export { TinyMCEDataProvider, useTinyMCEDataContext} from './TinyMCEDataProvider';
 export { useWinkDataContext, WinkDataProvider } from './WinkDataProvider';
@@ -21,5 +21,6 @@ export {ReactRenderingComponent,addMarkup, extractTextFromHtml } from "./ReactRe
 export {CamelToKebabCase} from "./CamelToKebabCase";
 export {AnimatedContent} from "./AnimatedContent";
 export {UseGridStack} from "./GridStack";
+
 
 export { useCurrentScreenWidth} from "./CurrentScreenWidth";

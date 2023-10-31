@@ -44,14 +44,14 @@ function LinePlugin() {
       .elem("mask", {
         x: 0,
         y: 0,
-        width: width,
-        height: height,
+        width,
+        height,
         id: options.maskNames.aboveThreshold,
       })
       .elem("rect", {
         x: 0,
         y: 0,
-        width: width,
+        width,
         height: projectedThreshold,
         fill: "white",
       });
@@ -61,14 +61,14 @@ function LinePlugin() {
       .elem("mask", {
         x: 0,
         y: 0,
-        width: width,
-        height: height,
+        width,
+        height,
         id: options.maskNames.belowThreshold,
       })
       .elem("rect", {
         x: 0,
         y: projectedThreshold,
-        width: width,
+        width,
         height: height - projectedThreshold,
         fill: "white",
       });
@@ -220,7 +220,7 @@ function LabelPlugin() {
 
       //position axis Y title
       if (options.axisY.axisTitle && data.axisY) {
-        xPos = 0;
+        xPos = 17;
 
         yPos = data.axisY.axisLength / 2 + chartPadding.top;
 
@@ -234,7 +234,7 @@ function LabelPlugin() {
 
         var transform =
           "rotate(" +
-          (options.axisY.flipTitle ? -90 : 90) +
+          (options.axisY.flipTitle ? -90 : -90) +
           ", " +
           xPos +
           ", " +
@@ -314,7 +314,7 @@ export function BarChartComponent({ text }) {
               axisClass: "ct-axis-title",
               offset: {
                 x: 0,
-                y: -8,
+                y: -7,
               },
               textAnchor: "middle",
               flipTitle: false,
@@ -554,7 +554,7 @@ export function ChartComponent({ text }) {
               axisClass: "ct-axis-title",
               offset: {
                 x: 0,
-                y: -5,
+                y: -7,
               },
               textAnchor: "middle",
               flipTitle: false,

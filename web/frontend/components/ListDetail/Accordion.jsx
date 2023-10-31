@@ -136,6 +136,7 @@ export function Accordion({
     pageIngCache,
     formatProducts,
     lockAllTasks,
+    DataProviderNavigate,
   } = useProductDataContext();
 
   const location = useLocation();
@@ -159,7 +160,9 @@ export function Accordion({
       setWords([productData.description]);
       setMarkupText(productData.description);
     } else {
-      location.pathname = "/";
+      console.log('reroute hit for root!!!!!!!!!!!!!!!!!!!!!!!!!')
+      DataProviderNavigate("/",{target:"host"})
+   
     }
   }, []);
 
@@ -394,6 +397,7 @@ if(!mappedLegend){
           const finish_reason = delta.finish_reason;
           Debounce(scrollSmoothly(accordionId), 400);
           str += word;
+          
           // console.log('word: ' , word);
           eventEmitter.emit("streamData", eventData);
           //  setServerWords((prevWords) => [...prevWords, word]);
@@ -706,7 +710,7 @@ if(!mappedLegend ){
     console.log("markup Text", markupText);
     const descriptionHtml = markupText;
     if (type === "description" && markupText.length) {
-      const productId = productData.id.split("/").pop();
+      const productId = productData.slice().id.split("/").pop();
 
       const { data, error } = await uncachedFetchData({
         url: "/api/products/update/description",

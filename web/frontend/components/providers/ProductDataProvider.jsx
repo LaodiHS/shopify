@@ -147,47 +147,47 @@ export function ProductDataProvider({ children }) {
     setProductsData({ ...productsData });
   }
 
-  useEffect(async () => {
-    if (sessionLoaded &&  location.pathname === "/product-details") {
-    
-        if (!productsData) {
-          await fetchData();
-          console.log("products data fetched");
+  // useEffect(async () => {
+  //   if (sessionLoaded &&  location.pathname === "/product-details") {
+  //   console.log('productsData from details: ', productsData);
+  //       if (!productsData) {
+  //         await fetchData();
+  //         console.log("products data fetched");
 
-          return;
-        }
+  //         return;
+  //       }
 
-        const cashedProductIndex = await productViewCache.get(
-          "cashedProductIndex"
-        );
+  //       const cashedProductIndex = await productViewCache.get(
+  //         "cashedProductIndex"
+  //       );
 
-        // If both productData and cashedProductData are unavailable and the current route is "product-detail"
+  //       // If both productData and cashedProductData are unavailable and the current route is "product-detail"
 
-        if (productsData === null && location.pathname === "/product-details") {
-          await fetchData();
-          console.log("product data fetched");
-          const index = await productViewCache.get("cashedProductIndex");
-          console.log("product Index:", index);
-          if (index >= 0) {
-            setProductData(productsData.productsData[index]);
-          } else {
-            navigate("/"); // Navigate to the root of the application
-          }
-        }
+  //       if (productsData === null && location.pathname === "/product-details") {
+  //         await fetchData();
+  //         console.log("product data fetched");
+  //         const index = await productViewCache.get("cashedProductIndex");
+  //         console.log("product Index:", index);
+  //         if (index >= 0) {
+  //           setProductData(productsData.productsData[index]);
+  //         } else {
+  //           navigate("/"); // Navigate to the root of the application
+  //         }
+  //       }
 
-        if (productData === null && cashedProductIndex !== null) {
-          // Parse the cashedProductIndex to an integer before using it
-          const index = parseInt(cashedProductIndex, 10);
-          await defineProductData(index);
-        }
+  //       if (productData === null && cashedProductIndex !== null) {
+  //         // Parse the cashedProductIndex to an integer before using it
+  //         const index = parseInt(cashedProductIndex, 10);
+  //         await defineProductData(index);
+  //       }
       
-    }
-  }, [location.pathname, navigate, pagingHistory, sessionLoaded]);
+  //   }
+  // }, [location.pathname, navigate, pagingHistory, sessionLoaded]);
 
 
 useEffect(async () =>{
 if(sessionLoaded){
-await pagingHistory.runSyncDataFetcher(uncachedFetchData, productsPerPage);
+// await pagingHistory.runSyncDataFetcher(uncachedFetchData, productsPerPage);
 }
 
 },[ sessionLoaded]);

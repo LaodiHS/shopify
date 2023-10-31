@@ -62,6 +62,7 @@ import {
   useWorkersContext,
   ImageCachePre,
   ImageCacheSrc,
+  CreateWorkers,
 } from "../../components";
 import { useAuthenticatedFetch } from "../../hooks";
 const svgAssets = import.meta.glob("../../assets/*.svg");
@@ -71,7 +72,9 @@ const svgAssets = import.meta.glob("../../assets/*.svg");
 //   const model = await loadGraphModel('path_to_yolo_model/model.json');
 //   return model;
 // }
-
+if (import.meta.hot) {
+  console.log("hot reload detected");
+}
 // async function detectObjects(imageElement, yoloModel) {
 //   // Convert the image to a tensor
 //   const imageTensor = tf.browser.fromPixels(imageElement);
@@ -154,11 +157,6 @@ const svgAssets = import.meta.glob("../../assets/*.svg");
 //   };
 //   reader.readAsDataURL(blob);
 // }
-const DataProvidersContext = createContext(null);
-
-export function useDataProvidersContext() {
-  return useContext(DataProvidersContext);
-}
 
 function logShopifyResponse(errorCode) {
   switch (errorCode) {
@@ -304,52 +302,56 @@ function logShopifyResponse(errorCode) {
   }
 }
 
-function useMap(initialEntries = []) {
-  const [mapStateForUseMap, setMapStateForUseMap] = useState(
-    new Map(initialEntries)
-  );
+// function useMap(initialEntries = []) {
+//   const [mapStateForUseMap, setMapStateForUseMap] = useState(
+//     new Map(initialEntries)
+//   );
 
-  const mapActions = {
-    get: (key) => mapStateForUseMap.get(key),
-    set: (key, value) => {
-      if (mapStateForUseMap.get(key) !== value) {
-        const newMap = new Map(mapStateForUseMap);
-        newMap.set(key, value);
-        setMapStateForUseMap(newMap);
-      }
-    },
-    delete: (key) => {
-      if (mapStateForUseMap.has(key)) {
-        const newMap = new Map(mapStateForUseMap);
-        newMap.delete(key);
-        setMapStateForUseMap(newMap);
-      }
-    },
-    clear: () => {
-      if (mapStateForUseMap.size > 0) {
-        setMapStateForUseMap(new Map());
-      }
-    },
-    entries: () => mapStateForUseMap.entries(),
-    forEach: (callback) => mapStateForUseMap.forEach(callback),
-    has: (key) => mapStateForUseMap.has(key),
-    keys: () => mapStateForUseMap.keys(),
-    values: () => mapStateForUseMap.values(),
-    get size() {
-      return mapStateForUseMap.size;
-    },
-  };
+//   const mapActions = {
+//     get: (key) => mapStateForUseMap.get(key),
+//     set: (key, value) => {
+//       if (mapStateForUseMap.get(key) !== value) {
+//         const newMap = new Map(mapStateForUseMap);
+//         newMap.set(key, value);
+//         setMapStateForUseMap(newMap);
+//       }
+//     },
+//     delete: (key) => {
+//       if (mapStateForUseMap.has(key)) {
+//         const newMap = new Map(mapStateForUseMap);
+//         newMap.delete(key);
+//         setMapStateForUseMap(newMap);
+//       }
+//     },
+//     clear: () => {
+//       if (mapStateForUseMap.size > 0) {
+//         setMapStateForUseMap(new Map());
+//       }
+//     },
+//     entries: () => mapStateForUseMap.entries(),
+//     forEach: (callback) => mapStateForUseMap.forEach(callback),
+//     has: (key) => mapStateForUseMap.has(key),
+//     keys: () => mapStateForUseMap.keys(),
+//     values: () => mapStateForUseMap.values(),
+//     get size() {
+//       return mapStateForUseMap.size;
+//     },
+//   };
 
-  return [mapStateForUseMap, mapActions];
-}
+//   return [mapStateForUseMap, mapActions];
+// }
 
+const DataProvidersContext = createContext(null);
+
+export const useDataProvidersContext = () => {
+  return useContext(DataProvidersContext);
+};
+export { DataProvidersContext };
 function modifyState(setter, updateOptions) {
   return setter((prevState) => {
-    if (typeof updateOptions === "function") {
-      return updateOptions(prevState);
-    } else {
-      return updateOptions;
-    }
+    return typeof updateOptions === "function"
+      ? updateOptions(prevState)
+      : updateOptions;
   });
 }
 function createEventEmitter() {
@@ -381,17 +383,18 @@ function createEventEmitter() {
   }
   return { on, emit, removeListener };
 }
-const eventEmitter = createEventEmitter();
 
-export function DataProvidersProvider({ children }) {
+export const DataProvidersProvider = ({ children }) => {
+  const [eventEmitter, setEventEmitter] = useState(createEventEmitter());
   const [user, setUser] = useState({});
   const [subscriptions, setSubscriptions] = useState(["free"]);
   const [currentSession, setCurrentSession] = useState({});
   const [sessionLoaded, setSessionLoaded] = useState(false);
-  const [subscriptionRetrievalLoading, setSubscriptionRetrievalLoading] = useState(false);
+  const [subscriptionRetrievalLoading, setSubscriptionRetrievalLoading] =
+    useState(false);
   const [contextualOptions, setContextualOptions] = useState({});
   const [selectedCollections, setSelectedCollections] = useState([]);
-  const [presentToast] = useIonToast();
+
   const [selectedImageText, setSelectedImageText] = useState("0 Items");
   const [selectedImages, setSelectedImages] = useState([]);
   const [selectedImageMap, setSelectedImageMap] = useState({});
@@ -399,6 +402,7 @@ export function DataProvidersProvider({ children }) {
   const [assistRequestInstance, setAssistRequestInstance] = useState(null);
   const [imageSelectionModalIsOpen, setImageSelectionModalIsOpen] =
     useState(false);
+
   const [wordList, setWordList] = useState([
     "Reliable",
     "Innovative",
@@ -445,10 +449,9 @@ export function DataProvidersProvider({ children }) {
   const [lockAllTasks, setLockAllTasks] = useState(false);
   const [updateArticleMethod, setUpdateArticleMethod] = useState(null);
   const [markupText, setMarkupText] = useState("");
-  const navigate = useNavigate();
+
   const [plans, setPlans] = useState({});
-  const app = useAppBridge();
-  const context = useShopifyContext();
+
   const [shopifyDown, setShopifyDown] = useState(false);
 
   const [retrySession, setRetrySession] = useState(false);
@@ -456,17 +459,21 @@ export function DataProvidersProvider({ children }) {
   const [dependenciesLoaded, setDependenciesLoaded] = useState({});
   const [AllDependenciesLoaded, setAllDependenciesLoaded] = useState(false);
   const [assetsLoaded, setAssetsLoaded] = useState(false);
-  const [allAssets, setAllAssets] = useState({});
+  const [allAssets, setAllAssets] = useState({}); 
+  const { workersLoaded} = useWorkersContext();
+
+
+   const [presentToast] = useIonToast();
+   const app = useAppBridge();
+   const context = useShopifyContext();
+   const navigate = useNavigate();
   const fetch = useAuthenticatedFetch(); // Make sure you have this hook defined somewhere
 
-  function defineShopifyDown( retryValue) {
-   return modifyState(setRetrySession, retryValue);
+  function defineShopifyDown(retryValue) {
+    return modifyState(setRetrySession, retryValue);
   }
 
-
-
-
-  const { workersLoaded } = useWorkersContext();
+    
 
 
   async function fetchDataWithCache({ url, method, body }) {
@@ -517,10 +524,9 @@ export function DataProvidersProvider({ children }) {
             }
             mapActions.set(cached_url_method_body_parameters, data.data);
             return data.data;
-          } else {
-            retryCount--;
-            await new Promise((resolve) => setTimeout(resolve, 3000));
           }
+          retryCount--;
+          await new Promise((resolve) => setTimeout(resolve, 3000));
         } catch (error) {
           retryCount--;
 
@@ -591,13 +597,15 @@ export function DataProvidersProvider({ children }) {
       console.error("call made outside session: ", url);
     }
   }
-  // useEffect(async () => {
-  //   const token = await getSessionToken(app);
+  useEffect(async () => {
+    const token = await getSessionToken(app);
+    console.log("token: ", token);
 
-  //   let session = await app.getState();
-
-  //   return () => {};
-  // }, []);
+  
+    let session = await app.getState();
+    console.log("session: ", session);
+    return () => {};
+  }, []);
 
   useEffect(async () => {
     if (workersLoaded) {
@@ -635,6 +643,7 @@ export function DataProvidersProvider({ children }) {
         pageHistory.getPagingState();
         setPagingHistory(pageHistory);
         setDependenciesLoaded((prev) => ({ ...prev, pagingHistory: true }));
+      
       }
       return async () => {
         console.log("closing db connection");
@@ -643,6 +652,7 @@ export function DataProvidersProvider({ children }) {
         }
         if (indexDb.db) {
           await indexDb.stopIndexDB();
+     
           setDependenciesLoaded((prev) => ({
             ...prev,
             IndexedSessionStorage: false,
@@ -680,99 +690,115 @@ export function DataProvidersProvider({ children }) {
   }
 
   useEffect(async () => {
-    if (AllDependenciesLoaded) {
-      console.log("all dependencies loaded");
-      const fetchDataSession = async () => {
-        try {
-          setSubscriptionRetrievalLoading(true);
-          const subscriptionsResponse = await fetch(
-            "/api/current/subscription/status"
-          );
-       
-          if (!subscriptionsResponse.ok) {
-            // If the response status is not ok (e.g., 401 Unauthorized or 403 Forbidden),
-            // it means the user is not authenticated or doesn't have access.
-            // Redirect the user to the login page or show an error message.
-            // navigation("/login");
-            setSubscriptionRetrievalLoading(false);
+    if (!AllDependenciesLoaded) {
+      return;
+    }
+    console.log("all dependencies loaded");
+    const fetchDataSession = async () => {
+      try {
+        setSubscriptionRetrievalLoading(true);
+        const subscriptionsResponse = await fetch(
+          "/api/current/subscription/status"
+        );
 
-            throw new Error("unable to find your subscription");
-          }
-          setShopifyDown(false);
-          const data = await subscriptionsResponse.json();
-          console.log("session loaded");
-          setSessionLoaded(true);
+        if (!subscriptionsResponse.ok) {
+          // If the response status is not ok (e.g., 401 Unauthorized or 403 Forbidden),
+          // it means the user is not authenticated or doesn't have access.
+          // Redirect the user to the login page or show an error message.
+          // navigation("/login");
+          setSubscriptionRetrievalLoading(false);
 
-          const { activeSubscriptions, session, user, redirectUri } = data;
-          const redirect = Redirect.create(app);
-          console.log("subscription redirectUri: ", redirectUri);
-
-          setPlans(data.plans);
-
-          assignUser(user);
-          setRouteSubscriptions(activeSubscriptions, session);
-
-          if (user && user.seen === false) {
-            navigate("/welcome");
-          }
-
-          if (!DEPLOYMENT_ENV) {
-            console.log("redirectUri  ", redirectUri);
-            if (redirectUri) {
-              await productViewCache.remove("user");
-              await productViewCache.remove("plans");
-              // await productViewCache.clearAll();
-            } else {
-              console.log("user", user);
-              console.log("plans", plans);
-              await productViewCache.set("plans", data.plans);
-              await productViewCache.set("user", user);
-
-              await productViewCache.set(
-                "activeSubscriptions",
-                activeSubscriptions
-              );
-              await productViewCache.set("session", session);
-            }
-          }
-          redirect.dispatch(Redirect.Action.REMOTE, { url: redirectUri });
-        } catch (err) {
-          // Handle network errors or other unexpected errors here.
-          setShopifyDown(true);
-          setPlans(err.plans);
-          // const retryInterval = 4000; // 4 seconds
-          // setTimeout(fetchDataSession, retryInterval);
-
-          console.error("Error fetching data", err);
+          throw new Error("unable to find your subscription");
         }
-        setSubscriptionRetrievalLoading(false);
-      };
-      // if (false && !DEPLOYMENT_ENV) {
-      //   const activeSubscriptions = await productViewCache.get(
-      //     "activeSubscriptions"
-      //   );
-      //   const session = await productViewCache.get("session");
-      //   const plans = await productViewCache.get("plans");
-      //   const user = await productViewCache.get("user");
-      //   if (plans && user && activeSubscriptions && session) {
-      //     try {
-      //       setPlans(plans);
-      //       assignUser(user);
+        if (!(await productViewCache.has("installed"))) {
+          await productViewCache.set("installed", "true");
+        }
+        setShopifyDown(false);
+        const data = await subscriptionsResponse.json();
+        console.log("session loaded");
+        setSessionLoaded(true);
 
-      //       setRouteSubscriptions(activeSubscriptions, session);
+        const { activeSubscriptions, session, user, redirectUri } = data;
+        const redirect = Redirect.create(app);
+        console.log("subscription redirectUri: ", redirectUri);
 
-      //       setSessionLoaded(true);
-      //     } catch (error) {
-      //       console.log("error", error);
-      //       await fetchDataSession();
-      //     }
-      //   } else {
-      //     await fetchDataSession();
-      //   }
-      // } else {
+        setPlans(data.plans);
 
-      await fetchDataSession();
-      // }
+        assignUser(user);
+        setRouteSubscriptions(activeSubscriptions, session);
+  
+        if(location.pathname !== "/"){
+            navigate("/", {target:"host"});
+        }
+        if (user && user.seen === false) {
+          navigate("/welcome");
+        }
+
+        if (!DEPLOYMENT_ENV) {
+          console.log("redirectUri  ", redirectUri);
+          if (redirectUri) {
+            await productViewCache.remove("user");
+            await productViewCache.remove("plans");
+            // await productViewCache.clearAll();
+          } else {
+            console.log("user", user);
+            console.log("plans", plans);
+            await productViewCache.set("plans", data.plans);
+            await productViewCache.set("user", user);
+
+            await productViewCache.set(
+              "activeSubscriptions",
+              activeSubscriptions
+            );
+            await productViewCache.set("session", session);
+          }
+        }
+        redirect.dispatch(Redirect.Action.REMOTE, { url: redirectUri });
+      } catch (err) {
+        // Handle network errors or other unexpected errors here.
+        setShopifyDown(true);
+        setPlans(err.plans);
+        // const retryInterval = 4000; // 4 seconds
+        // setTimeout(fetchDataSession, retryInterval);
+
+        console.error("Error fetching data", err);
+      }
+      setSubscriptionRetrievalLoading(false);
+    };
+    // if (false && !DEPLOYMENT_ENV) {
+    //   const activeSubscriptions = await productViewCache.get(
+    //     "activeSubscriptions"
+    //   );
+    //   const session = await productViewCache.get("session");
+    //   const plans = await productViewCache.get("plans");
+    //   const user = await productViewCache.get("user");
+    //   if (plans && user && activeSubscriptions && session) {
+    //     try {
+    //       setPlans(plans);
+    //       assignUser(user);
+
+    //       setRouteSubscriptions(activeSubscriptions, session);
+
+    //       setSessionLoaded(true);
+    //     } catch (error) {
+    //       console.log("error", error);
+    //       await fetchDataSession();
+    //     }
+    //   } else {
+    //     await fetchDataSession();
+    //   }
+    // } else {
+    try {
+
+      if (await productViewCache.has("installed")) {
+        await fetchDataSession();
+      } else {
+        setTimeout(async () => {
+          await fetchDataSession();
+        }, 3000);
+      }
+    } catch (error) {
+      console.log("token Error: ", error);
     }
     // fetchDataSession();
   }, [AllDependenciesLoaded, retrySession]);
@@ -1100,18 +1126,15 @@ export function DataProvidersProvider({ children }) {
     modifyState(setServerSentEventLoading, updateOption);
   }
 
-
-
-useEffect(()=>{
-  const lockEvents = [serverSentEventLoading, contentSaved ]
-if(lockEvents .some(event =>  event === true )){
-   setLockAllTasks (true); 
-}
-if(lockEvents.every(event => event === false)){
-  setLockAllTasks(false);
-}
-
-},[serverSentEventLoading, contentSaved])
+  useEffect(() => {
+    const lockEvents = [serverSentEventLoading, contentSaved];
+    if (lockEvents.some((event) => event === true)) {
+      setLockAllTasks(true);
+    }
+    if (lockEvents.every((event) => event === false)) {
+      setLockAllTasks(false);
+    }
+  }, [serverSentEventLoading, contentSaved]);
 
   function assignContentSaved(updateOptions) {
     modifyState(setContentSaved, updateOptions);
@@ -1143,16 +1166,20 @@ if(lockEvents.every(event => event === false)){
       };
 
       const clearLocalStorage = async () => {
+        if (location.pathname === "/description") {
+          console.log("hit description refresh");
+          navigate("/");
+        }
         if (DEPLOYMENT_ENV) {
           // await productViewCache.clearAll();
         }
       };
 
-      window.addEventListener("beforeunload", handleBeforeUnload);
+      window.addEventListener("beforeunload", clearLocalStorage);
 
-      return () => {
-        window.removeEventListener("beforeunload", handleBeforeUnload);
-      };
+      // return () => {
+      //   window.removeEventListener("beforeunload", handleBeforeUnload);
+      // };
     };
   }, []);
 
@@ -1221,4 +1248,4 @@ if(lockEvents.every(event => event === false)){
       {children}
     </DataProvidersContext.Provider>
   );
-}
+};

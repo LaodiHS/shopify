@@ -76,11 +76,14 @@ export default defineConfig({
     "process.env.SHOPIFY_API_KEY": JSON.stringify(process.env.SHOPIFY_API_KEY),
   },
   build: {
+    
     sourcemap:true,
   },
   esbuild: {
     pure: process.env.NODE_ENV === 'production' ? ['console.log', 'console.warn'] : [],
     sourcemap:true,
+    // drop: ['console', 'debugger'],
+      
   },
 
   resolve: {

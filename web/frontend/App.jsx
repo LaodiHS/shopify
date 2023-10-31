@@ -152,7 +152,7 @@ export default function App() {
 function LandingPage({ animationRef }) {
   const arrowRef = useRef(null);
   const [arrowAnimation, setArrowAnimation] = useState("animate__bounceIn");
-  const { subscriptions, setUser, uncachedFetchData, DataProviderNavigate } =
+  const { subscriptions, setUser, uncachedFetchData, allAssets , DataProviderNavigate } =
     useDataProvidersContext();
 
   useIonViewDidEnter(() => {
@@ -253,7 +253,7 @@ function LandingPage({ animationRef }) {
               height: "300px",
               backgroundImage: `url(${readingTree})`,
             }}
-          ></div>
+          />
           <p className="ion-text-center">
             Experience a seamless journey with our amazing features.
           </p>
@@ -325,7 +325,14 @@ function Description() {
     contentSaved,
     user,
   } = useDataProvidersContext();
+useEffect(()=>{
 
+
+  return ()=>
+  {
+
+  }
+},[])
   return (
     <IonPage ref={refDictionary["/description"]}>
       <IonicHeaderComponent
@@ -369,7 +376,7 @@ function Description() {
                 icon={descriptionWorkStation}
               />
             </IonButton>
-            <IonButtons slot="end"></IonButtons>
+            <IonButtons slot="end"/>
           </>
         }
       />
@@ -595,6 +602,7 @@ function IonMenuNav() {
     lockAllTasks,
     contentSaved,
     sessionLoaded,
+    allAssets,
   } = useDataProvidersContext();
   const { aiWorkStationSetter, aiWorkStation } = useNavigationDataContext();
   useEffect(() => {
@@ -627,7 +635,8 @@ function IonMenuNav() {
         access: checkFeatureAccess(["free"]),
         disabled: false,
         label: "Description Selection",
-        icon: pencilCase,
+        icon: allAssets["pencil-case.svg"],
+        //pencilCase,
         clickHandler: async (event) => {
           await DataProviderNavigate("/product-details");
         },
@@ -636,7 +645,7 @@ function IonMenuNav() {
         access: checkFeatureAccess(["free"]),
         disabled: false,
         label: "Description Assist",
-        icon: aiIcon,
+        icon: allAssets["ai-icon.svg"],
         clickHandler: async (event) => {
           await assistRequest(aiWorkStation);
         },
@@ -645,7 +654,7 @@ function IonMenuNav() {
         access: checkFeatureAccess(["free"]),
         disabled: false,
         label: "Clear Description",
-        icon: clear,
+        icon: allAssets["clear2.svg"],
         clickHandler: async (event) => {
           await clearAssistResult(aiWorkStation);
         },
@@ -655,7 +664,7 @@ function IonMenuNav() {
         disabled: false,
         label: "Save Description",
         saveSignal: true,
-        icon: save,
+        icon: allAssets["save.svg"],
         clickHandler: async (event) => {
           await updateArticleMethod(aiWorkStation, markupText);
         },
@@ -666,7 +675,7 @@ function IonMenuNav() {
         access: checkFeatureAccess(["free"]),
         disabled: false,
         label: "Description Selection",
-        icon: pencilCase,
+        icon: allAssets["pencil-case.svg"],
         clickHandler: async (event) => {
           await DataProviderNavigate("/product-details", { target: "host" });
         },
@@ -675,7 +684,7 @@ function IonMenuNav() {
         access: checkFeatureAccess(["free"]),
         disabled: false,
         label: "Description Assist",
-        icon: aiIcon,
+        icon: allAssets["ai-icon.svg"],
         clickHandler: async (event) => {
           await assistRequest(aiWorkStation);
         },
@@ -684,7 +693,7 @@ function IonMenuNav() {
         access: checkFeatureAccess(["free"]),
         disabled: false,
         label: "Clear Description",
-        icon: clear,
+        icon: allAssets["clear2.svg"],
         clickHandler: async (event) => {
           await clearAssistResult(aiWorkStation);
         },
@@ -694,7 +703,7 @@ function IonMenuNav() {
         disabled: false,
         label: "Save Description",
         saveSignal: true,
-        icon: save,
+        icon: allAssets["save.svg"],
         clickHandler: async (event) => {
           await updateArticleMethod(aiWorkStation, markupText);
         },
@@ -705,7 +714,7 @@ function IonMenuNav() {
         access: checkFeatureAccess(["free"]),
         disabled: false,
         label: "Products Pages",
-        icon: bookshelf,
+        icon: allAssets["bookshelf7.svg"],
         clickHandler: async (event) => {
           await DataProviderNavigate("/", { target: "host" });
         },
@@ -747,7 +756,7 @@ function IonMenuNav() {
         <IonRouterOutlet key="IonRouterOutlet">
           <Routes key="Routes">
             <Route
-              key="/"
+              key="root"
               index
               path="/"
               element={<ProductsCard animationRef={refDictionary["/"]} />}

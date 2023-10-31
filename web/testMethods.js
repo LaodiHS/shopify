@@ -2,7 +2,7 @@ import "dotenv/config";
 import { readJSONFromFileAsync } from "./userStore.js";
 import { Readable, pipeline } from "stream";
 
-const MockGptTurboResponse = true;
+const MockGptTurboResponse = false;
 export const max_tokens = 1000;
 let MockGptTurboPrompt = false;
 
@@ -48,6 +48,7 @@ export function checkRequiredProps(obj) {
     return;
   }
 
+  
   const functionString = arguments.callee.toString();
 
   const paramNames =

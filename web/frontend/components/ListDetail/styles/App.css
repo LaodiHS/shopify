@@ -395,13 +395,47 @@ mark {
   stroke: #59922b;
 }
 
-.ct-axis-title {
-  overflow: visible;
+:root {
+  --font-color-light: #333333; /* Default font color for light theme */
+  --font-color-dark: #ffffff; /* Default font color for dark theme */
 }
+.ct-axis-title{
+  overflow: visible;
+
+
+    font-size: 15px;
+    font-family: 'Baloo', sans-serif;
+  letter-spacing: 3px;
+ fill:#3E517A;
+}
+
+.ct-grid{
+  stroke:rgba(131, 101, 1, 0.753); 
+}
+.ct-label{
+  color:rgba(131, 101, 1, 0.753); 
+}
+
+@media (prefers-color-scheme: light) {
+  .ct-grid{
+    stroke:rgba(131, 101, 1, 0.653);  
+      stroke-dasharray: 0.8px;
+  }
+} 
+
+@media (prefers-color-scheme: dark) {
+  .ct-grid{
+    stroke:rgba(131, 101, 1, 0.173); 
+ 
+  }
+} */
+
 
 #ct-threshold-mask-above {
   stroke: #59922b;
 }
+
+
 
 @media screen and (max-width: 500px) {
   .ct-bar {
@@ -434,9 +468,7 @@ mark {
   opacity: 0.8;
 }
 
-.ct-axis-title {
-  font-size: 13px;
-}
+
 
 /* 
 

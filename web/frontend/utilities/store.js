@@ -391,7 +391,18 @@ class LHistory {
   sync_getCurrentCursors() {
     return this.pageState.get("pagingState");
   }
-
+async clearPagingHistory(){
+  const existingCursors = this.sync_getCurrentCursors();
+  console.log("existing cursors", existingCursors);
+  
+  if (existingCursors.length > 0) {
+    for (const cursor of existingCursors) {
+      await productViewCache.remove(cursor)
+      
+    }
+  await  this.resetToDefaultState();
+  }
+}
   async *sync_fetchSyncData(uncachedFetchData, productsPerPage) {
     const existingCursors = this.sync_getCurrentCursors();
     console.log("existing cursors", existingCursors);

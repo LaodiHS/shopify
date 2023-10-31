@@ -53,9 +53,12 @@ let workerPool;
 const taskQueue = [];
 
 const CreateWorkers = createContext(null);
-export function useWorkersContext() {
+
+export const useWorkersContext = () => {
   return useContext(CreateWorkers);
-}
+};
+
+export { CreateWorkers };
 
 export function Workers({ children }) {
   const [workersLoaded, setWorkersLoaded] = useState(false);

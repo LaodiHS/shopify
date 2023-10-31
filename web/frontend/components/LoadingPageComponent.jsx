@@ -85,8 +85,19 @@ export function LoadingPageComponent({ progress, type }) {
                     textOverflow: "ellipsis",
                   }}
                 >
-                  nectar<sub style={{fontFamily:  "'Baloo', sans-serif",letterSpacing:"none", position:"relative",
-                    fontSize: "small", top:"-5.7em" ,linSpacing:"1.5px", color:"tangerine"}}>AI</sub>
+                  nectar
+                  <sub
+                    style={{
+                      fontFamily: "'Baloo', sans-serif",
+                      letterSpacing: "2px",
+                      position: "relative",
+                      fontSize: "30px",
+                      top: "-1.7em",
+                      linSpacing: "1.5px",
+                    }}
+                  >
+                    AI
+                  </sub>
                 </IonText>
               </IonCol>
             </IonRow>
@@ -150,9 +161,9 @@ export function LoadingPageComponent({ progress, type }) {
                   backgroundPosition: "center center",
                   backgroundSize: "contain",
                   backgroundRepeat: "no-repeat",
-                  height: iconSize + "px",
+                  height: `${iconSize}px`,
                 }}
-              ></IonCol>
+              />
               <IonCol
                 key="nectarContainerRowColRightCol"
                 size="5"
@@ -163,7 +174,7 @@ export function LoadingPageComponent({ progress, type }) {
                   style={{
                     color: "#ef8561",
                     letterSpacing: "1.7vw",
-                    marginTop: iconSize + 50 + "px",
+                    marginTop: `${iconSize + 50}px`,
                     fontFamily: "'Baloo', sans-serif",
                     fontSize: "5vw",
                     whiteSpace: "nowrap" /* Prevents wrapping */,
@@ -171,8 +182,19 @@ export function LoadingPageComponent({ progress, type }) {
                     textOverflow: "ellipsis",
                   }}
                 >
-                  nectar<sub style={{fontFamily:  "'Baloo', sans-serif",letterSpacing:"2px", position:"relative",
-                    fontSize: "30px", top:"-1.7em" ,linSpacing:"1.5px"}}>AI</sub>
+                  nectar
+                  <sub
+                    style={{
+                      fontFamily: "'Baloo', sans-serif",
+                      letterSpacing: "2px",
+                      position: "relative",
+                      fontSize: "30px",
+                      top: "-1.7em",
+                      linSpacing: "1.5px",
+                    }}
+                  >
+                    AI
+                  </sub>
                 </IonText>
               </IonCol>
 
@@ -192,11 +214,11 @@ export function LoadingPageComponent({ progress, type }) {
                       key="nectarContainerLeavesContainerWidthAnimationContainerLeavesId"
                       id="leaves"
                     >
-                      <i key="l11"></i>
-                      <i key="l12"></i>
-                      <i key="l13"></i>
-                      <i key="l14"></i>
-                      <i key="l15"></i>
+                      <i key="l11" />
+                      <i key="l12" />
+                      <i key="l13" />
+                      <i key="l14" />
+                      <i key="l15" />
                       <i key="l16"></i>
                       <i key="l17"></i>
                       <i key="l18"></i>
@@ -210,14 +232,11 @@ export function LoadingPageComponent({ progress, type }) {
                       <i key="l116"></i>
                       <i key="l117"></i>
                       <i key="l118"></i>
-                      <i key="l119"></i>
-                      <i key="l120"></i>
-                      <i key="l121"></i>
                     </div>
-                    <div key="stars" id="stars"></div>
-                    <div key="stars2" id="stars2"></div>
-                    <div key="stars3" id="stars3"></div>
-                    <div key="stars4" id="stars4"></div>
+                    <div key="stars" id="stars" />
+                    <div key="stars2" id="stars2" />
+                    <div key="stars3" id="stars3" />
+                    <div key="stars4" id="stars4" />
                   </div>
                 </div>
               </IonCol>
@@ -226,15 +245,49 @@ export function LoadingPageComponent({ progress, type }) {
                 style={{
                   display: "grid",
 
-                  gridGap: "10px",
-
-                  gridTemplateColumns: "5fr 2fr",
+                  gridGap: "0px",
+                  gridTemplateRows: "1fr 1fr 1fr",
+               
                 }}
                 size="12"
                 // className="ion-hide-sm-down"
               >
                 <h3
                   key="LoadingText"
+                  style={{
+                    justifySelf: "center",
+                    alignSelf: "center",
+                    fontSize: "2.5vw",
+                    fontFamily: "Baloo, san serif",
+                    color: "black",
+                  }}
+                >
+                  Reading Your Catalog And Product Data
+                </h3>
+                <h1
+                  style={{
+                    justifySelf: "center",
+                    alignSelf: "center",
+                    fontSize: "2.5vw",
+                    fontFamily: "Baloo, san serif",
+                    color: "black",
+                  }}
+                >
+                  &
+                </h1>
+                <IonCol
+                key="ColGrid1"
+                style={{
+                  margin:0,
+                  padding:0,
+                  display: "grid",
+                  gridGap: "5px",
+                  gridTemplateColumns: "3fr  2fr",
+                }}
+                size="12"
+                // className="ion-hide-sm-down"
+              >
+                <h3
                   style={{
                     justifySelf: "end",
                     alignSelf: "center",
@@ -243,7 +296,7 @@ export function LoadingPageComponent({ progress, type }) {
                     color: "black",
                   }}
                 >
-                  Reading Your Catalog And Product Data
+                  Generating Reports
                 </h3>
                 <div
                   key="LoaderIconContainer"
@@ -254,12 +307,13 @@ export function LoadingPageComponent({ progress, type }) {
                     display: "grid",
                   }}
                 >
-                  <div key="LoaderIconContainerIcon" className="loader"></div>
+                  <div key="LoaderIconContainerIcon" className="loader" />
                 </div>
+                </IonCol>
               </IonCol>
             </IonRow>
 
-            <IonRow key="spacer"></IonRow>
+            <IonRow key="spacer" />
           </IonGrid>
         </IonContent>
       </div>

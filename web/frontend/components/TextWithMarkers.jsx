@@ -679,7 +679,7 @@ const cleanText = ({ str, selectedImageMap, mappedLegend }) => {
             return false;
           });
           console.log("imageSrc: ", ImageSrc);
-          parts.push(`<img src=${ImageSrc || ""}  />`);
+          parts.push(`<img src=${ImageSrc || "https://placehold.co/600x400?text=No+Image+Available"}  />`);
         }
 
         lastIndex = idWithBracketsRegex.lastIndex;
