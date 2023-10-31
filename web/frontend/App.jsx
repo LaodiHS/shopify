@@ -816,7 +816,7 @@ function IonMenuNav() {
           slot="bottom"
         >
           {tabs[currentRoute]?.map((tab, index) => {
-            const buttonId = "tabButtonId" + index;
+            const buttonId = `tabButtonId${index}`;
 
             return (
               <IonTabButton
