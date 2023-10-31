@@ -15,7 +15,6 @@ build:
     REDIS_API_UPSTASH_PASSWORD_TEST_ENV: "rediss://default:3a837f2df9094869bed83d7a69e9f32a@engaging-moose-36430.upstash.io:36430"
     REDIS_API_UPSTASH_PASSWORD: "rediss://default:ccd76f3b7a024da2aa51df1950d1c80b@immune-sole-44892.upstash.io:44892"
     REDIS_API_PASSWORD: "au34F3z3Bn8izOjWQ9zPITaQ6MYTE3CP"
-    OPEN_AI_SECRET_KEY: "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"
     
 
 
