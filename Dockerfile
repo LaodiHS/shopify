@@ -1,6 +1,6 @@
 FROM node:18-alpine
 
-RUN echo "Docker Build Starting..."
+# RUN echo "Docker Build Starting..."
 
 ARG SHOPIFY_API_KEY
 # Install Git
