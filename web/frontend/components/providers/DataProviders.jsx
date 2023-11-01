@@ -57,7 +57,7 @@ import {
   honeyCombGridDrop,
   readingBag,
 } from "../../assets";
-
+import * as svgAssets from "../../assets"
 import {
   useWorkersContext,
   ImageCachePre,
@@ -65,7 +65,9 @@ import {
   CreateWorkers,
 } from "../../components";
 import { useAuthenticatedFetch } from "../../hooks";
-const svgAssets = import.meta.glob("../../assets/*.svg");
+
+console.log('assets: ', svgAssets)
+// const svgAssets = import.meta.glob("../../assets/*.svg");
 // import {TRAINING_DATA} from 'https://storage.googleapis.com/jmstore/TensorFlowJS/EdX/TrainingData/fashion-mnist.js';
 // import { useWorkerContext } from './ImageCache';
 // async function loadYOLOModel() {
@@ -158,7 +160,7 @@ if (import.meta.hot) {
 //   reader.readAsDataURL(blob);
 // }
 
-function logShopifyResponse(errorCode) {
+const logShopifyResponse = (errorCode) => {
   switch (errorCode) {
     case 200:
       console.log(
@@ -390,19 +392,15 @@ export const DataProvidersProvider = ({ children }) => {
   const [subscriptions, setSubscriptions] = useState(["free"]);
   const [currentSession, setCurrentSession] = useState({});
   const [sessionLoaded, setSessionLoaded] = useState(false);
-  const [subscriptionRetrievalLoading, setSubscriptionRetrievalLoading] =
-    useState(false);
+  const [subscriptionRetrievalLoading, setSubscriptionRetrievalLoading] = useState(false);
   const [contextualOptions, setContextualOptions] = useState({});
   const [selectedCollections, setSelectedCollections] = useState([]);
-
   const [selectedImageText, setSelectedImageText] = useState("0 Items");
   const [selectedImages, setSelectedImages] = useState([]);
   const [selectedImageMap, setSelectedImageMap] = useState({});
   const [languageOptions, setLanguageOptions] = useState([]);
   const [assistRequestInstance, setAssistRequestInstance] = useState(null);
-  const [imageSelectionModalIsOpen, setImageSelectionModalIsOpen] =
-    useState(false);
-
+  const [imageSelectionModalIsOpen, setImageSelectionModalIsOpen] = useState(false);
   const [wordList, setWordList] = useState([
     "Reliable",
     "Innovative",
@@ -436,10 +434,7 @@ export const DataProvidersProvider = ({ children }) => {
     "Sleek",
   ]);
   const [pagingHistory, setPagingHistory] = useState(null);
-
-  const [clearAssistResultMethod, setClearAssistResultMethod] = useState(
-    new Map()
-  );
+  const [clearAssistResultMethod, setClearAssistResultMethod] = useState(new Map());
   const [refDictionary, setRefDictionary] = useState(NavigationRefs);
   const [mappedLegend, setMappedLegend] = useState([[]]);
   const [legendReversed, setLegendReversed] = useState({});
@@ -449,24 +444,18 @@ export const DataProvidersProvider = ({ children }) => {
   const [lockAllTasks, setLockAllTasks] = useState(false);
   const [updateArticleMethod, setUpdateArticleMethod] = useState(null);
   const [markupText, setMarkupText] = useState("");
-
   const [plans, setPlans] = useState({});
-
   const [shopifyDown, setShopifyDown] = useState(false);
-
   const [retrySession, setRetrySession] = useState(false);
-
   const [dependenciesLoaded, setDependenciesLoaded] = useState({});
   const [AllDependenciesLoaded, setAllDependenciesLoaded] = useState(false);
   const [assetsLoaded, setAssetsLoaded] = useState(false);
   const [allAssets, setAllAssets] = useState({}); 
   const { workersLoaded} = useWorkersContext();
-
-
-   const [presentToast] = useIonToast();
-   const app = useAppBridge();
-   const context = useShopifyContext();
-   const navigate = useNavigate();
+  const [presentToast] = useIonToast();
+  const app = useAppBridge();
+  const context = useShopifyContext();
+  const navigate = useNavigate();
   const fetch = useAuthenticatedFetch(); // Make sure you have this hook defined somewhere
 
   function defineShopifyDown(retryValue) {
@@ -476,7 +465,7 @@ export const DataProvidersProvider = ({ children }) => {
     
 
 
-  async function fetchDataWithCache({ url, method, body }) {
+  const fetchDataWithCache = async ({ url, method, body }) => {
     if (sessionLoaded) {
       const cached_url_method_body_parameters =
         url + JSON.stringify(method) + JSON.stringify(body);
@@ -540,69 +529,67 @@ export const DataProvidersProvider = ({ children }) => {
           }
         }
       }
-    } else {
-      console.error("call made outside session: ", url);
+      return;
     }
+    console.error("call made outside session: ", url);
   }
-  async function uncachedFetchData({ url, method = "GET", body }) {
-    if (sessionLoaded) {
-      if (!fetch) {
-        throw new Error("authenticated fetch required");
-      }
-
-      const boxed = { data: null, error: null };
-      try {
-        const options = {
-          method,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        };
-
-        if (body) {
-          options.body = JSON.stringify(body);
-        }
-
-        const response_data = await fetch(url, options);
-
-        if (!response_data.ok) {
-          console.error("response ok", logShopifyResponse(response.status));
-        }
-
-        const data = await response_data.json();
-
-        boxed.data = data?.data;
-        if (response_data.error) {
-          boxed.error = response_data.error;
-        }
-        if (data?.error) {
-          boxed.error = data.error;
-        }
-      } catch (error) {
-        console.error("fetch error:", error);
-        presentToast({
-          message: "There was a network error! Please try again later.",
-          duration: 5000,
-          position: "middle", // top, bottom, middle
-          onDidDismiss: (e) => {
-            //setDisableButtons(false);
-          },
-        });
-
-        console.log("error", error);
-        boxed.error = error || null;
-      }
-      return boxed;
-    } else {
-      console.error("call made outside session: ", url);
+  const uncachedFetchData = async ({ url, method = "GET", body }) => {
+    if (!sessionLoaded) {
+      return;
     }
+    if (!fetch) {
+      throw new Error("authenticated fetch required");
+    }
+
+    const boxed = { data: null, error: null };
+    try {
+      const options = {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      };
+
+      if (body) {
+        options.body = JSON.stringify(body);
+      }
+
+      const response_data = await fetch(url, options);
+
+      if (!response_data.ok) {
+        console.error("response ok", logShopifyResponse(response.status));
+      }
+
+      const data = await response_data.json();
+
+      boxed.data = data?.data;
+      if (response_data.error) {
+        boxed.error = response_data.error;
+      }
+      if (data?.error) {
+        boxed.error = data.error;
+      }
+    } catch (error) {
+      console.error("fetch error:", error);
+      presentToast({
+        message: "There was a network error! Please try again later.",
+        duration: 5000,
+        position: "middle", // top, bottom, middle
+        onDidDismiss: (e) => {
+          //setDisableButtons(false);
+        },
+      });
+
+      console.log("error", error);
+      boxed.error = error || null;
+    }
+    return boxed;
+
   }
   useEffect(async () => {
     const token = await getSessionToken(app);
     console.log("token: ", token);
-
-  
-    let session = await app.getState();
+    const session = await app.getState();
     console.log("session: ", session);
     return () => {};
   }, []);
@@ -619,10 +606,12 @@ export const DataProvidersProvider = ({ children }) => {
           IndexedSessionStorage: Boolean(db),
         }));
 
-        const assets = Object.entries(svgAssets);
+      
 
-        for (const [src, svg] of assets) {
+        for (const asset in svgAssets) {
           try {
+            const src = await svgAssets[asset]
+            console.log('s--->', src)
             const blobUrl = await ImageCachePre(
               productViewCache,
               src,
@@ -630,8 +619,6 @@ export const DataProvidersProvider = ({ children }) => {
             );
 
             const assetName = src.slice().split("/").pop();
-
-            //  setAllAssets((pre) => ({ ...pre, [assetName]: blobUrl }));
             allAssets[assetName] = blobUrl;
           } catch (error) {
             console.error("error preloading svg assets: ", error);
@@ -643,8 +630,8 @@ export const DataProvidersProvider = ({ children }) => {
         pageHistory.getPagingState();
         setPagingHistory(pageHistory);
         setDependenciesLoaded((prev) => ({ ...prev, pagingHistory: true }));
-      
       }
+      
       return async () => {
         console.log("closing db connection");
         if (!indexDb) {
@@ -841,59 +828,58 @@ export const DataProvidersProvider = ({ children }) => {
         hasAccess: true,
         message: (label) => label,
       };
-    } else {
-      const required = combinedSubscriptions.slice();
-
-      if (required.length > 1) {
-        required[required.length - 1] = "or " + required[required.length - 1];
-      }
-      const requiredLabel = required;
-
-      if (!requiredLabel) return null;
-
-      return {
-        hasAccess: false,
-        lockButton: (text) => (
-          <IonList>
-            <IonItem
-              className="ion-padding-top ion-text-capitalize ion-text-wrap"
-              button="true"
-              slot="start"
-              fill="clear"
-              onClick={(e) => DataProviderNavigate("/subscriptions")}
-              color="warning"
-            >
-              {requiredLabel && requiredLabel?.slice(0, 1)[0]}{" "}
-              <IonLabel slot="start" className="ion-text-wrap ion-padding-top">
-                Honey Members{" "}
-              </IonLabel>{" "}
-              <IonIcon size="large" slot="end" icon={beehive}></IonIcon>
-            </IonItem>
-          </IonList>
-        ),
-        message: (label) => (
-          <IonText
-            style={{ cursor: "pointer" }}
-            onClick={(e) => DataProviderNavigate("/subscriptions")}
-            color="warning"
-            className="ion-text-capitalize ion-text-wrap"
-          >
-            With {requiredLabel && requiredLabel?.slice(0, 1)[0]} Honey
-          </IonText>
-        ),
-        some: () => (
-          <IonText
-            style={{ cursor: "pointer" }}
-            onClick={(e) => DataProviderNavigate("/subscriptions")}
-            color="warning"
-            className="ion-text-capitalize ion-text-wrap"
-          >
-            Some Features Require A {requiredLabel.slice().join(", ")}{" "}
-            Subscription.
-          </IonText>
-        ),
-      };
     }
+    const required = combinedSubscriptions.slice();
+
+    if (required.length > 1) {
+      required[required.length - 1] = `or ${required[required.length - 1]}`;
+    }
+    const requiredLabel = required;
+
+    if (!requiredLabel) return null;
+
+    return {
+      hasAccess: false,
+      lockButton: (text) => (
+        <IonList>
+          <IonItem
+            className="ion-padding-top ion-text-capitalize ion-text-wrap"
+            button="true"
+            slot="start"
+            fill="clear"
+            onClick={(e) => DataProviderNavigate("/subscriptions")}
+            color="warning"
+          >
+            {requiredLabel && requiredLabel?.slice(0, 1)[0]}{" "}
+            <IonLabel slot="start" className="ion-text-wrap ion-padding-top">
+              Honey Members{" "}
+            </IonLabel>{" "}
+            <IonIcon size="large" slot="end" icon={beehive}></IonIcon>
+          </IonItem>
+        </IonList>
+      ),
+      message: (label) => (
+        <IonText
+          style={{ cursor: "pointer" }}
+          onClick={(e) => DataProviderNavigate("/subscriptions")}
+          color="warning"
+          className="ion-text-capitalize ion-text-wrap"
+        >
+          With {requiredLabel && requiredLabel?.slice(0, 1)[0]} Honey
+        </IonText>
+      ),
+      some: () => (
+        <IonText
+          style={{ cursor: "pointer" }}
+          onClick={(e) => DataProviderNavigate("/subscriptions")}
+          color="warning"
+          className="ion-text-capitalize ion-text-wrap"
+        >
+          Some Features Require A {requiredLabel.slice().join(", ")}{" "}
+          Subscription.
+        </IonText>
+      ),
+    };
   }
 
   const SubscriptionAndSession = {

@@ -35,6 +35,7 @@ ion-toast.custom-toast::part(message) {
 ion-accordion {
   margin: 0 auto;
 }
+
 /* 
 ion-accordion.accordion-expanding,
 ion-accordion.accordion-expanded {
@@ -53,7 +54,8 @@ ion-accordion.accordion-expanding ion-item[slot='header'],
 ion-accordion.accordion-expanded ion-item[slot='header'] {
   --background: var(--ion-color-primary);
   --color: var(--ion-color-primary-contrast);
-} */
+} 
+*/
 
 .emoji {
   font-size: 5em;
@@ -183,7 +185,9 @@ ion-title div {
     font-size: 18px;
     letter-spacing: 2px;
   }
-} */
+} 
+*/
+
 
 .container {
   display: grid;
@@ -314,7 +318,8 @@ mark {
     flex-direction: row;
     justify-content: space-around;
     margin-top: 20px;
-} */
+} 
+*/
 
 .legend-item {
   /* display: flex; */
@@ -428,7 +433,7 @@ mark {
     stroke:rgba(131, 101, 1, 0.173); 
  
   }
-} */
+}
 
 
 #ct-threshold-mask-above {
