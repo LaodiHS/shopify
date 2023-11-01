@@ -10,6 +10,7 @@ ENV SHOPIFY_API_SECRET="a4ca9424d4961d3f0789eb75f8fd8e08"
 EXPOSE 8081
 WORKDIR /app
 COPY web .
+RUN npm install -g npm@10.2.2
 RUN npm install
 RUN cd frontend && npm install && npm run build
 CMD ["npm", "run", "serve"]
