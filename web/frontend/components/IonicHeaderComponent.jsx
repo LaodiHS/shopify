@@ -1,13 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  IonContent,
   IonHeader,
-  IonPage,
   IonTitle,
   IonToolbar,
-  IonGrid,
-  IonRow,
-  IonCol,
   IonProgressBar,
 } from "@ionic/react";
 import { useDataProvidersContext } from ".";

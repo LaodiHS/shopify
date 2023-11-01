@@ -17,18 +17,20 @@ import {
   // useIonViewWillEnter,
   // useIonViewDidLeave,
   // useIonViewWillLeave,
-  IonContent,
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonSpinner,
+  // IonContent,
+  // IonGrid,
+  // IonRow,
+  // IonCol,
+  // IonSpinner,
   IonText,
-  IonButtons,
-  IonButton,
+  // IonButtons,
+  // IonButton,
   IonIcon,
-  IonPage,
+  // IonPage,
   IonList,
-  IonProgressBar,
+  // IonProgressBar,
+  useIonToast, 
+  useIonRouter
 } from "@ionic/react";
 import {
   //useAuthenticatedFetch,
@@ -42,14 +44,13 @@ import {
 } from "../../utilities/store";
 import { indexDb } from "../../utilities/IndexDB";
 import { useLocation, useNavigate } from "react_router_dom";
-import { request } from "@shopify/app-bridge/actions/AuthCode";
+// import { request } from "@shopify/app-bridge/actions/AuthCode";
 import { useShopifyContext } from "../providers/ShopifyContext";
 import { getSessionToken } from "@shopify/app-bridge/utilities";
 import { Redirect } from "@shopify/app-bridge/actions";
-import { SessionToken, TitleBar } from "@shopify/app-bridge/actions";
-import { useIonToast, useIonRouter } from "@ionic/react";
-import { AnimatedContent } from "./";
-import { NavigationRefs } from "./";
+// import { SessionToken, TitleBar } from "@shopify/app-bridge/actions";
+
+import {NavigationRefs,  AnimatedContent } from "./";
 
 
 import * as svgAssets from "../../assets"
@@ -60,7 +61,7 @@ import {
 } from "../../components";
 import { useAuthenticatedFetch } from "../../hooks";
 
-console.log('assets: ', svgAssets)
+
 // const svgAssets = import.meta.glob("../../assets/*.svg");
 // import {TRAINING_DATA} from 'https://storage.googleapis.com/jmstore/TensorFlowJS/EdX/TrainingData/fashion-mnist.js';
 // import { useWorkerContext } from './ImageCache';

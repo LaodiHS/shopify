@@ -1,21 +1,23 @@
-import React, { useEffect, useRef, useState } from "react";
+import model from "wink-eng-lite-web-model";
+import winkNLP from "wink-nlp";
 // import cloud from "d3-cloud";
 // import * as d3 from "d3";
-import winkNLP from "wink-nlp";
+
 // import ner from 'wink-ner';
-import model from "wink-eng-lite-web-model";
+import React, { useEffect, useRef, useState } from "react";
+
 // import {winkTokenixer} from "wink-tokenizer";
-import { IonRow, IonCol, IonButton, IonText } from "@ionic/react";
+import {
+  // IonRow,
+  IonCol,
+
+  // IonButton, IonText
+} from "@ionic/react";
 
 // import debounce from "lodash.debounce";
 
-
-
 // import { useDataProvidersContext, InformationIcon } from "..";
 // var tokenize = winkTokenizer().tokenize;
-
-
-
 
 const nlp = winkNLP(model);
 // Obtain "its" helper to extract item properties.
@@ -86,13 +88,10 @@ const patterns = [
     patterns: ["[NOUN] [PROPN]"],
   },
 
-   {
+  {
     name: "productName",
     patterns: ["[PROPN]"],
-  }
-
-
-  
+  },
 ];
 
 const patternCount = nlp.learnCustomEntities(patterns, {
@@ -101,74 +100,66 @@ const patternCount = nlp.learnCustomEntities(patterns, {
   usePOS: true,
 });
 
-
-
 function rankResults(results, term) {
-    // Define a scoring function based on different factors
-    const scoreResults = (result) => {
-      let score = 0;
-  
-      // Example: Give higher score if term is in the title
-      if (result.title.toLowerCase().includes(term.toLowerCase())) {
-        score += 10;
-      }
-  
-      // Example: Give higher score if term is in the snippet
-      if (result.snippet.toLowerCase().includes(term.toLowerCase())) {
-        score += 5;
-      }
-  
-      // Add more factors and adjust scoring as needed
-  
-      return score;
-    };
-  
-    // Apply scoring function to each result
-    const rankedResults = results.map((result) => ({
-      ...result,
-      score: scoreResults(result),
-    }));
-  
-    // Sort the results based on the scores in descending order
-    rankedResults.sort((a, b) => b.score - a.score);
-  
-    return rankedResults;
+  // Define a scoring function based on different factors
+  const scoreResults = (result) => {
+    let score = 0;
+
+    // Example: Give higher score if term is in the title
+    if (result.title.toLowerCase().includes(term.toLowerCase())) {
+      score += 10;
+    }
+
+    // Example: Give higher score if term is in the snippet
+    if (result.snippet.toLowerCase().includes(term.toLowerCase())) {
+      score += 5;
+    }
+
+    // Add more factors and adjust scoring as needed
+
+    return score;
+  };
+
+  // Apply scoring function to each result
+  const rankedResults = results.map((result) => ({
+    ...result,
+    score: scoreResults(result),
+  }));
+
+  // Sort the results based on the scores in descending order
+  rankedResults.sort((a, b) => b.score - a.score);
+
+  return rankedResults;
+}
+
+function findBestMatch(ri, e, text) {
+  let index = null;
+  if (ri.query.searchinfo.totalhits === 0) return index;
+  if (e.out(its.type) === "simpleADJ" && !e.out(its.value).match(/^[A-Z]/))
+    return index;
+
+  const term = e.out(its.normal);
+  const termRegex = new RegExp(term, "i");
+
+  // Extract a snippet of text around the matched term for contextual analysis
+  const termIndex = text.toLowerCase().indexOf(term.toLowerCase());
+  const snippetStart = Math.max(termIndex - 50, 0); // Start 50 characters before the term
+  const snippetEnd = Math.min(termIndex + term.length + 50, text.length); // End 50 characters after the term
+  const snippet = text.substring(snippetStart, snippetEnd);
+
+  // Analyze the snippet for additional context
+  if (snippet.match(termRegex)) {
+    for (let k = 0; k < ri.query.search.length; k += 1) {
+      const riqsk = ri.query.search[k];
+      if (riqsk.title.match(termRegex) || riqsk.snippet.match(termRegex))
+        return { pageid: riqsk.pageid, title: riqsk.title };
+    }
   }
 
+  return null;
 
-
-
-
-  function findBestMatch(ri, e, text) {
-    let index = null;
-    if (ri.query.searchinfo.totalhits === 0) return index;
-    if (e.out(its.type) === "simpleADJ" && !e.out(its.value).match(/^[A-Z]/))
-      return index;
-  
-    const term = e.out(its.normal);
-    const termRegex = new RegExp(term, "i");
-  
-   // Extract a snippet of text around the matched term for contextual analysis
-    const termIndex = text.toLowerCase().indexOf(term.toLowerCase());
-    const snippetStart = Math.max(termIndex - 50, 0); // Start 50 characters before the term
-    const snippetEnd = Math.min(termIndex + term.length + 50, text.length); // End 50 characters after the term
-    const snippet = text.substring(snippetStart, snippetEnd);
-  
-    // Analyze the snippet for additional context
-    if (snippet.match(termRegex)) {
-      for (let k = 0; k < ri.query.search.length; k += 1) {
-        const riqsk = ri.query.search[k];
-        if (riqsk.title.match(termRegex) || riqsk.snippet.match(termRegex))
-          return { pageid: riqsk.pageid, title: riqsk.title };
-      }
-    }
-  
-    return null;
- 
- 
- 
   const rgx = RegExp(e.out(its.normal).split(/\s+/).join("|"), "i");
-for (let k = 0; k < ri.query.search.length; k += 1) {
+  for (let k = 0; k < ri.query.search.length; k += 1) {
     const riqsk = ri.query.search[k];
     if (riqsk.title.match(rgx) || riqsk.snippet.match(rgx))
       return { pageid: riqsk.pageid, title: riqsk.title };
@@ -208,9 +199,7 @@ async function search(term) {
 }
 
 async function imageCloud(text) {
-
   const doc = nlp.readDoc(text);
-
 
   const potentialEntities = doc.customEntities().out();
 

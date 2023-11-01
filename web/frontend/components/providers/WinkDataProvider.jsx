@@ -1,11 +1,14 @@
-import React, { createContext, useState, useEffect, useContext } from "react";
-import cloud from "d3-cloud";
-import * as d3 from "d3";
+
 import winkNLP from "wink-nlp";
-import ner from "wink-ner";
+// import ner from "wink-ner";
 import model from "wink-eng-lite-web-model";
-import { winkTokenixer } from "wink-tokenizer";
-// import complexity from "too-wordy"
+
+import React, { createContext, useState, useEffect, useContext } from "react";
+// import cloud from "d3-cloud";
+// import * as d3 from "d3";
+
+// import { winkTokenixer } from "wink-tokenizer";
+
 
 import { extractTextFromHtml } from "./";
 
@@ -14,8 +17,8 @@ import { extractTextFromHtml } from "./";
 
 import tinycolor from "tinycolor2";
 
-import { navigate } from "ionicons/icons";
-import { darkenHexColor } from "../../utilities/darkenHexColor";
+// import { navigate } from "ionicons/icons";
+// import { darkenHexColor } from "../../utilities/darkenHexColor";
 const nlp = winkNLP(model);
 // Obtain "its" helper to extract item properties.
 const its = nlp.its;
