@@ -12,11 +12,9 @@ export { default as deskLamp } from "./desk_lamp.svg";
 export { default as microphone } from "./microphone.svg";
 export { default as trash } from "./trash.svg";
 
-
 export { default as readingTree } from "./readingTree.svg";
 
 export { default as autumnTrees } from "./autumn-trees.svg";
-
 
 export { default as benchWarmer } from "./benchWarmer.svg";
 export { default as honeyCombGridDrop } from "./a-honey-gooi-comb.svg";

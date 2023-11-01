@@ -78,7 +78,7 @@ import {
 
 import { Email } from "./utilities/smtp";
 import ExitFrame from "./pages/ExitIframe";
-const svgAssets = import.meta.glob("./assets/*.svg");
+// const svgAssets = import.meta.glob("./assets/*.svg");
 tinymceCustomPlugins(tinymce);
 setupIonicReact({ mode: "ios" });
 export default function App() {
@@ -599,7 +599,7 @@ function IonMenuNav() {
   }, [location.pathname]);
 
   useEffect(async () => {
-    console.log("svgAssets:", svgAssets);
+    // console.log("svgAssets:", svgAssets);
 
     // await ImageCachePre(readingBag)
   }, []);
