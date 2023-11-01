@@ -76,7 +76,7 @@ import {
   AnimatedContent,
 } from "./components";
 
-// import { Email } from "./utilities/smtp";
+
 import ExitFrame from "./pages/ExitIframe";
 // const svgAssets = import.meta.glob("./assets/*.svg");
 tinymceCustomPlugins(tinymce);

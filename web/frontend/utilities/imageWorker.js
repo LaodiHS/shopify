@@ -1,9 +1,8 @@
-//const modules = import.meta.glob('./utilities/store.js')
+
 import { indexDb } from "./IndexDB";
 import { productViewCache } from "../utilities/store";
-import { start } from "@shopify/app-bridge/actions/Loading";
-//this.productViewCache;
-//importScripts('./store.js');
+
+
 let workerStarted = false;
 async function startWorker() {
   if (workerStarted) return;
@@ -114,4 +113,4 @@ self.addEventListener("message", async (event) => {
   }
 });
 
-//startWorker()
+

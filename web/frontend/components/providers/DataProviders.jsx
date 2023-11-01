@@ -3,6 +3,8 @@
 // import * as cocoSsd from "@tensorflow-models/coco-ssd";
 // import * as tf from "@tensorflow/tfjs";
 // import { loadGraphModel } from "@tensorflow/tfjs-converter";
+// import { request } from "@shopify/app-bridge/actions/AuthCode";
+// import { SessionToken, TitleBar } from "@shopify/app-bridge/actions";
 import React, {
   createContext,
   useContext,
@@ -13,29 +15,13 @@ import React, {
   createRef,
 } from "react";
 import {
-  // useIonViewDidEnter,
-  // useIonViewWillEnter,
-  // useIonViewDidLeave,
-  // useIonViewWillLeave,
-  // IonContent,
-  // IonGrid,
-  // IonRow,
-  // IonCol,
-  // IonSpinner,
   IonText,
-  // IonButtons,
-  // IonButton,
   IonIcon,
-  // IonPage,
   IonList,
-  // IonProgressBar,
-  useIonToast, 
-  useIonRouter
+  useIonToast,
+  useIonRouter,
 } from "@ionic/react";
-import {
-  //useAuthenticatedFetch,
-  useAppBridge,
-} from "@shopify/app-bridge-react";
+import { useAppBridge } from "@shopify/app-bridge-react";
 import {
   LHistory,
   productViewCache,
@@ -44,23 +30,18 @@ import {
 } from "../../utilities/store";
 import { indexDb } from "../../utilities/IndexDB";
 import { useLocation, useNavigate } from "react_router_dom";
-// import { request } from "@shopify/app-bridge/actions/AuthCode";
+
 import { useShopifyContext } from "../providers/ShopifyContext";
 import { getSessionToken } from "@shopify/app-bridge/utilities";
 import { Redirect } from "@shopify/app-bridge/actions";
-// import { SessionToken, TitleBar } from "@shopify/app-bridge/actions";
-
-import {NavigationRefs,  AnimatedContent } from "./";
-
-
-import * as svgAssets from "../../assets"
+import { NavigationRefs, AnimatedContent } from "./";
+import * as svgAssets from "../../assets";
 import {
   useWorkersContext,
   ImageCachePre,
   ImageCacheSrc,
 } from "../../components";
 import { useAuthenticatedFetch } from "../../hooks";
-
 
 // const svgAssets = import.meta.glob("../../assets/*.svg");
 // import {TRAINING_DATA} from 'https://storage.googleapis.com/jmstore/TensorFlowJS/EdX/TrainingData/fashion-mnist.js';
@@ -297,7 +278,7 @@ const logShopifyResponse = (errorCode) => {
       console.log("Unknown error code.");
       break;
   }
-}
+};
 
 // function useMap(initialEntries = []) {
 //   const [mapStateForUseMap, setMapStateForUseMap] = useState(
@@ -387,7 +368,8 @@ export const DataProvidersProvider = ({ children }) => {
   const [subscriptions, setSubscriptions] = useState(["free"]);
   const [currentSession, setCurrentSession] = useState({});
   const [sessionLoaded, setSessionLoaded] = useState(false);
-  const [subscriptionRetrievalLoading, setSubscriptionRetrievalLoading] = useState(false);
+  const [subscriptionRetrievalLoading, setSubscriptionRetrievalLoading] =
+    useState(false);
   const [contextualOptions, setContextualOptions] = useState({});
   const [selectedCollections, setSelectedCollections] = useState([]);
   const [selectedImageText, setSelectedImageText] = useState("0 Items");
@@ -395,7 +377,28 @@ export const DataProvidersProvider = ({ children }) => {
   const [selectedImageMap, setSelectedImageMap] = useState({});
   const [languageOptions, setLanguageOptions] = useState([]);
   const [assistRequestInstance, setAssistRequestInstance] = useState(null);
-  const [imageSelectionModalIsOpen, setImageSelectionModalIsOpen] = useState(false);
+  const [imageSelectionModalIsOpen, setImageSelectionModalIsOpen] =
+    useState(false);
+  const [pagingHistory, setPagingHistory] = useState(null);
+  const [clearAssistResultMethod, setClearAssistResultMethod] = useState(
+    new Map()
+  );
+  const [refDictionary, setRefDictionary] = useState(NavigationRefs);
+  const [mappedLegend, setMappedLegend] = useState([[]]);
+  const [legendReversed, setLegendReversed] = useState({});
+  const [legend, setLegend] = useState({});
+  const [contentSaved, setContentSaved] = useState(false);
+  const [serverSentEventLoading, setServerSentEventLoading] = useState(false);
+  const [lockAllTasks, setLockAllTasks] = useState(false);
+  const [updateArticleMethod, setUpdateArticleMethod] = useState(null);
+  const [markupText, setMarkupText] = useState("");
+  const [plans, setPlans] = useState({});
+  const [shopifyDown, setShopifyDown] = useState(false);
+  const [retrySession, setRetrySession] = useState(false);
+  const [dependenciesLoaded, setDependenciesLoaded] = useState({});
+  const [AllDependenciesLoaded, setAllDependenciesLoaded] = useState(false);
+  const [assetsLoaded, setAssetsLoaded] = useState(false);
+  const [allAssets, setAllAssets] = useState({});
   const [wordList, setWordList] = useState([
     "Reliable",
     "Innovative",
@@ -428,37 +431,16 @@ export const DataProvidersProvider = ({ children }) => {
     "Ergonomic",
     "Sleek",
   ]);
-  const [pagingHistory, setPagingHistory] = useState(null);
-  const [clearAssistResultMethod, setClearAssistResultMethod] = useState(new Map());
-  const [refDictionary, setRefDictionary] = useState(NavigationRefs);
-  const [mappedLegend, setMappedLegend] = useState([[]]);
-  const [legendReversed, setLegendReversed] = useState({});
-  const [legend, setLegend] = useState({});
-  const [contentSaved, setContentSaved] = useState(false);
-  const [serverSentEventLoading, setServerSentEventLoading] = useState(false);
-  const [lockAllTasks, setLockAllTasks] = useState(false);
-  const [updateArticleMethod, setUpdateArticleMethod] = useState(null);
-  const [markupText, setMarkupText] = useState("");
-  const [plans, setPlans] = useState({});
-  const [shopifyDown, setShopifyDown] = useState(false);
-  const [retrySession, setRetrySession] = useState(false);
-  const [dependenciesLoaded, setDependenciesLoaded] = useState({});
-  const [AllDependenciesLoaded, setAllDependenciesLoaded] = useState(false);
-  const [assetsLoaded, setAssetsLoaded] = useState(false);
-  const [allAssets, setAllAssets] = useState({}); 
-  const { workersLoaded} = useWorkersContext();
+  const { workersLoaded } = useWorkersContext();
   const [presentToast] = useIonToast();
   const app = useAppBridge();
-  const context = useShopifyContext();
+  // const context = useShopifyContext();
   const navigate = useNavigate();
   const fetch = useAuthenticatedFetch(); // Make sure you have this hook defined somewhere
 
   function defineShopifyDown(retryValue) {
     return modifyState(setRetrySession, retryValue);
   }
-
-    
-
 
   const fetchDataWithCache = async ({ url, method, body }) => {
     if (sessionLoaded) {
@@ -527,7 +509,7 @@ export const DataProvidersProvider = ({ children }) => {
       return;
     }
     console.error("call made outside session: ", url);
-  }
+  };
   const uncachedFetchData = async ({ url, method = "GET", body }) => {
     if (!sessionLoaded) {
       return;
@@ -579,8 +561,7 @@ export const DataProvidersProvider = ({ children }) => {
       boxed.error = error || null;
     }
     return boxed;
-
-  }
+  };
   useEffect(async () => {
     const token = await getSessionToken(app);
     console.log("token: ", token);
@@ -601,12 +582,9 @@ export const DataProvidersProvider = ({ children }) => {
           IndexedSessionStorage: Boolean(db),
         }));
 
-      
-
         for (const asset in svgAssets) {
           try {
-            const src = await svgAssets[asset]
-            console.log('s--->', src)
+            const src = await svgAssets[asset];
             const blobUrl = await ImageCachePre(
               productViewCache,
               src,
@@ -626,7 +604,7 @@ export const DataProvidersProvider = ({ children }) => {
         setPagingHistory(pageHistory);
         setDependenciesLoaded((prev) => ({ ...prev, pagingHistory: true }));
       }
-      
+
       return async () => {
         console.log("closing db connection");
         if (!indexDb) {
@@ -634,7 +612,7 @@ export const DataProvidersProvider = ({ children }) => {
         }
         if (indexDb.db) {
           await indexDb.stopIndexDB();
-     
+
           setDependenciesLoaded((prev) => ({
             ...prev,
             IndexedSessionStorage: false,
@@ -708,9 +686,9 @@ export const DataProvidersProvider = ({ children }) => {
 
         assignUser(user);
         setRouteSubscriptions(activeSubscriptions, session);
-  
-        if(location.pathname !== "/"){
-            navigate("/", {target:"host"});
+
+        if (location.pathname !== "/") {
+          navigate("/", { target: "host" });
         }
         if (user && user.seen === false) {
           navigate("/welcome");
@@ -771,7 +749,6 @@ export const DataProvidersProvider = ({ children }) => {
     //   }
     // } else {
     try {
-
       if (await productViewCache.has("installed")) {
         await fetchDataSession();
       } else {
@@ -1072,12 +1049,6 @@ export const DataProvidersProvider = ({ children }) => {
   function assignMarkupText(text) {
     modifyState(setMarkupText, text);
   }
-
-  // useEffect(() => {
-
-  //   // Update the refDictionary state
-  //   setRefDictionary(routeRefs);
-  // }, []);
 
   async function DataProviderNavigate(
     route,

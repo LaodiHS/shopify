@@ -9,7 +9,6 @@ import {
   IonGrid,
   IonRow,
   IonCol,
-  IonText,
   IonItem,
   IonList,
   IonChip,
@@ -22,7 +21,7 @@ import {
   // NoImagePlaceHolder,
 } from "../components";
 
-import { debounce, throttle } from "lodash";
+import { throttle } from "lodash";
 // import { Image } from "@react-pdf/renderer";
 function SentenceHighlight({ text, color }) {
   return (
