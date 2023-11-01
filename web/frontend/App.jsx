@@ -23,9 +23,8 @@ import {
   arrowDownOutline,
   chevronBack,
 } from "ionicons/icons";
-
-import { IonReactRouter } from "@ionic/react-router";
 import {
+  IonReactRouter, 
   setupIonicReact,
   IonApp,
   IonContent,
@@ -76,7 +75,7 @@ import {
   AnimatedContent,
 } from "./components";
 
-import { Email } from "./utilities/smtp";
+// import { Email } from "./utilities/smtp";
 import ExitFrame from "./pages/ExitIframe";
 // const svgAssets = import.meta.glob("./assets/*.svg");
 tinymceCustomPlugins(tinymce);
@@ -489,7 +488,7 @@ const BugReportPage = (React.FC = () => {
       `,
     };
 
-    await Email.send(emailToSend);
+    // await Email.send(emailToSend);
 
     // Reset form data after submission
     // setFormData({

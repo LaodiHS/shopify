@@ -4,7 +4,7 @@
   "private": true,
   "license": "HasanSeirafi",
   "scripts": {
-    "build": "vite build",
+    "build": "NODE_OPTIONS=--max_old_space_size=8192 vite build",
     "dev": "vite",
     "coverage": "vitest run --coverage"
   },
