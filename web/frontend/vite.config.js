@@ -38,8 +38,8 @@ if (host === "localhost") {
     overlay: true,
     protocol: "ws",
     host: "localhost",
-    port: 64999,
-    clientPort: 64999,
+    port: 64_999,
+    clientPort: 64_999,
   };
 } else {
   hmrConfig = {
@@ -57,16 +57,7 @@ export default defineConfig({
     react(
       //{ devTarget: "es2022" }
     ),
-    vue({
-      template: {
-        compilerOptions: {
-          // ...
-        },
-        transformAssetUrls: {
-          // ...
-        },
-      },
-    }),
+    vue(),
   ],
   optimizeDeps: {
     // web: ['vue'], // Include relevant libraries
@@ -80,13 +71,7 @@ export default defineConfig({
     chunkSizeWarningLimit: 7000,
     sourcemap:true,
   },
-  // esbuild: {
-  //   pure: process.env.NODE_ENV === 'production' ? ['console.log', 'console.warn'] : [],
-  //   sourcemap:true,
 
-  //   // drop: ['console', 'debugger'],
-      
-  // },
 
   resolve: {
     preserveSymlinks: true,

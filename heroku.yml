@@ -3,7 +3,6 @@ build:
     web: Dockerfile
   config:
     HOST: "https://neuralnectar-76114b90699c.herokuapp.com/"
-    SHOPIFY_APP_URL: "https://neuralnectar-76114b90699c.herokuapp.com/"
     APP_ENV: "production"
     NODE_ENV: "production"
     SCOPES: "write_products,read_content,write_content"
