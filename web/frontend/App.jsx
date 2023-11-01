@@ -23,8 +23,9 @@ import {
   arrowDownOutline,
   chevronBack,
 } from "ionicons/icons";
+
+import { IonReactRouter } from "@ionic/react-router";
 import {
-  IonReactRouter, 
   setupIonicReact,
   IonApp,
   IonContent,
