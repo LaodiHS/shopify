@@ -34,17 +34,6 @@ import {
   IonPopover,
 } from "@ionic/react";
 import { useAuthenticatedFetch } from "../hooks";
-import {productViewCache} from "../utilities/store"
-import {
-  autumnTrees,
-  benchWarmer,
-  honeyCombGridDrop,
-  chestnutHoney,
-  acaciaHoney,
-  sourwoodHoney,
-  honeyStick,
-} from "../assets";
-
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { Redirect } from "@shopify/app-bridge/actions";
 import {
@@ -58,7 +47,7 @@ export const SubscriptionComponent = ({
   animationRef,
   //  subscriptions
 }) => {
-  const { subscriptions, plans, setSubscriptions, sessionLoaded, productViewCache } = useDataProvidersContext();
+  const {allAssets, subscriptions, plans, setSubscriptions, sessionLoaded, productViewCache } = useDataProvidersContext();
 
   const fetch = useAuthenticatedFetch();
   const [showModal, setShowModal] = useState(false);
@@ -181,7 +170,7 @@ setSubscriptionOptions(getSubscriptionsOptions);
             <IonCol
               size="12"
               style={{
-                backgroundImage: `url(${honeyCombGridDrop})`,
+                backgroundImage: `url(${allAssets.honeyCombGridDrop})`,
                 backgroundPosition: "center",
                 backgroundSize: "contain",
                 backgroundRepeat: "no-repeat",
@@ -252,9 +241,9 @@ setSubscriptionOptions(getSubscriptionsOptions);
               const current = subscriptions.includes(subscription.title);
 
               const honeyIcons = {
-                acacia: acaciaHoney,
-                chestnut: chestnutHoney,
-                sourwood: sourwoodHoney,
+                acacia: allAssets.acaciaHoney,
+                chestnut: allAssets.chestnutHoney,
+                sourwood: allAssets.sourwoodHoney,
               };
 
               return (
@@ -294,7 +283,7 @@ setSubscriptionOptions(getSubscriptionsOptions);
                                   backgroundRepeat: `no-repeat`,
                                   height: "130px",
                                   width: `${cardWidth - 110}px`,
-                                  backgroundImage: `url(${honeyStick})`,
+                                  backgroundImage: `url(${allAssets.honeyStick})`,
                                 }}
                               ></div>
                             )}
@@ -466,7 +455,7 @@ setSubscriptionOptions(getSubscriptionsOptions);
                     backgroundSize: "contain",
                     backgroundRepeat: "no-repeat",
                     height: "100px",
-                    backgroundImage: `url(${autumnTrees})`,
+                    backgroundImage: `url(${allAssets.autumnTrees})`,
                   }}
                 ></IonCol>
                 <IonCol
@@ -477,7 +466,7 @@ setSubscriptionOptions(getSubscriptionsOptions);
                     backgroundRepeat: "no-repeat",
                     height: "390px",
                     transform: "scaleX(-1)",
-                    backgroundImage: `url(${benchWarmer})`,
+                    backgroundImage: `url(${allAssets.benchWarmer})`,
                   }}
                 ></IonCol>
                 <IonCol
@@ -487,7 +476,7 @@ setSubscriptionOptions(getSubscriptionsOptions);
                     backgroundSize: "contain",
                     backgroundRepeat: "no-repeat",
                     height: "350px",
-                    backgroundImage: `url(${autumnTrees})`,
+                    backgroundImage: `url(${allAssets.autumnTrees})`,
                   }}
                 ></IonCol>
               </IonRow>

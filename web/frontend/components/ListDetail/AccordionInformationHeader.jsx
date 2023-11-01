@@ -9,43 +9,26 @@ import {
 import {
   informationCircleOutline,
   exitOutline,
-  informationCircle,
-  lockClosed
 } from "ionicons/icons";
-import {
-  descriptionWorkStation,
-  clear,
-  bookshelf,
-  save,
-  aiIcon,
-  pencilCase,
-  newsPaperWorStation,
 
-  readingTree,
-  honeyCombGridDrop,
-  beehive,
 
-} from "../../assets";
-
-export function AccordionInformationHeader({ lock, accordionName, boxName, note }) {
+export function AccordionInformationHeader({ lock, accordionName, boxName, note, beehive }) {
   
   return (
     <IonItem slot="header" color="light">
       <IonLabel size="small" slot="">{accordionName}</IonLabel>
-      <IonIcon
-        slot="start"
-        size="small"
-        color="secondary"
-        aria-label="Include existing description in composition"
-        id={boxName + accordionName}
-        icon={informationCircleOutline}
-      ></IonIcon>
+      <IonIcon slot="start"
+      size="small"
+      color="secondary"
+      aria-label="Include existing description in composition"
+      id={boxName + accordionName}
+      icon={informationCircleOutline} />
    
       { lock === false  && (
         <IonIcon
         slot="end"
         size=""
-        id={boxName + accordionName+ "lock"}
+        id={`${boxName + accordionName}lock`}
         icon={beehive}
         >   {lock}
 
@@ -67,7 +50,7 @@ export function AccordionInformationHeader({ lock, accordionName, boxName, note 
           </IonText>
           <IonText color="secondary">
             <sub>
-              <IonIcon icon={exitOutline}></IonIcon> click outside box to close
+              <IonIcon icon={exitOutline} /> click outside box to close
             </sub>
           </IonText>
         </IonContent>

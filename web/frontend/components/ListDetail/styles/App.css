@@ -80,9 +80,7 @@ ion-accordion.accordion-expanded ion-item[slot='header'] {
   position: relative;
 }
 
-/* .icon-inner, .ionicon, svg{
-  fill:currentColor;
-} */
+
 
 .grid-container {
   position: absolute;

@@ -31,6 +31,7 @@ export function ProductDataProvider({ children }) {
     assignLegend,
     assignAssistRequest,
     assignUpdateArticleMethod,
+    allAssets,
     markupText,
     setMarkupText,
     setServerSentEventLoading,
@@ -250,6 +251,7 @@ if(sessionLoaded){
     setPaging,
     fetchData,
     AllDependenciesLoaded,
+    allAssets
   };
 
   useEffect(async () => {

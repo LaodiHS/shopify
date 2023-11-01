@@ -13,20 +13,20 @@ import {
   IonLoading,
 } from "@ionic/react";
 
-import { IonicHeaderComponent } from "./IonicHeaderComponent";
-import { honeyDrop } from "../assets";
+
+
 import { useDataProvidersContext } from "../components";
-const svgAssets = import.meta.glob("./assets/reading-bag.svg");
+
 export function LoadingPageComponent({ progress, type }) {
   const [iconSize, setIconSize] = useState("25px");
   const [cloudAnimationHeight, setCloudAnimationHeight] = useState("100px");
-  const [readingBagSVG, setReadingBagSVG] = useState("");
-  const arrowRef = useRef();
+  // const [readingBagSVG, setReadingBagSVG] = useState("");
+  // const arrowRef = useRef();
 
   const { assetsLoaded, allAssets } = useDataProvidersContext();
 
   useEffect(() => {
-    setCloudAnimationHeight(window.innerHeight + "px");
+    setCloudAnimationHeight(`${window.innerHeight}px`);
     console.log("windowHeight:", window.innerHeight);
     const height = (8 / 100) * window.innerHeight;
 
@@ -121,7 +121,7 @@ export function LoadingPageComponent({ progress, type }) {
         key="mainBackgroundImageContainer"
         id="nc-main"
         style={{
-          backgroundImage: `url(${allAssets["reading-bag.svg"]})`,
+          backgroundImage: `url(${allAssets.readingBag })`,
           backgroundPosition: "top",
           backgroundSize: "cover",
           backgroundRepeat: "no-repeat",
@@ -157,7 +157,7 @@ export function LoadingPageComponent({ progress, type }) {
                 key="nectarContainerRowColEmblem"
                 size="2"
                 style={{
-                  backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.01), rgba(255, 255, 255, 0.01)), url(${honeyDrop})`,
+                  backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.01), rgba(255, 255, 255, 0.01)), url(${allAssets.honeyDrop})`,
                   backgroundPosition: "center center",
                   backgroundSize: "contain",
                   backgroundRepeat: "no-repeat",

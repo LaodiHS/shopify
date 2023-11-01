@@ -1,17 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
-import cloud from "d3-cloud";
-import * as d3 from "d3";
+// import cloud from "d3-cloud";
+// import * as d3 from "d3";
 import winkNLP from "wink-nlp";
-import ner from 'wink-ner';
+// import ner from 'wink-ner';
 import model from "wink-eng-lite-web-model";
 // import {winkTokenixer} from "wink-tokenizer";
 import { IonRow, IonCol, IonButton, IonText } from "@ionic/react";
 
-import debounce from "lodash.debounce";
+// import debounce from "lodash.debounce";
 
-import { beehive } from "../../assets";
 
-import { useDataProvidersContext, InformationIcon } from "..";
+
+// import { useDataProvidersContext, InformationIcon } from "..";
 // var tokenize = winkTokenizer().tokenize;
 
 

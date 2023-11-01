@@ -38,7 +38,7 @@ import {
   useCurrentScreenWidth,
 } from "../components";
 import { alertCircleOutline } from "ionicons/icons";
-import { deskLamp, imagePlaceHolder } from "../assets";
+
 
 export function ListComponent({productsData}) {
   const [mainDisplayImages, setMainDisplayImages] = useState({});
@@ -51,6 +51,7 @@ export function ListComponent({productsData}) {
     DataProviderNavigate,
     eventEmitter,
     setProductsLoading,
+    allAssets
   } = useProductDataContext();
 
   const [products, setProducts] = useState(productsData || []);
@@ -108,7 +109,7 @@ export function ListComponent({productsData}) {
     const mainImagesSrc = productsData?.reduce(
       (acc, product, productIndex) => {
         acc[productIndex] = {
-          img: product?.images[0]?.transformedSrc || imagePlaceHolder,
+          img: product?.images[0]?.transformedSrc || allAssets.imagePlaceHolder,
           index: 0,
         };
         return acc;
@@ -591,7 +592,7 @@ export function ListComponent({productsData}) {
                                 disabled={true}
                                 size="large"
                                 style={{
-                                  backgroundImage: `url(${deskLamp})`,
+                                  backgroundImage: `url(${allAssets.deskLamp})`,
                                   backgroundPosition: "right",
                                   backgroundSize: "contain",
                                   backgroundRepeat: "no-repeat",
@@ -603,7 +604,7 @@ export function ListComponent({productsData}) {
                                 {/* <IonIcon
                                   slot="icon-only"
                                   color="dark"
-                                  icon={deskLamp}
+                                  icon={allAssets.deskLamp}
                                 ></IonIcon> */}
                               </IonButton>
                               <IonButton

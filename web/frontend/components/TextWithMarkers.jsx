@@ -21,7 +21,7 @@ import {
   // useDataProvidersContext,
   // NoImagePlaceHolder,
 } from "../components";
-import { imagePlaceHolder } from "../assets";
+
 import { debounce, throttle } from "lodash";
 // import { Image } from "@react-pdf/renderer";
 function SentenceHighlight({ text, color }) {
@@ -101,7 +101,7 @@ function parseText({
   mappedLegend,
   variableListItemHeight,
   variableListItemImageHeight,
-
+imagePlaceHolder,
   selectedImageMapPureKeys,
 
   processedSentences,
@@ -172,16 +172,15 @@ function parseText({
       let ImageSrc = imagePlaceHolder;
 
       const result = mappedLegend.slice().find(([key, id]) => {
-        if (id && id.includes("#" + idValue)) {
+        if (id && id.includes(`#${idValue}`)) {
           if (key.includes("_.jpg")) {
-            let imageKey = key.split(" ")[1];
+            const imageKey = key.split(" ")[1];
             ImageSrc =
               selectedImageMapPureKeys[imageKey]?.url || imagePlaceHolder;
-            return true;
           } else {
             ImageSrc = key;
-            return true;
           }
+          return true;
         }
         return false;
       });
@@ -204,30 +203,27 @@ function parseText({
         type: markerType,
         color: color || "#" + idValue,
       };
-      let hashImageElement = label + markerSize + idValue;
-      if (!processedImages[hashImageElement]) {
+      const hashImageElement = label + markerSize + idValue;
+      if (processedImages[hashImageElement]) {
+        parts.push(processedImages[hashImageElement]);
+      } else {
         processedImages[hashImageElement] = element;
         parts.push(element);
-      } else {
-        parts.push(processedImages[hashImageElement]);
       }
 
       lastIndex = idWithBracketsRegex.lastIndex;
     }
 
-    if (cleanedSentence.length) {
-      if (lastIndex < cleanedSentence.length) {
-        const lastSentence = cleanedSentence.slice(lastIndex);
-        let mainString = lastSentence;
-        wrapSubstringInPTags({
-          mappedLegend,
-          mainString,
-          colorSet,
-          parts,
-          size: variableListItemHeight,
-          sentenceEnd: ".",
-        });
-      }
+    if (cleanedSentence.length && lastIndex < cleanedSentence.length) {
+      const lastSentence = cleanedSentence.slice(lastIndex);
+      wrapSubstringInPTags({
+        mappedLegend,
+        mainString: lastSentence,
+        colorSet,
+        parts,
+        size: variableListItemHeight,
+        sentenceEnd: ".",
+      });
     }
     const part = parts.filter((val) => {
       if (!val.variant) {
@@ -330,15 +326,13 @@ const VirtualList = React.memo(
 
     useEffect(() => {
       console.log("component refreshed");
-      if (variableSizeListRef.current) {
-        if (!userScrollDetected) {
-          variableSizeListRef.current.scrollToItem(
-            streamData.length - 3,
-            "start"
-          );
+      if (variableSizeListRef.current && !userScrollDetected) {
+        variableSizeListRef.current.scrollToItem(
+          streamData.length - 3,
+          "start"
+        );
 
-          // 'start' is the alignment option
-        }
+        // 'start' is the alignment option
       }
     }, [streamData]);
 
@@ -398,6 +392,7 @@ let dataStreamArray = [];
 let processedSentences = {};
 let processedImages = {};
 function TextWithMarkers({
+  imagePlaceHolder,
   eventEmitter,
   assignClearAssistMethod,
   mappedLegend,
@@ -430,6 +425,7 @@ function TextWithMarkers({
     () =>
       parseText({
         text: streamData.join(""),
+        imagePlaceHolder,
         mappedLegend,
         labelArray,
         variableListItemHeight,

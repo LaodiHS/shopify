@@ -37,7 +37,7 @@ import {
   informationCircleOutline,
   exitOutline,
 } from "ionicons/icons";
-import { pencilCase, microphone } from "../assets";
+
 import { SharedData } from "../utilities/data-context.js";
 import {
   useProductDataContext,
@@ -81,6 +81,7 @@ export function ListDetailComponent({ animationRef }) {
     lockAllTasks,
     handleSelectChange,
     DataProviderNavigate,
+    allAssets,
   } = useProductDataContext();
 
   if (!subscriptions) {
@@ -182,7 +183,7 @@ export function ListDetailComponent({ animationRef }) {
               color="neural"
               slot="end"
             >
-              <IonIcon slot="icon-only" icon={pencilCase} />
+              <IonIcon slot="icon-only" icon={allAssets.pencilCase} />
             </IonButton>
           }
         />
@@ -228,7 +229,7 @@ export function ListDetailComponent({ animationRef }) {
                       color="neural"
                       size="large"
                     >
-                      <IonIcon slot="icon-only" icon={microphone}></IonIcon>
+                      <IonIcon slot="icon-only" icon={allAssets.microphone}></IonIcon>
                     </IonButton>
 
                     <IonIcon

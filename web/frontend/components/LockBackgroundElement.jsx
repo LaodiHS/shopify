@@ -4,13 +4,7 @@ import { useNavigate } from "react_router_dom"
 export function LockBackgroundElement ({contents}){
 
 const navigate = useNavigate()
-
-
-
-
-
-
-    return (
+return (
         <IonCard onClick={(e) => navigate("/subscriptions", {host:true, replace:true})}
         style={{
             boxShadow:"none",

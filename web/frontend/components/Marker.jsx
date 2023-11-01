@@ -16,7 +16,7 @@ import {
 } from "@ionic/react";
 // import { useDataProvidersContext, NoImagePlaceHolder } from "../components";
 // import { darkenHexColor } from "../utilities/darkenHexColor";
-// import { imagePlaceHolder } from "../assets";
+
 
 const Marker = ({ markerType, label, color, size, loadingStream, imageSrc }) => {
   if (

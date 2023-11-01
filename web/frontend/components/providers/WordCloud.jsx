@@ -3,7 +3,7 @@ import cloud from "d3-cloud";
 import * as d3 from "d3";
 import debounce from "lodash.debounce";
 import { IonRow, IonCol, IonButton, IonText } from "@ionic/react";
-import { beehive } from "../../assets";
+
 
 import tinycolor from "tinycolor2";
 import { useDataProvidersContext, InformationIcon,DocumentImagery } from "../";
@@ -180,7 +180,7 @@ function updateWordCloud(layout, svgRef, words) {
 }
 
 export function WordCloud({ text, doc, its, checkFeatureAccess }) {
-  const { DataProviderNavigate } = useDataProvidersContext();
+  const { DataProviderNavigate, allAssets } = useDataProvidersContext();
 
   const [layout, setLayout] = useState(cloud());
   const [initialGraph, setInitialGraph] = useState(false);
@@ -207,7 +207,7 @@ export function WordCloud({ text, doc, its, checkFeatureAccess }) {
         <IonCol
           onClick={(e) => DataProviderNavigate("/subscriptions")}
           style={{
-            backgroundImage: `url(${beehive})`,
+            backgroundImage: `url(${allAssets.beehive})`,
             height: "100px",
             backgroundPosition: "center",
             backgroundSize: "contain",

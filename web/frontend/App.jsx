@@ -23,19 +23,6 @@ import {
   arrowDownOutline,
   chevronBack,
 } from "ionicons/icons";
-import {
-  descriptionWorkStation,
-  clear,
-  bookshelf,
-  save,
-  aiIcon,
-  pencilCase,
-  newsPaperWorStation,
-  readingTree,
-  honeyCombGridDrop,
-  beehive,
-  readingBag,
-} from "./assets";
 
 import { IonReactRouter } from "@ionic/react-router";
 import {
@@ -197,7 +184,7 @@ function LandingPage({ animationRef }) {
             <IonRow>
               <IonCol
                 style={{
-                  backgroundImage: `url(${honeyCombGridDrop})`,
+                  backgroundImage: `url(${allAssets.honeyCombGridDrop})`,
                   backgroundPosition: "center",
                   backgroundSize: "contain",
                   backgroundRepeat: "no-repeat",
@@ -251,7 +238,7 @@ function LandingPage({ animationRef }) {
               backgroundSize: "contain",
               backgroundRepeat: "no-repeat",
               height: "300px",
-              backgroundImage: `url(${readingTree})`,
+              backgroundImage: `url(${allAssets.readingTree})`,
             }}
           />
           <p className="ion-text-center">
@@ -320,7 +307,7 @@ function Description() {
   const {
     refDictionary,
     DataProviderNavigate,
-
+allAssets,
     lockAllTasks,
     contentSaved,
     user,
@@ -373,7 +360,7 @@ useEffect(()=>{
               <IonIcon
                 slot="icon-only"
                 size="large"
-                icon={descriptionWorkStation}
+                icon={allAssets.descriptionWorkStation}
               />
             </IonButton>
             <IonButtons slot="end"/>
@@ -395,6 +382,7 @@ function Article() {
     DataProviderNavigate,
     serverSentEventLoading,
     lockAllTasks,
+    allAssets,
     contentSaved,
   } = useDataProvidersContext();
 
@@ -441,7 +429,7 @@ function Article() {
                 key="ion/icon/asset/svg"
                 slot="icon-only"
                 size="large"
-                icon={newsPaperWorStation}
+                icon={allAssets.newsPaperWorStation}
               />
             </IonButton>
           </>
@@ -635,7 +623,7 @@ function IonMenuNav() {
         access: checkFeatureAccess(["free"]),
         disabled: false,
         label: "Description Selection",
-        icon: allAssets["pencil-case.svg"],
+        icon: allAssets.pencilCase,
         //pencilCase,
         clickHandler: async (event) => {
           await DataProviderNavigate("/product-details");
@@ -645,7 +633,7 @@ function IonMenuNav() {
         access: checkFeatureAccess(["free"]),
         disabled: false,
         label: "Description Assist",
-        icon: allAssets["ai-icon.svg"],
+        icon: allAssets.aiIcon,
         clickHandler: async (event) => {
           await assistRequest(aiWorkStation);
         },
@@ -654,7 +642,7 @@ function IonMenuNav() {
         access: checkFeatureAccess(["free"]),
         disabled: false,
         label: "Clear Description",
-        icon: allAssets["clear2.svg"],
+        icon: allAssets.clear,
         clickHandler: async (event) => {
           await clearAssistResult(aiWorkStation);
         },
@@ -664,7 +652,7 @@ function IonMenuNav() {
         disabled: false,
         label: "Save Description",
         saveSignal: true,
-        icon: allAssets["save.svg"],
+        icon: allAssets.save,
         clickHandler: async (event) => {
           await updateArticleMethod(aiWorkStation, markupText);
         },
@@ -675,7 +663,7 @@ function IonMenuNav() {
         access: checkFeatureAccess(["free"]),
         disabled: false,
         label: "Description Selection",
-        icon: allAssets["pencil-case.svg"],
+        icon: allAssets.pencilCase,
         clickHandler: async (event) => {
           await DataProviderNavigate("/product-details", { target: "host" });
         },
@@ -684,7 +672,7 @@ function IonMenuNav() {
         access: checkFeatureAccess(["free"]),
         disabled: false,
         label: "Description Assist",
-        icon: allAssets["ai-icon.svg"],
+        icon: allAssets.aiIcon,
         clickHandler: async (event) => {
           await assistRequest(aiWorkStation);
         },
@@ -693,7 +681,7 @@ function IonMenuNav() {
         access: checkFeatureAccess(["free"]),
         disabled: false,
         label: "Clear Description",
-        icon: allAssets["clear2.svg"],
+        icon: allAssets.clear,
         clickHandler: async (event) => {
           await clearAssistResult(aiWorkStation);
         },
@@ -703,7 +691,7 @@ function IonMenuNav() {
         disabled: false,
         label: "Save Description",
         saveSignal: true,
-        icon: allAssets["save.svg"],
+        icon: allAssets.save,
         clickHandler: async (event) => {
           await updateArticleMethod(aiWorkStation, markupText);
         },
@@ -714,7 +702,7 @@ function IonMenuNav() {
         access: checkFeatureAccess(["free"]),
         disabled: false,
         label: "Products Pages",
-        icon: allAssets["bookshelf7.svg"],
+        icon: allAssets.bookshelf,
         clickHandler: async (event) => {
           await DataProviderNavigate("/", { target: "host" });
         },
@@ -723,7 +711,7 @@ function IonMenuNav() {
         access: checkFeatureAccess(["chestnut"]),
 
         label: "Description Workstation",
-        icon: descriptionWorkStation,
+        icon: allAssets.descriptionWorkStation,
 
         clickHandler: async (event, hasAccess) => {
           if (!hasAccess) {
@@ -737,7 +725,7 @@ function IonMenuNav() {
       {
         access: checkFeatureAccess(["sourwood"]),
         label: "Article Workstation",
-        icon: newsPaperWorStation,
+        icon: allAssets.newsPaperWorStation,
         clickHandler: async (event, hasAccess) => {
           if (!hasAccess) {
             await DataProviderNavigate("/subscriptions");
@@ -834,7 +822,7 @@ function IonMenuNav() {
                   color={contentSaved && tab.saveSignal ? "success" : "neural"}
                   key={"icon" + index}
                   src={tab.access.hasAccess && tab.src}
-                  icon={!tab.src && tab.access.hasAccess ? tab.icon : beehive}
+                  icon={!tab.src && tab.access.hasAccess ? tab.icon : allAssets.beehive}
                   className="custom-icon"
                 />
                 <IonLabel

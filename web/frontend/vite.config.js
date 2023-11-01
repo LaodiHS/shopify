@@ -19,6 +19,7 @@ if (
 }
 
 
+
 const proxyOptions = {
   target: `http://127.0.0.1:${process.env.BACKEND_PORT}`,
   changeOrigin: false,
@@ -82,6 +83,7 @@ export default defineConfig({
   esbuild: {
     pure: process.env.NODE_ENV === 'production' ? ['console.log', 'console.warn'] : [],
     sourcemap:true,
+    
     // drop: ['console', 'debugger'],
       
   },

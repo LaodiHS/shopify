@@ -10,24 +10,13 @@ import {
   IonCol,
   IonProgressBar,
 } from "@ionic/react";
-import {
-  descriptionWorkStation,
-  clear,
-  bookshelf,
-  save,
-  aiIcon,
-  pencilCase,
-  newsPaperWorStation,
-
-  readingTree,
-  honeyCombGridDrop,
-  
-} from "../assets";
+import { useDataProvidersContext } from ".";
 export function IonicHeaderComponent({ centerText, left, right, progress = 100 , buffer=100, type="determinate"}) {
  const titleSize = useRef(null)
-const [fontSize, setFontSize] = useState("10px")
+
+const {allAssets} = useDataProvidersContext()
 useEffect(() => {
-let width;
+
 setTimeout(() => {
   titleSize.offsetWidth
 }, 0);
@@ -47,7 +36,7 @@ setTimeout(() => {
       >
         {left}
         <IonTitle ref = {ref => { titleSize.current = ref} }   style={{
-          backgroundImage: `url(${honeyCombGridDrop})`,
+          backgroundImage: `url(${allAssets.honeyCombGridDrop})`,
           fontSize: "9px",
           backgroundPosition: "center",
           backgroundSize: "contain",

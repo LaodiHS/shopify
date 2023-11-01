@@ -136,6 +136,7 @@ export function Accordion({
     pageIngCache,
     formatProducts,
     lockAllTasks,
+    allAssets,
     DataProviderNavigate,
   } = useProductDataContext();
 
@@ -710,7 +711,7 @@ if(!mappedLegend ){
     console.log("markup Text", markupText);
     const descriptionHtml = markupText;
     if (type === "description" && markupText.length) {
-      const productId = productData.slice().id.split("/").pop();
+      const productId = productData.id.split("/").pop();
 
       const { data, error } = await uncachedFetchData({
         url: "/api/products/update/description",
@@ -948,7 +949,8 @@ function renderAccordionItem({
     // assignClearAssistMethod,
     // mappedLegend,
     selectedImageMap,
-    lockAllTasks
+    lockAllTasks,
+    allAssets,
   } = useDataProvidersContext();
 
   useEffect(() => {
@@ -996,6 +998,7 @@ function renderAccordionItem({
             >
               <IonAccordion key={index + 8} value="requirements">
                 <AccordionInformationHeader
+                beehive={allAssets.beehive}
                   accordionName={`Requirements`} //HighlightHub
                   boxName={aiWorkStation}
                   lock={true}
@@ -1004,6 +1007,7 @@ function renderAccordionItem({
 
                 <div className="ion-padding" slot="content">
                   <TextWithMarkers
+                  imagePlaceHolder={allAssets.imagePlaceHolder}
                     eventEmitter={eventEmitter}
                     assignClearAssistMethod={assignClearAssistMethod}
                     mappedLegend={mappedLegend}
@@ -1019,6 +1023,7 @@ function renderAccordionItem({
                 value="markup"
               >
                 <AccordionInformationHeader
+                beehive={allAssets.beehive}
                   accordionName={
                     markupViewLock.hasAccess
                       ? `MarkUp`
@@ -1066,6 +1071,7 @@ function renderAccordionItem({
                 }}
               >
                 <AccordionInformationHeader
+                beehive={allAssets.beehive}
                   accordionName={
                     markupViewLock.hasAccess
                       ? `Presentation`
@@ -1122,7 +1128,9 @@ function renderAccordionItem({
                 }}
               >
                 <AccordionInformationHeader
+                beehive={allAssets.beehive}
                   accordionName={
+                    
                     markupViewLock.hasAccess
                       ? `SEO Analytics`
                       : markupViewLock.message(`SEO Analytics`)

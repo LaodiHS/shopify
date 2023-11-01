@@ -51,18 +51,12 @@ import { useIonToast, useIonRouter } from "@ionic/react";
 import { AnimatedContent } from "./";
 import { NavigationRefs } from "./";
 
-import {
-  beehive,
-  readingTree,
-  honeyCombGridDrop,
-  readingBag,
-} from "../../assets";
+
 import * as svgAssets from "../../assets"
 import {
   useWorkersContext,
   ImageCachePre,
   ImageCacheSrc,
-  CreateWorkers,
 } from "../../components";
 import { useAuthenticatedFetch } from "../../hooks";
 
@@ -74,9 +68,9 @@ console.log('assets: ', svgAssets)
 //   const model = await loadGraphModel('path_to_yolo_model/model.json');
 //   return model;
 // }
-if (import.meta.hot) {
-  console.log("hot reload detected");
-}
+// if (import.meta.hot) {
+//   console.log("hot reload detected");
+// }
 // async function detectObjects(imageElement, yoloModel) {
 //   // Convert the image to a tensor
 //   const imageTensor = tf.browser.fromPixels(imageElement);
@@ -619,7 +613,7 @@ export const DataProvidersProvider = ({ children }) => {
             );
 
             const assetName = src.slice().split("/").pop();
-            allAssets[assetName] = blobUrl;
+            allAssets[asset] = blobUrl;
           } catch (error) {
             console.error("error preloading svg assets: ", error);
           }
@@ -854,7 +848,7 @@ export const DataProvidersProvider = ({ children }) => {
             <IonLabel slot="start" className="ion-text-wrap ion-padding-top">
               Honey Members{" "}
             </IonLabel>{" "}
-            <IonIcon size="large" slot="end" icon={beehive}></IonIcon>
+            <IonIcon size="large" slot="end" icon={allAssets.beehive}></IonIcon>
           </IonItem>
         </IonList>
       ),

@@ -1,26 +1,14 @@
 import MyWorker from "../../utilities/imageWorker?worker";
 import React, { useEffect, useState, useContext, createContext } from "react";
 import { IonImg, IonSkeletonText } from "@ionic/react";
-import {
-  useDataProvidersContext,
-  useProductDataContext,
-} from "../../components";
+import {useDataProvidersContext} from "../../components";
 //navigator.hardwareConcurrency || 4; // Number of worker instances in the pool
-import { imagePlaceHolder } from "../../assets";
-import { productViewCache } from "../../utilities/store";
-function getOptimalNumThreads(defaultNumThreads = 10) {
-  let optimalThreads;
 
-  if (
-    typeof defaultNumThreads !== "number" ||
-    defaultNumThreads <= 2 ||
-    !Number.isInteger(defaultNumThreads)
-  ) {
-    // If defaultNumThreads is not a positive integer greater than 2, set a sensible default value.
-    optimalThreads = 3;
-  } else {
-    optimalThreads = defaultNumThreads;
-  }
+
+function getOptimalNumThreads(defaultNumThreads = 10) {
+  let optimalThreads = typeof defaultNumThreads !== "number" ||
+  defaultNumThreads <= 2 ||
+  !Number.isInteger(defaultNumThreads) ? 3 : defaultNumThreads;
 
   if (
     navigator &&
@@ -37,7 +25,7 @@ function getOptimalNumThreads(defaultNumThreads = 10) {
 
   return Math.max(optimalThreads, 1); // Ensure at least 1 thread.
 }
-let threadId = 1;
+const threadId = 1;
 function createImageCacheWorker() {
   try {
     const worker = new MyWorker({ type: "module" });
@@ -168,7 +156,7 @@ async function convertDataUrlToBlobUrl(rawData) {
 //   }
 // }
 export function ImageCache({ src, style, alt, sliderImg, ...props }) {
-  const { productViewCache } = useDataProvidersContext();
+  const { productViewCache, allAssets } = useDataProvidersContext();
   const [cachedSrc, setCachedSrc] = useState(null);
   const [imageLoading, setImageLoading] = useState(false);
   const [canLoad, setCanLoad] = useState(true);
@@ -193,35 +181,36 @@ export function ImageCache({ src, style, alt, sliderImg, ...props }) {
         const cachedBlobUrl = await convertDataUrlToBlobUrl(cachedImageBlob);
         setCachedSrc(cachedBlobUrl);
         setImageLoading(false);
+        return;
      
-      } else {
-      return await new Promise((resolve) => {
-          taskQueue.push({
-            elementObject: { src, memType: "image/png" },
-            resolve,
-          });
-          processTaskQueue();
-        }).then(async (blob) => {
-          if (blob) {
-            if (canLoad) {
-              const blobUrl = await convertDataUrlToBlobUrl(blob);
-              setCachedSrc(blobUrl);
-              setImageLoading(false);
-            }
-          }
-        });
       }
+      return await new Promise((resolve) => {
+        taskQueue.push({
+          elementObject: { src, memType: "image/png" },
+          resolve,
+        });
+        processTaskQueue();
+      }).then(async (blob) => {
+        if (!(blob && canLoad)) {
+          return;
+        }
+        const blobUrl = await convertDataUrlToBlobUrl(blob);
+        setCachedSrc(blobUrl);
+        setImageLoading(false);
+      });
     };
-    src !== imagePlaceHolder
-      ? await preloadImages(src)
-      : (setCachedSrc(imagePlaceHolder), setImageLoading(false));
+    if (src === allAssets.imagePlaceHolder) {
+      (setCachedSrc(allAssets.imagePlaceHolder), setImageLoading(false));
+    } else {
+      await preloadImages(src);
+    }
 
   }, [src]);
 
   return (
     <>
      {imageLoading ? <IonSkeletonText
-        key={src + "animatedPlace=holder"}
+        key={`${src}animatedPlace=holder`}
         animated
         style={{ ...style, display: "block" }}
       /> :
@@ -248,8 +237,7 @@ export async function ImageCachePre(productViewCache, src, memType) {
   // const { productViewCache } = useDataProvidersContext();
   if (await productViewCache.has(src)) {
     const cachedBlob = await productViewCache.get(src);
-    const blobUrl = await convertDataUrlToBlobUrl(cachedBlob);
-    return blobUrl;
+    return await convertDataUrlToBlobUrl(cachedBlob);
   }
   return await new Promise((resolve) => {
     taskQueue.push({ elementObject: { src, memType }, resolve });
@@ -257,8 +245,7 @@ export async function ImageCachePre(productViewCache, src, memType) {
   }).then(async (imageBlob) => {
     if (imageBlob) {
       await productViewCache.set(src, imageBlob);
-      const blobUrl = await convertDataUrlToBlobUrl(imageBlob);
-      return blobUrl;
+      return await convertDataUrlToBlobUrl(imageBlob);
     }
   });
 }
@@ -279,8 +266,7 @@ export async function ImageCacheSrc(productViewCache, src, memType) {
   }).then(async (imageBlob) => {
     if (imageBlob) {
       const cachedBlob = await productViewCache.set(src, imageBlob);
-      const blobUrl = await convertDataUrlToBlobUrl(cachedBlob);
-      return blobUrl;
+      return await convertDataUrlToBlobUrl(cachedBlob);
     }
   });
 }

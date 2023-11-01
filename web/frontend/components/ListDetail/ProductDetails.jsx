@@ -32,13 +32,13 @@ import {
 import {
   informationCircleOutline,
   exitOutline,
-  informationCircle,
+  // informationCircle,
 } from "ionicons/icons";
-import { trash, pictures, beehive, } from "../../assets";
 
-import { Context, SharedData } from "../../utilities/data-context.js";
+
+// import { Context, SharedData } from "../../utilities/data-context.js";
 import { shortenText } from "../../utilities/utility-methods";
-import { ReactRenderingComponent } from "../providers";
+// import { ReactRenderingComponent } from "../providers";
 
 import {
   AppTypeahead,
@@ -69,6 +69,7 @@ const {Editor} = useTinyMCEDataContext()
     DataProviderNavigate,
     imageSelectionModalIsOpen,
     assignImageSelectionModalIsOpen,
+    allAssets
   } = useDataProvidersContext();
   // console.log('descriptio', productDetailOptions)
   // console.log('descriptoin------>', productDetailOptions.find(([key, value]) => key === "description"))
@@ -165,7 +166,7 @@ const {Editor} = useTinyMCEDataContext()
                     className="ion-float-start"
                     size="large"
                   >
-                    <IonIcon slot="icon-only" icon={trash}></IonIcon>
+                    <IonIcon slot="icon-only" icon={allAssets.trash}></IonIcon>
                   </IonButton>
                 </IonButtons>
               </IonCol>
@@ -401,7 +402,7 @@ const {Editor} = useTinyMCEDataContext()
             </IonButton>
 
             <IonButton onClick={e => DataProviderNavigate("/subscriptions") } slot="icon-only" >
-              <IonIcon size="large" icon={beehive}></IonIcon>
+              <IonIcon size="large" icon={allAssets.beehive}></IonIcon>
             </IonButton>
           </>}
           
@@ -429,7 +430,7 @@ const {Editor} = useTinyMCEDataContext()
                 assignImageSelectionModalIsOpen((prevIsOpen) => !prevIsOpen);
               }}
             >
-              <IonIcon slot="icon-only" icon={pictures}></IonIcon>
+              <IonIcon slot="icon-only" icon={allAssets.pictures}></IonIcon>
             </IonButton>
 
 

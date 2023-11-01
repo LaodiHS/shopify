@@ -86,6 +86,7 @@ async function startServer() {
     const app = await authentication();
     // const csp = "frame-ancestors 'self' neuralnectar.fly.dev";
 
+    
     serverSideEvent(app, redisClient, queue);
     app.use(compression({ threshold: 9 }));
     handleDescriptionEndpoints(app, queue);
