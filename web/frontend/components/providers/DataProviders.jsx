@@ -582,21 +582,21 @@ export const DataProvidersProvider = ({ children }) => {
           IndexedSessionStorage: Boolean(db),
         }));
 
-        // for (const asset in svgAssets) {
-        //   try {
-        //     const src = await svgAssets[asset];
-        //     const blobUrl = await ImageCachePre(
-        //       productViewCache,
-        //       src,
-        //       "image/svg+xml"
-        //     );
+        for (const asset in svgAssets) {
+          try {
+            const src = await svgAssets[asset];
+            const blobUrl = await ImageCachePre(
+              productViewCache,
+              src,
+              "image/svg+xml"
+            );
 
-        //     // const assetName = src.slice().split("/").pop();
-        //     allAssets[asset] = blobUrl;
-        //   } catch (error) {
-        //     console.error("error preloading svg assets: ", error);
-        //   }
-        // }
+            // const assetName = src.slice().split("/").pop();
+            allAssets[asset] = blobUrl;
+          } catch (error) {
+            console.error("error preloading svg assets: ", error);
+          }
+        }
 
         setAssetsLoaded(true);
         const pageHistory = new LHistory("pagingHistory");
