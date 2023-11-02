@@ -434,7 +434,7 @@ async clearPagingHistory(){
   }
   async runSyncDataFetcher(uncachedFetchData, productsPerPage) {
     let restoreTime;
-    const initialTimeout = 20000;
+    const initialTimeout = 3000;
     console.log("hit sync");
 
     const syncDataGenerator = this.sync_fetchSyncData(
@@ -481,7 +481,7 @@ async clearPagingHistory(){
       throttleStatus.currentlyAvailable - actualQueryCost;
     if (remainingQueries < 0) {
       // return seven min if negative;
-      return 7 * 60000;
+      return 7 * 60_000;
     }
     // Calculate interval based on remainingQueries
     const nextInterval =
@@ -518,7 +518,7 @@ export const formatProducts = async (productData, key) => {
     const formattedProducts = productData.data.body.data.products.edges.map(
       (edge) => {
         const product = edge.node;
-        const formattedProduct = {
+        return {
           id: product.id,
           title: product.title,
           handle: product.handle,
@@ -574,24 +574,21 @@ export const formatProducts = async (productData, key) => {
             };
           }),
         };
-        return formattedProduct;
       }
     );
-    const productsObject = {
+
+    return {
       productsData: formattedProducts,
       pageInfo: JSON.parse(
         JSON.stringify(productData.data.body.data.products.pageInfo)
       ),
-      extensions: JSON.parse(JSON.stringify(productData.data.body.extensions)),
+      extensions: JSON.parse(JSON.stringify(Object.assign(productData.data.body.extensions, {date: new Date()}))),
     };
-
-    return productsObject;
-  } else {
-    if (key) {
-      await productViewCache.clearKey(key);
-    }
-    throw new Error("Invalid Products object");
   }
+  if (key) {
+    await productViewCache.clearKey(key);
+  }
+  throw new Error("Invalid Products object");
 };
 
 const handlePopulate = async () => {

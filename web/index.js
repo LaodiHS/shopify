@@ -570,6 +570,10 @@ async function startServer() {
     //   }
     //   res.status(status).send({ success: status === 200, error });
     // });
+
+
+
+
     const dir_name = dirname(fileURLToPath(import.meta.url));
  
 
@@ -600,6 +604,10 @@ async function startServer() {
     // };
 
     // app.use("/*", shopify.ensureInstalledOnShop());
+app.use( (req, res, next) => {
+  res.set('Cache-control', 'public, max-age=300')
+  next();
+})
 
     app.use(
       "/*",
