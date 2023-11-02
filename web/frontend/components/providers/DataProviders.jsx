@@ -571,8 +571,8 @@ export const DataProvidersProvider = ({ children }) => {
   }, []);
 
   useEffect(async () => {
-    if (workersLoaded) {
-      if (!indexDb.db) {
+    const loadAssets = async () => {
+      if (workersLoaded && !indexDb.db) {
         const db = await indexDb.startIndexDB();
         if (!db) {
           throw new Error("db is not started:", db);
@@ -584,14 +584,15 @@ export const DataProvidersProvider = ({ children }) => {
 
         for (const asset in svgAssets) {
           try {
+            if (asset === trophyImage) continue;
             const src = await svgAssets[asset];
+            console.log("src:", src);
+            if (!src.includes(".svg")) continue;
             const blobUrl = await ImageCachePre(
               productViewCache,
               src,
               "image/svg+xml"
             );
-
-            // const assetName = src.slice().split("/").pop();
             allAssets[asset] = blobUrl;
           } catch (error) {
             console.error("error preloading svg assets: ", error);
@@ -600,31 +601,26 @@ export const DataProvidersProvider = ({ children }) => {
 
         setAssetsLoaded(true);
         const pageHistory = new LHistory("pagingHistory");
-        pageHistory.getPagingState();
+        await pageHistory.getPagingState();
         setPagingHistory(pageHistory);
         setDependenciesLoaded((prev) => ({ ...prev, pagingHistory: true }));
       }
+    };
 
-      return async () => {
-        console.log("closing db connection");
-        if (!indexDb) {
-          throw new Error("no db specified: ", indexDb.db);
-        }
-        if (indexDb.db) {
-          await indexDb.stopIndexDB();
+   await loadAssets();
 
-          setDependenciesLoaded((prev) => ({
-            ...prev,
-            IndexedSessionStorage: false,
-          }));
-        }
-      };
-    }
+    return async () => {
+      console.log("closing db connection");
+      if (!indexDb) throw new Error("no db specified: ", indexDb.db);
+      if (indexDb.db) {
+        await indexDb.stopIndexDB();
+        setDependenciesLoaded((prev) => ({
+          ...prev,
+          IndexedSessionStorage: false,
+        }));
+      }
+    };
   }, [workersLoaded]);
-
-  async function getSVGAsset(src, memType) {
-    return await ImageCacheSrc(productViewCache, src, memType);
-  }
 
   useEffect(() => {
     console.log("hit number allDep: ", Object.entries(dependenciesLoaded));
@@ -801,12 +797,13 @@ export const DataProvidersProvider = ({ children }) => {
         message: (label) => label,
       };
     }
-    const required = combinedSubscriptions.slice();
+    const requiredLabel = combinedSubscriptions.slice();
 
-    if (required.length > 1) {
-      required[required.length - 1] = `or ${required[required.length - 1]}`;
+    if (requiredLabel.length > 1) {
+      requiredLabel[requiredLabel.length - 1] = `or ${
+        requiredLabel[requiredLabel.length - 1]
+      }`;
     }
-    const requiredLabel = required;
 
     if (!requiredLabel) return null;
 
@@ -990,8 +987,10 @@ export const DataProvidersProvider = ({ children }) => {
       const selImages = { ...prev };
       sel_images.length = 0;
       selected_images.forEach((image) => {
-        const symbol_name =
-          "image: " + compressString(image, all_product_images) + "_.jpg";
+        const symbol_name = `image: ${compressString(
+          image,
+          all_product_images
+        )}_.jpg`;
 
         sel_images.push(symbol_name);
         selImages[symbol_name] = {
@@ -1139,7 +1138,6 @@ export const DataProvidersProvider = ({ children }) => {
     shopifyDown,
     defineShopifyDown,
     allAssets,
-    getSVGAsset,
     assetsLoaded,
     AllDependenciesLoaded,
     modifyState,

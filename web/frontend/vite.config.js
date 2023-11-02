@@ -3,6 +3,7 @@ import { dirname } from "path";
 import { fileURLToPath } from "url";
 import https from "https";
 import react from "@vitejs/plugin-react";
+import Checker from 'vite-plugin-checker';
 //import react from "@vitejs/plugin-react-swc";
 // import vue from "@vitejs/plugin-vue";
 // import eslintPlugin from 'vite-plugin-eslint'
@@ -58,6 +59,7 @@ export default defineConfig({
       //{ devTarget: "es2022" }
     ),
     vue(),
+    Checker({ typescript: false, flow: true })
   ],
   optimizeDeps: {
     // web: ['vue'], // Include relevant libraries

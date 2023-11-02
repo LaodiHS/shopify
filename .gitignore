@@ -34,3 +34,7 @@ web/database.sqlite
 web/ionic/.angular
 
 .vscode/
+
+.prettierrc
+
+.flowconfig

@@ -1,6 +1,6 @@
-import "dotenv/config";
-import { readJSONFromFileAsync } from "./userStore.js";
-import { Readable, pipeline } from "stream";
+import 'dotenv/config';
+import { readJSONFromFileAsync } from './userStore.js';
+import { Readable, pipeline } from 'stream';
 
 const MockGptTurboResponse = false;
 export const max_tokens = 1000;
@@ -13,7 +13,7 @@ const CheckRequiredProps = true;
 
 // ChatGpt Function Inline Error Triggers
 if (MockGptTurboPrompt) {
-  MockGptTurboPrompt = "Use only 20 word for the text of the story.";
+  MockGptTurboPrompt = 'Use only 20 word for the text of the story.';
 }
 
 export { MockGptTurboPrompt };
@@ -25,7 +25,7 @@ export function getLegend(genLegend) {
 function replaceBracketContents(inputString, replacements) {
   let index = 0;
   return inputString.replace(/\([^)]+\)/g, (match) => {
-    console.log('match'. match)
+    console.log('match'.match);
 
     let replacement;
     if (replacements[index]) {
@@ -35,7 +35,7 @@ function replaceBracketContents(inputString, replacements) {
     }
 
     // Use match if replacements array is exhausted
-console.log('replacement: ', replacement)
+    console.log('replacement: ', replacement);
     index++;
     return `(${replacement})`;
   });
@@ -48,36 +48,31 @@ export function checkRequiredProps(obj) {
     return;
   }
 
-  
   const functionString = arguments.callee.toString();
 
   const paramNames =
-    functionString
-      .slice(functionString.indexOf("(") + 1, functionString.indexOf(")"))
-      .match(/([^\s,]+)/g) || [];
+    functionString.slice(functionString.indexOf('(') + 1, functionString.indexOf(')')).match(/([^\s,]+)/g) || [];
   // console.log('paramNames: ' + paramNames)
   // console.log('functionString: ' + functionString)
   const requiredProps = paramNames.slice(1); // Excluding the first parameter, which is obj
 
   const missingProps = requiredProps.filter((prop) => !(prop in obj));
   if (missingProps.length > 0) {
-    const functionName = checkRequiredProps.caller.name || "Unknown function";
-    const errorMessage = `Missing required properties '${missingProps.join(
-      ", "
-    )}' in function '${functionName}'`;
+    const functionName = checkRequiredProps.caller.name || 'Unknown function';
+    const errorMessage = `Missing required properties '${missingProps.join(', ')}' in function '${functionName}'`;
     throw new Error(errorMessage);
   }
 }
 
 export function testBullMqJobProcessFailure() {
   if (TestBullMqJobProcessFailure) {
-    throw new Error("Job processing failed");
+    throw new Error('Job processing failed');
   }
 }
 
 export function testNonNetWorkErrorOnChatGptTurboFailure() {
   if (TestNonNetWorkErrorOnChatGptTurboFailure) {
-    throw Error("failed to process");
+    throw Error('failed to process');
   }
 }
 
@@ -97,7 +92,7 @@ export async function mockGptTurboResponse({
     await new Promise((resolve) =>
       setTimeout(() => {
         resolve(true);
-      }, 100)
+      }, 100),
     );
 
     let sample =
@@ -106,13 +101,13 @@ export async function mockGptTurboResponse({
     let text = replaceBracketContents(sample, legend);
     console.log('text: ', text);
     const sampleTexts = [
-      text.split(" ").map((item) => " " + item + " "),
+      text.split(' ').map((item) => ' ' + item + ' '),
       " as they become available, creating a chat-like experience. In this blog, we will explore how to configure and implement streaming in OpenAI's chat completions API. We will also look at how to consume these streams using Node.js, highlighting the differences between OpenAI's streaming API and standard SSE."
-        .split(" ")
-        .map((item) => " " + item + " "),
-      "Streaming is a technique that allows data to be sent and received incrementally, without waiting for the entire data to be ready. This can improve performance and user experience, especially for large or dynamic data. [DONE]"
-        .split(" ")
-        .map((item) => " " + item + " "),
+        .split(' ')
+        .map((item) => ' ' + item + ' '),
+      'Streaming is a technique that allows data to be sent and received incrementally, without waiting for the entire data to be ready. This can improve performance and user experience, especially for large or dynamic data. [DONE]'
+        .split(' ')
+        .map((item) => ' ' + item + ' '),
     ].flat(Infinity);
 
     const responseStream = createChatGptTurboResponse(sampleTexts);
@@ -149,11 +144,11 @@ function createChatGptTurboResponse(texts) {
             index: currentIndex,
             delta: {
               content: texts[currentIndex++],
-              finish_reason: currentIndex < texts.length ? null : "end",
+              finish_reason: currentIndex < texts.length ? null : 'end',
             },
 
             usage: {
-              total_tokens: texts[currentIndex - 1].split(" ").length,
+              total_tokens: texts[currentIndex - 1].split(' ').length,
             },
           },
         ],
