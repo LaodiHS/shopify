@@ -9,6 +9,8 @@ primary_region = "lax"
 [build]
 
 [env]
+  SHOPIFY_API_KEY = "e39c559d5a6b026c4626628bb9c1959b"
+  SHOPIFY_API_SECRET = "a4ca9424d4961d3f0789eb75f8fd8e08"
   HOST = "https://neuralnectar.fly.dev"
   LOG_LEVEL = "debug"
   NODE_ENV = "production"
@@ -20,8 +22,6 @@ primary_region = "lax"
   REDIS_LAB_PRODUCTION = "redis://default:z62jRMRCqkZRFoX6YDWmzIRdQCGRkWK0@redis-12145.c309.us-east-2-1.ec2.cloud.redislabs.com:12145"
   REDIS_LAB_TEST_ENV = "redis://default:au34F3z3Bn8izOjWQ9zPITaQ6MYTE3CP@redis-12960.c60.us-west-1-2.ec2.cloud.redislabs.com:12960"
   SCOPES = "write_products,read_content,write_content"
-  SHOPIFY_API_KEY = "e39c559d5a6b026c4626628bb9c1959b"
-  SHOPIFY_API_SECRET = "a4ca9424d4961d3f0789eb75f8fd8e08"
-
+  
 [http_service]
   internal_port = 3000
