@@ -4,7 +4,6 @@
 #
 
 app = "neuralnectar"
-primary_region = "lax"
 
 [build]
 
