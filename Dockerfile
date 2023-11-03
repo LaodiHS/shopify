@@ -10,26 +10,6 @@ RUN cd frontend && npm install && npm run build
 CMD ["npm", "run", "serve"]
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # FROM node:18-alpine
 
 # # RUN echo "Docker Build Starting..."

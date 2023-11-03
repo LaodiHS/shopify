@@ -24,4 +24,4 @@ primary_region = "lax"
   SCOPES = "write_products,read_content,write_content"
   
 [http_service]
-  internal_port = 3000
+  internal_port = 8081

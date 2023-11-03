@@ -76,7 +76,6 @@ import {
   AnimatedContent,
 } from "./components";
 
-
 import ExitFrame from "./pages/ExitIframe";
 // const svgAssets = import.meta.glob("./assets/*.svg");
 tinymceCustomPlugins(tinymce);
@@ -109,38 +108,43 @@ export default function App() {
     : [];
 
   return (
-    <IonApp force-theme="gray">
-      {/* <PolarisProvider>  */}
-      <BrowserRouter>
-        <AppBridgeProvider>
-          <QueryProvider>
-            <NavigationDataProvider>
-              <NavigationMenu navigationLinks={navigationPanel} />
-              <Workers>
-                <TinyMCEDataProvider>
-                  <WinkDataProvider>
-                    <DataProvidersProvider>
-                      <ProductDataProvider>
-                        <IonMenuNav />
-                      </ProductDataProvider>
-                    </DataProvidersProvider>
-                  </WinkDataProvider>
-                </TinyMCEDataProvider>
-              </Workers>
-            </NavigationDataProvider>
-          </QueryProvider>
-        </AppBridgeProvider>
-      </BrowserRouter>
-      <PolarisProvider> </PolarisProvider>
-    </IonApp>
+    <PolarisProvider>
+    <IonApp force-theme="light">
+        <BrowserRouter>
+          <AppBridgeProvider>
+            <QueryProvider>
+              <NavigationDataProvider>
+                <NavigationMenu navigationLinks={navigationPanel} />
+                <Workers>
+                  <TinyMCEDataProvider>
+                    <WinkDataProvider>
+                      <DataProvidersProvider>
+                        <ProductDataProvider>
+                          <IonMenuNav />
+                        </ProductDataProvider>
+                      </DataProvidersProvider>
+                    </WinkDataProvider>
+                  </TinyMCEDataProvider>
+                </Workers>
+              </NavigationDataProvider>
+            </QueryProvider>
+          </AppBridgeProvider>
+        </BrowserRouter>
+    </IonApp>  
+     </PolarisProvider>
   );
 }
 
 function LandingPage({ animationRef }) {
   const arrowRef = useRef(null);
   const [arrowAnimation, setArrowAnimation] = useState("animate__bounceIn");
-  const { subscriptions, setUser, uncachedFetchData, allAssets , DataProviderNavigate } =
-    useDataProvidersContext();
+  const {
+    subscriptions,
+    setUser,
+    uncachedFetchData,
+    allAssets,
+    DataProviderNavigate,
+  } = useDataProvidersContext();
 
   useIonViewDidEnter(() => {
     arrowRef.current?.addEventListener("animationend", () => {
@@ -307,19 +311,14 @@ function Description() {
   const {
     refDictionary,
     DataProviderNavigate,
-allAssets,
+    allAssets,
     lockAllTasks,
     contentSaved,
     user,
   } = useDataProvidersContext();
-useEffect(()=>{
-
-
-  return ()=>
-  {
-
-  }
-},[])
+  useEffect(() => {
+    return () => {};
+  }, []);
   return (
     <IonPage ref={refDictionary["/description"]}>
       <IonicHeaderComponent
@@ -363,7 +362,7 @@ useEffect(()=>{
                 icon={allAssets.descriptionWorkStation}
               />
             </IonButton>
-            <IonButtons slot="end"/>
+            <IonButtons slot="end" />
           </>
         }
       />
@@ -394,7 +393,7 @@ function Article() {
             <IonButton
               color="neural"
               key="IonButtons/article"
-              disabled={ lockAllTasks}
+              disabled={lockAllTasks}
               onClick={() => {
                 DataProviderNavigate("/product-details");
               }}
@@ -477,7 +476,7 @@ const BugReportPage = (React.FC = () => {
     const emailToSend = {
       SecureToken: "376ee0cd-ab84-414e-a207-3ec8ca2d89bd", //2A4E18C4EE14D83137B68735833A9ED3B1D21FB887E521E76D9FCBC83FDDEE99802E471273AB80D3DC7C79AA9FB518DB
       //smtp password support@techsolutionsforge.com    8B5199E49BC1B7CFCCD4560DF930D755BDFE  2525
-      // 2bef0aef-b2cc-4074-8cff-f291ce935b1b 
+      // 2bef0aef-b2cc-4074-8cff-f291ce935b1b
       To: "hasanseirafi69@gmail.com",
       From: "admin.shopify.com",
       Subject: `Bug Report `,
@@ -600,7 +599,6 @@ function IonMenuNav() {
 
   useEffect(async () => {
     // console.log("svgAssets:", svgAssets);
-
     // await ImageCachePre(readingBag)
   }, []);
 
@@ -810,8 +808,12 @@ function IonMenuNav() {
               <IonTabButton
                 size="large"
                 id={buttonId}
-                disabled={(contentSaved && tab.saveSignal ) ? false :  (lockAllTasks || tab.disabled) }
-             color={contentSaved && tab.saveSignal ? "success" : "neural"}
+                disabled={
+                  contentSaved && tab.saveSignal
+                    ? false
+                    : lockAllTasks || tab.disabled
+                }
+                color={contentSaved && tab.saveSignal ? "success" : "neural"}
                 key={index}
                 tab={currentRoute}
                 onClick={(e) =>
@@ -822,15 +824,26 @@ function IonMenuNav() {
                   color={contentSaved && tab.saveSignal ? "success" : "neural"}
                   key={"icon" + index}
                   src={tab.access.hasAccess && tab.src}
-                  icon={!tab.src && tab.access.hasAccess ? tab.icon : allAssets.beehive}
+                  icon={
+                    !tab.src && tab.access.hasAccess
+                      ? tab.icon
+                      : allAssets.beehive
+                  }
                   className="custom-icon"
                 />
                 <IonLabel
                   key={index}
-                  color={(contentSaved && tab.saveSignal )? "success" : tab.access.hasAccess ? "primary" : "danger"}
+                  color={
+                    contentSaved && tab.saveSignal
+                      ? "success"
+                      : tab.access.hasAccess
+                      ? "primary"
+                      : "danger"
+                  }
                 >
-             
-                {(contentSaved && tab.saveSignal ) ? "Saving" : tab.access.message(tab.label)}
+                  {contentSaved && tab.saveSignal
+                    ? "Saving"
+                    : tab.access.message(tab.label)}
                 </IonLabel>
               </IonTabButton>
             );

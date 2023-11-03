@@ -70,8 +70,8 @@ export function getPolarisTranslations() {
  * Intended to be called before rendering the app to ensure translations are present.
  */
 export async function initI18n() {
- // await loadIntlPolyfills();
- // await Promise.all([initI18next(), fetchPolarisTranslations()]);
+ await loadIntlPolyfills();
+ await Promise.all([initI18next(), fetchPolarisTranslations()]);
 }
 
 /**

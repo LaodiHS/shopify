@@ -16,3 +16,9 @@ https://help.heroku.com/sharing/31513dcf-21f3-4e40-89c2-7c0653eeb43c
 
 
 https://help.heroku.com/tickets/1314697
+
+
+
+
+
+ sudo docker build --platform linux/amd64 -t neuralnectar --build-arg SHOPIFY_API_SECRET=a4ca9424d4961d3f0789eb75f8fd8e08 .   

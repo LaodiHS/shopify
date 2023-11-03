@@ -52,7 +52,7 @@ export function PolarisProvider({ children }) {
 
   return (
     <AppProvider 
-    //i18n={translations}
+    i18n={translations}
      linkComponent={AppBridgeLink}>
       {children}
     </AppProvider>
