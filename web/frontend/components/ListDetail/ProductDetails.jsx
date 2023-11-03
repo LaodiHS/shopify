@@ -44,7 +44,7 @@ import {
   AppTypeahead,
   extractTextFromHtml,
   useDataProvidersContext,
-  ImageLoader,
+  // ImageLoader,
   // Tinymce,
   ImageCache,
   useTinyMCEDataContext, NoImagePlaceHolder

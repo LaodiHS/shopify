@@ -7,7 +7,7 @@ export { InformationIcon } from "./providers/InformationIcon";
 
 export { AppTypeahead } from "./ListDetail/AppTypeahead";
 export { SelectedOptions } from "./ListDetail/SelectedOptions";
-export { ImageLoader } from "./ImageLoader";
+// export { ImageLoader } from "./ImageLoader";
 export { ProductDetails } from "./ListDetail/ProductDetails";
 export { Accordion } from "./ListDetail/Accordion";
 export { AccordionInformationHeader } from "./ListDetail/AccordionInformationHeader";
