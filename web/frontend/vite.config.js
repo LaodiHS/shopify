@@ -2,13 +2,13 @@ import { defineConfig } from "vite";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 import https from "https";
-import react from "@vitejs/plugin-react";
+
 // import Checker from 'vite-plugin-checker';
 //import react from "@vitejs/plugin-react-swc";
 // import vue from "@vitejs/plugin-vue";
 // import eslintPlugin from 'vite-plugin-eslint'
-import vue from '@vitejs/plugin-vue'
-
+// import vue from '@vitejs/plugin-vue'
+import react from "@vitejs/plugin-react";
 if (
   process.env.npm_lifecycle_event === "build" &&
   !process.env.CI &&
@@ -58,7 +58,7 @@ export default defineConfig({
     react(
       //{ devTarget: "es2022" }
     ),
-    vue()
+    // vue()
     // ,
     // Checker({ typescript: false, flow: true })
   ],

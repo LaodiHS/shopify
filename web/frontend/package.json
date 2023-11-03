@@ -27,7 +27,8 @@
     "@shopify/app-bridge-react": "^3.7.7",
     "@shopify/i18next-shopify": "0.2.0",
     "@shopify/polaris": "^10.49.1",
-    "@vitejs/plugin-react-swc": "^3.4.0",
+    "@vitejs/plugin-react": "^4.1.1",
+   
     "animate.css": "^4.1.1",
     "axios": "^1.4.0",
     "bcryptjs": "^2.4.3",
@@ -88,6 +89,7 @@
     "@types/node": "^20.8.9",
     "@types/react": "^18.2.32",
     "@types/react-dom": "^18.2.14",
+    "@vitejs/plugin-react-swc": "^3.4.0",
     "@types/tinymce": "^4.6.5",
     "@vitejs/plugin-legacy": "^4.1.1",
     "@vitejs/plugin-react": "^4.1.1",
