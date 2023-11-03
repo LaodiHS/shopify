@@ -2,7 +2,7 @@
 
 name = "test-neuralnectar"
 client_id = "b2919712bc4555c05f978c56eb4f5750"
-application_url = "https://factory-pathology-di-tiles.trycloudflare.com"
+application_url = "https://pokemon-partner-acoustic-lat.trycloudflare.com"
 embedded = true
 
 [access_scopes]
@@ -11,9 +11,10 @@ scopes = "write_products,read_content,write_content"
 
 [auth]
 redirect_urls = [
-  "https://factory-pathology-di-tiles.trycloudflare.com/auth/callback",
-  "https://factory-pathology-di-tiles.trycloudflare.com/auth/shopify/callback",
-  "https://factory-pathology-di-tiles.trycloudflare.com/api/auth/callback"
+  "https://pokemon-partner-acoustic-lat.trycloudflare.com/auth/callback",
+  "https://pokemon-partner-acoustic-lat.trycloudflare.com/auth/shopify/callback",
+  "https://pokemon-partner-acoustic-lat.trycloudflare.com/api/auth/callback",
+  "https://pokemon-partner-acoustic-lat.trycloudflare.com/.shopify/graphiql/auth/callback"
 ]
 
 [webhooks]

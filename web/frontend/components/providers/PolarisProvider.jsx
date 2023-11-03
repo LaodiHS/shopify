@@ -48,7 +48,7 @@ function AppBridgeLink({ url, children, external, ...rest }) {
  *
  */
 export function PolarisProvider({ children }) {
-  //const translations = getPolarisTranslations();
+  const translations = getPolarisTranslations();
 
   return (
     <AppProvider 
