@@ -72,8 +72,7 @@ export default defineConfig({
   build: {
     chunkSizeWarningLimit: 7000,
     sourcemap:true,
-    workers:1,
-    parallel:false,
+
   },
 
 
