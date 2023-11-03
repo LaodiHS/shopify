@@ -72,7 +72,10 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 7000,
-    sourcemap:true,
+    sourcemap:false,
+    parallel:false,
+    minify:'terser',
+    workers:1
 
   },
 
