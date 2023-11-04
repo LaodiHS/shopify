@@ -2,7 +2,7 @@
 
 name = "test-neuralnectar"
 client_id = "b2919712bc4555c05f978c56eb4f5750"
-application_url = "https://pokemon-partner-acoustic-lat.trycloudflare.com"
+application_url = "https://membrane-placing-households-nirvana.trycloudflare.com"
 embedded = true
 
 [access_scopes]
@@ -11,10 +11,10 @@ scopes = "write_products,read_content,write_content"
 
 [auth]
 redirect_urls = [
-  "https://pokemon-partner-acoustic-lat.trycloudflare.com/auth/callback",
-  "https://pokemon-partner-acoustic-lat.trycloudflare.com/auth/shopify/callback",
-  "https://pokemon-partner-acoustic-lat.trycloudflare.com/api/auth/callback",
-  "https://pokemon-partner-acoustic-lat.trycloudflare.com/.shopify/graphiql/auth/callback"
+  "https://membrane-placing-households-nirvana.trycloudflare.com/auth/callback",
+  "https://membrane-placing-households-nirvana.trycloudflare.com/auth/shopify/callback",
+  "https://membrane-placing-households-nirvana.trycloudflare.com/api/auth/callback",
+  "https://membrane-placing-households-nirvana.trycloudflare.com/.shopify/graphiql/auth/callback"
 ]
 
 [webhooks]

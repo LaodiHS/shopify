@@ -77,7 +77,7 @@ export function LoadingPageComponent({ progress, type }) {
                   style={{
                     color: "#ef8561",
                     letterSpacing: "1.7vw",
-                    marginTop: iconSize + 50 + "px",
+                    marginTop: `${iconSize + 50}px`,
                     fontFamily: "'Baloo', sans-serif",
                     fontSize: "5vw",
                     whiteSpace: "nowrap" /* Prevents wrapping */,

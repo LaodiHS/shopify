@@ -4,9 +4,8 @@ import * as d3 from "d3";
 import debounce from "lodash.debounce";
 import { IonRow, IonCol, IonButton, IonText } from "@ionic/react";
 
-
 import tinycolor from "tinycolor2";
-import { useDataProvidersContext, InformationIcon,DocumentImagery } from "../";
+import { useDataProvidersContext, InformationIcon, DocumentImagery } from "../";
 
 function generateComplementaryColor(baseColor) {
   const base = tinycolor(baseColor);
@@ -15,8 +14,7 @@ function generateComplementaryColor(baseColor) {
     .lighten(10) // Adjust lightness
     .saturate(30) // Adjust saturation
     .toString();
-  const complementary = base.toHexString();
-  return complementary;
+  return base.toHexString();
 }
 function RandomColor(baseColor) {
   const base = tinycolor(baseColor);
@@ -93,10 +91,10 @@ function wordsFromTextNLP(doc, its) {
 }
 function generateWordCloud(layout, svgRef, svgContainer, words) {
   const ScaleFontValueToRange = createScalerForWords(words);
-  const width = svgContainer.current.offsetWidth;
-
-const computedHeight = words.length * 4.75
-const height = computedHeight < 200 ? 200 : computedHeight;
+  const width = svgContainer?.current?.offsetWidth;
+  if (!width) return;
+  const computedHeight = words.length * 4.75;
+  const height = computedHeight < 200 ? 200 : computedHeight;
   layout
     .size([width, height])
     .words(words)
@@ -109,7 +107,7 @@ const height = computedHeight < 200 ? 200 : computedHeight;
 
   function draw(words) {
     const svg = d3.select(svgRef.current);
-  
+
     svg
       .attr("width", layout.size()[0])
       .attr("height", layout.size()[1])
@@ -147,14 +145,13 @@ function updateWordCloud(layout, svgRef, words) {
   layout.start();
 
   // Select all text elements inside the SVG
-  const textElements = d3
-    .select(svgRef.current)
+  d3.select(svgRef.current)
     .selectAll("text")
 
     .data(layout.words(), (d) => d.text)
     .exit()
     .remove()
-    .on("end", function () {});
+    .on("end", () => {});
 
   d3.select(svgRef.current)
     .selectAll("text")
@@ -167,14 +164,13 @@ function updateWordCloud(layout, svgRef, words) {
         ")rotate(" +
         d.rotate +
         ")"
-
     )
     .text((d) => d.text)
     .transition()
     .attr("opacity", 1)
     .attr(
       "transform",
-      (d) => "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")"
+      (d) => `translate(${[d.x, d.y]})rotate(${d.rotate})`
     )
     .duration(1500);
 }
@@ -184,10 +180,9 @@ export function WordCloud({ text, doc, its, checkFeatureAccess }) {
 
   const [layout, setLayout] = useState(cloud());
   const [initialGraph, setInitialGraph] = useState(false);
-  const [importantIdeas, setImportantIdeas] = useState([])
+  const [importantIdeas, setImportantIdeas] = useState([]);
   const svgRef = useRef(null);
   const svgContainer = useRef(null);
- 
 
   if (!checkFeatureAccess(["acacia"])?.hasAccess) {
     return (
@@ -199,9 +194,8 @@ export function WordCloud({ text, doc, its, checkFeatureAccess }) {
               color="shoe"
               onClick={(e) => DataProviderNavigate("/subscriptions")}
             >
-             Quickly Visualize The Most Important Ideas In Your Document
+              Quickly Visualize The Most Important Ideas In Your Document
             </IonButton>
-
           </IonText>
         </IonCol>
         <IonCol
@@ -215,7 +209,7 @@ export function WordCloud({ text, doc, its, checkFeatureAccess }) {
           }}
           className="ion-align-items-center ion-text-center ion-text-capitalize"
           size="12"
-        ></IonCol>
+        />
         <IonCol className="ion-text-center ion-text-capitalize">
           <IonButton
             fill="clear"
@@ -231,7 +225,7 @@ export function WordCloud({ text, doc, its, checkFeatureAccess }) {
 
   useEffect(() => {
     const words = wordsFromTextNLP(doc, its);
-    setImportantIdeas(words)
+    setImportantIdeas(words);
     // console.log('words',words)
     let resizeTimeout;
     const handleResize = () => {
@@ -252,8 +246,7 @@ export function WordCloud({ text, doc, its, checkFeatureAccess }) {
             observer.disconnect(); // Stop observing once it comes into view
             setInitialGraph(true);
           } else {
-       
-       //     updateWordCloud(layout, svgRef, words);
+            //     updateWordCloud(layout, svgRef, words);
             // updateWordCloud(layout, svgRef, words)
             const deb = debounce(
               (e) => updateWordCloud(layout, svgRef, words),
@@ -280,23 +273,25 @@ export function WordCloud({ text, doc, its, checkFeatureAccess }) {
     };
   }, [text]);
 
-
-
   return (
     <>
-      <InformationIcon label="Key Concepts in Your Document" id="word-cloud-seo-tools" content="These words not only capture the most frequently used terms in your document, but they also provide a visual representation of the key concepts that strongly resonate with your reader. They encapsulate the core essence of the document in vivid mental imagery" />
-       <IonCol size="12" className="ion-text-center ion-text-capitalize">
-       {/* <DocumentImagery text={text} />      */}
+      <InformationIcon
+        label="Key Concepts in Your Document"
+        id="word-cloud-seo-tools"
+        content="These words not only capture the most frequently used terms in your document, but they also provide a visual representation of the key concepts that strongly resonate with your reader. They encapsulate the core essence of the document in vivid mental imagery"
+      />
+      <IonCol size="12" className="ion-text-center ion-text-capitalize">
+        {/* <DocumentImagery text={text} />      */}
       </IonCol>
       <IonCol
-        className={
-          `ion-text-center ion-text-capitalize ${importantIdeas.length
-            ? " ion-hide"
-            : ""}`
-        }
+        className={`ion-text-center ion-text-capitalize ${
+          importantIdeas.length ? " ion-hide" : ""
+        }`}
         size="12"
       >
-        <IonText className="ion-text-center" color="warning">There is currently not enough data in your document.</IonText>
+        <IonText className="ion-text-center" color="warning">
+          There is currently not enough data in your document.
+        </IonText>
       </IonCol>
       <IonCol
         key="svgContainer"
@@ -304,7 +299,11 @@ export function WordCloud({ text, doc, its, checkFeatureAccess }) {
         className="ion-align-items-center"
         size="12"
       >
-        <svg key="svg" ref={svgRef} style={{ width: "100%", height: "100%", minHeight:"283.3px" }} />
+        <svg
+          key="svg"
+          ref={svgRef}
+          style={{ width: "100%", height: "100%", minHeight: "283.3px" }}
+        />
       </IonCol>
     </>
   );

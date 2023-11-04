@@ -2,9 +2,8 @@ import express from "express";
 import { shopify } from "./shopify.js";
 import { billingConfig, isTest } from "./billing.js";
 import webhookHandlers from "./webhook-handlers.js";
-import compression from "compression"
 import crypto from "crypto"
-import { Shopify } from "@shopify/shopify-api";
+
 
 
 

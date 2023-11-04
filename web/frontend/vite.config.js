@@ -70,11 +70,15 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 7000,
-    sourcemap:true,
+   // sourcemap:true,
   //  parallel:false,
    // minify:'terser',
    // workers:1
 
+  },
+  esbuild:{
+    pure: process.env.NODE_ENV === 'production' ? ['console.log', 'console.warn'] : [],
+  
   },
   resolve: {
     preserveSymlinks: true,

@@ -35,14 +35,14 @@ import { useShopifyContext } from "../providers/ShopifyContext";
 import { getSessionToken } from "@shopify/app-bridge/utilities";
 import { Redirect } from "@shopify/app-bridge/actions";
 import { NavigationRefs, AnimatedContent } from "./";
-// import * as svgAssets from "../../assets";
+ import * as svgAssets from "../../assets";
 import {
   useWorkersContext,
   ImageCachePre,
   ImageCacheSrc,
 } from "../../components";
 import { useAuthenticatedFetch } from "../../hooks";
-const svgAssets = {};
+
 // const svgAssets = import.meta.glob("../../assets/*.svg");
 // import {TRAINING_DATA} from 'https://storage.googleapis.com/jmstore/TensorFlowJS/EdX/TrainingData/fashion-mnist.js';
 // import { useWorkerContext } from './ImageCache';
@@ -584,7 +584,7 @@ export const DataProvidersProvider = ({ children }) => {
 
         for (const asset in svgAssets) {
           try {
-            if (asset === trophyImage) continue;
+         
             const src = await svgAssets[asset];
             console.log("src:", src);
             if (!src.includes(".svg")) continue;

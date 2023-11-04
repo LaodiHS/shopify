@@ -38,11 +38,12 @@ import {
 import { sendEmail } from "./sendEmail.js";
 import * as userStore from "./userStore.js";
 
-// const dnsCache = dnscache({
-//   enable: true,
-//   // "ttl" : 300,
-//   cachesize: 1000, // Set TTL to 5 minutes (300 seconds)
-// });
+
+dnscache({
+  enable: true,
+   "ttl" : 300,
+  cachesize: 1000, // Set TTL to 5 minutes (300 seconds)
+});
 
 const { writeJSONToFileAsync } = userStore;
 

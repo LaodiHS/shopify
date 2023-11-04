@@ -19,6 +19,6 @@ https://help.heroku.com/tickets/1314697
 
 
 
-
+flyctl deploy --build-arg  SHOPIFY_API_SECRET=a4ca9424d4961d3f0789eb75f8fd8e08  --remote-only    
 
  sudo docker build --platform linux/amd64 -t neuralnectar --build-arg SHOPIFY_API_SECRET=a4ca9424d4961d3f0789eb75f8fd8e08 .   

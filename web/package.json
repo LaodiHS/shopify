@@ -14,9 +14,9 @@
   },
   "dependencies": {
     "@lexical/react": "^0.12.0",
-    "@shopify/shopify-app-express": "^2.2.2",
-    "@shopify/shopify-app-session-storage-redis": "^1.1.8",
-    "@shopify/shopify-app-session-storage-sqlite": "^1.2.3",
+    "@shopify/shopify-app-express": "^3.0.1",
+    "@shopify/shopify-app-session-storage-redis": "^2.0.1",
+    "@shopify/shopify-app-session-storage-sqlite": "^2.0.1",
     "@tinymce/tinymce-react": "^4.3.0",
     "ajv": "^8.12.0",
     "axios": "^1.4.0",
@@ -49,7 +49,7 @@
     "uid": "^2.0.2"
   },
   "devDependencies": {
-    "prettier": "^2.6.2",
+    "prettier": "^3.0.3",
     "pretty-quick": "^3.1.3"
   }
 }
