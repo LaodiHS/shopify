@@ -1,9 +1,5 @@
 import React, { useEffect } from 'react';
 
-import styler from 'stylefire';
-import { useInView } from 'react-intersection-observer';
-
-
 async function AnimatedContent(ref, animation, options = {}) {
 console.log('options', animation)
   const {

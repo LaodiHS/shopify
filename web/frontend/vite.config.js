@@ -2,13 +2,13 @@ import { defineConfig } from "vite";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 import https from "https";
-
+import react from "@vitejs/plugin-react";
 // import Checker from 'vite-plugin-checker';
 //import react from "@vitejs/plugin-react-swc";
 // import vue from "@vitejs/plugin-vue";
 // import eslintPlugin from 'vite-plugin-eslint'
 // import vue from '@vitejs/plugin-vue'
-import react from "@vitejs/plugin-react";
+
 if (
   process.env.npm_lifecycle_event === "build" &&
   !process.env.CI &&
@@ -49,19 +49,17 @@ if (host === "localhost") {
     port: process.env.FRONTEND_PORT,
     clientPort: 443,
   };
-}
-
-
+};
+   // vue()
+    // ,
+    // Checker({ typescript: false, flow: true })
+  
+//{ devTarget: "es2022" }
 export default defineConfig({
   root: dirname(fileURLToPath(import.meta.url)),
   plugins: [
-    react(
-      //{ devTarget: "es2022" }
-    ),
-    // vue()
-    // ,
-    // Checker({ typescript: false, flow: true })
-  ],
+    react()
+ ],
   optimizeDeps: {
     // web: ['vue'], // Include relevant libraries
   },
@@ -72,14 +70,12 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 7000,
-    sourcemap:false,
-    parallel:false,
-    minify:'terser',
-    workers:1
+    sourcemap:true,
+  //  parallel:false,
+   // minify:'terser',
+   // workers:1
 
   },
-
-
   resolve: {
     preserveSymlinks: true,
   },
