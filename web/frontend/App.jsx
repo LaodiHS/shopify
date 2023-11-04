@@ -109,7 +109,7 @@ export default function App() {
 
   return (
     <PolarisProvider>
-    <IonApp force-theme="light">
+    <IonApp >
         <BrowserRouter>
           <AppBridgeProvider>
             <QueryProvider>
@@ -131,7 +131,7 @@ export default function App() {
           </AppBridgeProvider>
         </BrowserRouter>
     </IonApp>  
-     </PolarisProvider>
+      </PolarisProvider>
   );
 }
 

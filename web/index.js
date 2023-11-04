@@ -39,11 +39,15 @@ import { sendEmail } from "./sendEmail.js";
 import * as userStore from "./userStore.js";
 
 
-dnscache({
-  enable: true,
-   "ttl" : 300,
-  cachesize: 1000, // Set TTL to 5 minutes (300 seconds)
-});
+
+
+
+// dnscache({
+//   enable: true,
+//    "ttl" : 300,
+//   cachesize: 1000, // Set TTL to 5 minutes (300 seconds)
+// });
+
 
 const { writeJSONToFileAsync } = userStore;
 
@@ -558,6 +562,7 @@ async function startServer() {
       res.status(status).send({ success: status === 200, data, error });
     });
 
+
     // app.get("/api/products/create", async (_req, res) => {
     //   let status = 200;
     //   let error = null;
@@ -605,10 +610,10 @@ async function startServer() {
     // };
 
     // app.use("/*", shopify.ensureInstalledOnShop());
-app.use( (req, res, next) => {
-  res.set('Cache-control', 'public, max-age=300')
-  next();
-})
+// app.use( (req, res, next) => {
+//   res.set('Cache-control', 'public, max-age=300')
+//   next();
+// })
 
     app.use(
       "/*",

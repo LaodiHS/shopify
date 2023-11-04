@@ -6,13 +6,16 @@ import { productViewCache } from "../utilities/store";
 let workerStarted = false;
 async function startWorker() {
   if (workerStarted) return;
+  try{
   if (!indexDb.db) {
     await indexDb.startIndexDB();
   }
   if (!indexDb.db) {
     throw new Error("Database not started", indexDb.db);
   }
-
+  }catch(error){
+console.log('dabase worker error: ' , error)
+  }
   const reader = new FileReader();
 
   async function readRawData(blob, memType) {
@@ -52,6 +55,7 @@ async function startWorker() {
     // console.log('backtoUrl ', backtoUrl);
   }
 
+  
   try {
     self.addEventListener("message", async (event) => {
       const { srcList } = event.data;
@@ -104,13 +108,13 @@ async function startWorker() {
 }
 
 self.addEventListener("message", async (event) => {
-  if (event.data.id) {
-    // console.log('event.data.id', event.data.id);
-    await startWorker();
-    self.postMessage({ id: event.data.id, loaded: true });
-    console.log("image worker started:", event.data.id);
-    // Remove the event listener after it has been triggered once
+  if (!event.data.id) {
+    return;
   }
+  // console.log('event.data.id', event.data.id);
+  await startWorker();
+  self.postMessage({ id: event.data.id, loaded: true });
+  console.log("image worker started:", event.data.id);
 });
 
 

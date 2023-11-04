@@ -1,13 +1,14 @@
 import { defineConfig } from "vite";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
-import https from "https";
+
 import react from "@vitejs/plugin-react";
+import https from "https";
 // import Checker from 'vite-plugin-checker';
 //import react from "@vitejs/plugin-react-swc";
 // import vue from "@vitejs/plugin-vue";
 // import eslintPlugin from 'vite-plugin-eslint'
-// import vue from '@vitejs/plugin-vue'
+//  import vue from '@vitejs/plugin-vue'
 
 if (
   process.env.npm_lifecycle_event === "build" &&
@@ -27,6 +28,7 @@ const proxyOptions = {
   secure: true,
   ws: false,
 };
+
 
 
 const host = process.env.HOST
@@ -50,8 +52,7 @@ if (host === "localhost") {
     clientPort: 443,
   };
 };
-   // vue()
-    // ,
+ 
     // Checker({ typescript: false, flow: true })
   
 //{ devTarget: "es2022" }
@@ -61,7 +62,7 @@ export default defineConfig({
     react()
  ],
   optimizeDeps: {
-    // web: ['vue'], // Include relevant libraries
+
   },
   define: {
     DEPLOYMENT_ENV: process.env.NODE_ENV === "production",
@@ -70,7 +71,7 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 7000,
-   // sourcemap:true,
+  //  sourcemap:true,
   //  parallel:false,
    // minify:'terser',
    // workers:1
@@ -79,6 +80,7 @@ export default defineConfig({
   },
   esbuild:{
     // pure: process.env.NODE_ENV === 'production' ? ['console.log', 'console.warn'] : [],
+    // target: 'es2020',
   minify:false
   },
   resolve: {
@@ -97,6 +99,12 @@ export default defineConfig({
     },
   },
 });
+
+
+
+
+
+
 
   
    // 'process.env.NODE_ENV': JSON.stringify('production')

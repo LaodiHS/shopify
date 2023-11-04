@@ -20,28 +20,28 @@ const UseGridStack = (options = {}) => {
 
 
 
-  useEffect(() => {
-    gridRef.current =  gridRef.current || GridStack.init({ float:true }, '.controlled');
-    const grid = gridRef.current;
-    grid.batchUpdate()
-    grid.removeAll(false)
-    items.forEach(({ id }) => grid.makeWidget(refs.current[id].current))
-    grid.batchUpdate(false)
+  // useEffect(() => {
+  //   gridRef.current =  gridRef.current || GridStack.init({ float:true }, '.controlled');
+  //   const grid = gridRef.current;
+  //   grid.batchUpdate()
+  //   grid.removeAll(false)
+  //   items.forEach(({ id }) => grid.makeWidget(refs.current[id].current))
+  //   grid.batchUpdate(false)
 
 
 
 
-    items.forEach(({ id }) => {
-        refs.current[id] = refs.current[id] || createRef();
-        grid.makeWidget(refs.current[id].current);
-      });
+  //   items.forEach(({ id }) => {
+  //       refs.current[id] = refs.current[id] || createRef();
+  //       grid.makeWidget(refs.current[id].current);
+  //     });
 
 
 
-    return () => {
-      gridRef.current.destroy();
-    };
-  }, []);
+  //   return () => {
+  //     gridRef.current.destroy();
+  //   };
+  // }, []);
 
 
 
