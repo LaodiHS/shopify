@@ -1,7 +1,7 @@
-export { default as honeyCombGridDrop } from "./a-honey-gooi-comb.svg";
-export { default as aiIcon } from "./ai-icon.svg";
-export { default as autumnTrees } from "./autumn-trees.svg";
-export { default as sourwoodHoney } from "./a-honey-gooie-jar.svg";
+// export { default as honeyCombGridDrop } from "./a-honey-gooi-comb.svg";
+// export { default as aiIcon } from "./ai-icon.svg";
+// export { default as autumnTrees } from "./autumn-trees.svg";
+// export { default as sourwoodHoney } from "./a-honey-gooie-jar.svg";
 export { default as acaciaHoney } from "./a-honey-container.svg";
 
 export { default as honeyStick } from "./a-beehive-stick-honey.svg";

@@ -35,7 +35,7 @@ import { useShopifyContext } from "../providers/ShopifyContext";
 import { getSessionToken } from "@shopify/app-bridge/utilities";
 import { Redirect } from "@shopify/app-bridge/actions";
 import { NavigationRefs, AnimatedContent } from "./";
- import * as svgAssets from "../../assets";
+import * as svgAssets from "../../assets";
 import {
   useWorkersContext,
   ImageCachePre,
@@ -573,21 +573,25 @@ export const DataProvidersProvider = ({ children }) => {
   useEffect(async () => {
     const loadAssets = async () => {
       if (workersLoaded && !indexDb.db) {
-        const db = await indexDb.startIndexDB();
-        if (!db) {
-          throw new Error("db is not started:", db);
+        try {
+          const db = await indexDb.startIndexDB();
+          if (!db) {
+            throw new Error("db is not started:", db);
+          }
+          console.log("thid is the db:", db);
+          setDependenciesLoaded((prev) => ({
+            ...prev,
+            IndexedSessionStorage: Boolean(db),
+          }));
+        } catch (e) {
+          console.error("Error loading INDEXdb", e);
         }
-        setDependenciesLoaded((prev) => ({
-          ...prev,
-          IndexedSessionStorage: Boolean(db),
-        }));
-
         for (const asset in svgAssets) {
           try {
-         
-            const src = await svgAssets[asset];
+            const src = svgAssets[asset];
             console.log("src:", src);
-            if (!src.includes(".svg")) continue;
+            if (src && !src.includes(".svg")) continue;
+
             const blobUrl = await ImageCachePre(
               productViewCache,
               src,
@@ -601,13 +605,17 @@ export const DataProvidersProvider = ({ children }) => {
 
         setAssetsLoaded(true);
         const pageHistory = new LHistory("pagingHistory");
+        try{
         await pageHistory.getPagingState();
         setPagingHistory(pageHistory);
         setDependenciesLoaded((prev) => ({ ...prev, pagingHistory: true }));
+        }catch(e){
+      console.error('error loading page history', e)
+        }
       }
     };
 
-   await loadAssets();
+    await loadAssets();
 
     return async () => {
       console.log("closing db connection");

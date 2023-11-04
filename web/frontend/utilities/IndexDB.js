@@ -1,22 +1,29 @@
-export const IndexedSessionStorage = {
-  db: null,
-  dbName: !DEPLOYMENT_ENV ? "TEST_NEURALNECTAR" : "NeuralNectarPrivacySecured",
-  storeName: !DEPLOYMENT_ENV
-    ? "TEST_NEURALNECTAR"
-    : "NeuralNectarPrivacySecured",
+export class IndexedSessionStorage {
+  constructor() {
+    (this.db = null),
+      (this.dbName = DEPLOYMENT_ENV
+        ? "NeuralNectarPrivacySecured"
+        : "TEST_NEURALNECTAR");
+    this.storeName = DEPLOYMENT_ENV
+      ? "NeuralNectarPrivacySecured"
+      : "TEST_NEURALNECTAR";
+  }
 
-  init: async function () {
+  async init() {
     return new Promise((resolve, reject) => {
+      console.log('db init started')
       const request = indexedDB.open(this.dbName, 1);
 
       request.onupgradeneeded = (event) => {
+        console.log('upgrade start')
         this.db = event.target.result;
         this.db.createObjectStore(this.storeName, { keyPath: "key" });
+        console.log('upgrade end');
       };
 
       request.onsuccess = (event) => {
         const db = event.target.result;
-        this.db=db;
+        this.db = db;
         resolve(this);
       };
 
@@ -29,9 +36,9 @@ export const IndexedSessionStorage = {
         reject(event.target.error); // Reject the promise on error
       };
     });
-  },
+  }
 
-  setItem: async function (key, value) {
+  async setItem(key, value) {
     if (this.db === null) {
       throw new Error("dataBase is not started");
     }
@@ -59,9 +66,9 @@ export const IndexedSessionStorage = {
         reject(event.target.error);
       };
     });
-  },
+  }
 
-  getItem: async function (key) {
+  async getItem(key) {
     if (this.db === null) {
       throw new Error("dataBase is not started");
     }
@@ -86,9 +93,9 @@ export const IndexedSessionStorage = {
         reject(event.target.error);
       };
     });
-  },
+  }
 
-  removeItem: async function (key) {
+  async removeItem(key) {
     if (this.db === null) {
       throw new Error("dataBase is not started");
     }
@@ -108,9 +115,9 @@ export const IndexedSessionStorage = {
         reject(event.target.error);
       };
     });
-  },
+  }
 
-  clear: async function () {
+  async clear() {
     if (this.db === null) {
       throw new Error("dataBase is not started");
     }
@@ -138,8 +145,8 @@ export const IndexedSessionStorage = {
         reject(event.target.error);
       };
     });
-  },
-  hasItem: async function (key) {
+  }
+  async hasItem(key) {
     if (this.db === null) {
       throw new Error("dataBase is not started");
     }
@@ -160,9 +167,9 @@ export const IndexedSessionStorage = {
         reject(event.target.error);
       };
     });
-  },
+  }
 
-  waitForPendingOperations: async function () {
+  async waitForPendingOperations() {
     if (this.db === null) {
       throw new Error("dataBase is not started");
     }
@@ -183,9 +190,9 @@ export const IndexedSessionStorage = {
         resolve(); // Resolve the promise even if an error occurs
       };
     });
-  },
+  }
 
-  close: async function () {
+  async close() {
     if (this.db) {
       await waitForPendingOperations(); // Implement this function to wait for any pending operations to complete
       try {
@@ -196,24 +203,40 @@ export const IndexedSessionStorage = {
         this.db = null; // Set db to null to indicate it's closed
       }
     }
-  },
-};
-
-function IndexDB() {
-  async function startIndexDB() {
-   const db = await IndexedSessionStorage.init();
-    this.db = db
-    return this.db;
   }
-  async function stopIndexDB() {
-    if (this.db) {
-      await db.close();
-    }
-  }
-  return { startIndexDB, stopIndexDB, db: null };
 }
 
-const indexDb = IndexDB();
+class IndexDB {
+  constructor() {
+    this.db = null;
+  }
+  async startIndexDB() {
+    try {
+     
+      const indexDBSession = new IndexedSessionStorage();
+
+       console.log("laoding db started");
+      const db = await indexDBSession.init();
+      console.log("db initialized", db);
+      this.db = db;
+      console.log("this db is initialized", this.db);
+      return this.db;
+    } catch (error) {
+      console.error("error starting index db", error);
+    }
+  }
+  async stopIndexDB() {
+    if (this.db) {
+      try {
+        await db.close();
+      } catch (error) {
+        console.error("error stopping index db", error);
+      }
+    }
+  }
+}
+
+const indexDb = new IndexDB();
 export { indexDb };
 
 // Beforeunload Event:
