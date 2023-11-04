@@ -74,11 +74,12 @@ export default defineConfig({
   //  parallel:false,
    // minify:'terser',
    // workers:1
+   minify:false,
 
   },
   esbuild:{
-    pure: process.env.NODE_ENV === 'production' ? ['console.log', 'console.warn'] : [],
-  
+    // pure: process.env.NODE_ENV === 'production' ? ['console.log', 'console.warn'] : [],
+  minify:false
   },
   resolve: {
     preserveSymlinks: true,
