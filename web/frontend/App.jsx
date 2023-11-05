@@ -108,7 +108,8 @@ export default function App() {
     : [];
 
   return (
-    <PolarisProvider>
+    <>
+    <PolarisProvider><div></div>  </PolarisProvider>
     <IonApp >
         <BrowserRouter>
           <AppBridgeProvider>
@@ -131,7 +132,7 @@ export default function App() {
           </AppBridgeProvider>
         </BrowserRouter>
     </IonApp>  
-      </PolarisProvider>
+    </>
   );
 }
 
