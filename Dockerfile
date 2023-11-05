@@ -16,8 +16,8 @@ ENV REDIS_API_PASSWORD="au34F3z3Bn8izOjWQ9zPITaQ6MYTE3CP"
 EXPOSE 8081
 WORKDIR /app
 COPY web .
-RUN npm install --no-cache
-RUN cd frontend && npm install --no-cache && npm run build
+RUN npm install
+RUN cd frontend && npm install && npm run build
 CMD ["npm", "run", "serve"]
 
 

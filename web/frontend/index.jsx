@@ -5,5 +5,6 @@ import { initI18n } from "./utils/i18nUtils";
 
 // Ensure that locales are loaded before rendering the app
 initI18n().then(() => {
-  render(<App />, document.getElementById("app"));
+
 });
+  render(<App />, document.getElementById("app"));
