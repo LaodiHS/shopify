@@ -615,9 +615,9 @@ export const DataProvidersProvider = ({ children }) => {
       }
     };
 
-setTimeout( async () =>{
+
    await loadAssets();
-},25_000)
+
    
 
     return async () => {
