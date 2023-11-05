@@ -25,4 +25,4 @@ embedded = false
 
 [build]
 automatically_update_urls_on_dev = true
-dev_store_url = "quickstart-b80cd149.myshopify.com"
+# dev_store_url = "quickstart-b80cd149.myshopify.com"
