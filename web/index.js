@@ -256,6 +256,7 @@ async function startServer() {
           //   session: session,
           // });
 
+          
           const { plan } = req.body;
           const { session } = res.locals.shopify;
 
@@ -614,6 +615,7 @@ async function startServer() {
 //   res.set('Cache-control', 'public, max-age=300')
 //   next();
 // })
+
 
     app.use(
       "/*",

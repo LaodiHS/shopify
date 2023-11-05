@@ -8,7 +8,7 @@ import {
 
 import { shopifyApp } from "@shopify/shopify-app-express";
 import { RedisSessionStorage } from "@shopify/shopify-app-session-storage-redis";
-import { restResources } from "@shopify/shopify-api/rest/admin/2023-07";
+import { restResources } from "@shopify/shopify-api/rest/admin/2023-10";
 // let { restResources }  = await import( `@shopify/shopify-api/rest/admin/${LATEST_API_VERSION}`);
 import { billingConfig, usageTerms } from "./billing.js";
 import { SQLiteSessionStorage } from "@shopify/shopify-app-session-storage-sqlite";

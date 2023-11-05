@@ -92,7 +92,7 @@ function wordsFromTextNLP(doc, its) {
 function generateWordCloud(layout, svgRef, svgContainer, words) {
   const ScaleFontValueToRange = createScalerForWords(words);
   const width = svgContainer?.current?.offsetWidth;
-  if (!width) return;
+  if (!width){
   const computedHeight = words.length * 4.75;
   const height = computedHeight < 200 ? 200 : computedHeight;
   layout
@@ -134,6 +134,7 @@ function generateWordCloud(layout, svgRef, svgContainer, words) {
       .attr("transform", (d) => `translate(${d.x},${d.y}) rotate(${d.rotate})`)
       .text((d) => d.text);
   }
+}
 }
 
 function updateWordCloud(layout, svgRef, words) {

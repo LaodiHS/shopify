@@ -176,10 +176,10 @@ export function Accordion({
     }
   }, [aiWorkStation]);
 
-  useEffect(async () => {
+  // useEffect(async () => {
     // const blogName = await generateHash(currentSession.shop);
     // setHashBlogName(blogName);
-  }, []);
+  // }, []);
 
   useEffect(() => {
     assignUpdateArticleMethod(() => handleUpdateClick);
@@ -189,12 +189,14 @@ export function Accordion({
     setMarkupText(addMarkup(words.join("")));
   }, [words]);
 
-  useEffect(async () => {
+  useEffect( () => {
+    const getToken = async () => {
     const token = await getSessionToken(app);
     setSessionToken(token);
 
     let session = await app.getState();
-
+    }
+    getToken()
     return () => {};
   }, [app]);
   useEffect(() => {

@@ -88,10 +88,13 @@ export function ProductDataProvider({ children }) {
     modifyState(setIsProductsLoading, loading);
   }
 
-  useEffect(async () => {
+  useEffect( () => {
+    const setIndex = async() =>{
     if (pagingHistory && sessionLoaded) {
       setCurrentIndexPage(await pagingHistory.getCurrentIndex());
     }
+  }
+  setIndex()
   }, [pagingHistory, sessionLoaded]);
 
   async function setPaging(formattedData) {
@@ -186,11 +189,13 @@ export function ProductDataProvider({ children }) {
   // }, [location.pathname, navigate, pagingHistory, sessionLoaded]);
 
 
-useEffect(async () =>{
+useEffect( () =>{
+  const runSyncDataFetcher = async () => {
 if(sessionLoaded){
-// await pagingHistory.runSyncDataFetcher(uncachedFetchData, productsPerPage);
+await pagingHistory.runSyncDataFetcher(uncachedFetchData, productsPerPage);
 }
-
+  }
+  // runSyncDataFetcher()
 },[ sessionLoaded]);
 
 
@@ -254,7 +259,8 @@ if(sessionLoaded){
     allAssets
   };
 
-  useEffect(async () => {
+  useEffect( () => {
+    const LoadSession = async () => {
     let id;
     if (sessionLoaded) {
       console.log("sessionLoaded: ", sessionLoaded);
@@ -269,6 +275,8 @@ if(sessionLoaded){
         // setFetchedData(false);
       };
     }
+  }
+  LoadSession()
   }, [sessionLoaded]);
 
   return (

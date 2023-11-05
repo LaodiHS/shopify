@@ -562,15 +562,15 @@ export const DataProvidersProvider = ({ children }) => {
     }
     return boxed;
   };
-  useEffect(async () => {
-    const token = await getSessionToken(app);
-    console.log("token: ", token);
-    const session = await app.getState();
-    console.log("session: ", session);
-    return () => {};
-  }, []);
+  // useEffect(async () => {
+  //   const token = await getSessionToken(app);
+  //   console.log("token: ", token);
+  //   const session = await app.getState();
+  //   console.log("session: ", session);
+  //   return () => {};
+  // }, []);
 
-  useEffect(async () => {
+  useEffect(() => {
     const loadAssets = async () => {
       if (workersLoaded && !indexDb.db) {
         try {
@@ -605,20 +605,17 @@ export const DataProvidersProvider = ({ children }) => {
 
         setAssetsLoaded(true);
         const pageHistory = new LHistory("pagingHistory");
-        try{
-        await pageHistory.getPagingState();
-        setPagingHistory(pageHistory);
-        setDependenciesLoaded((prev) => ({ ...prev, pagingHistory: true }));
-        }catch(e){
-      console.error('error loading page history', e)
+        try {
+          await pageHistory.getPagingState();
+          setPagingHistory(pageHistory);
+          setDependenciesLoaded((prev) => ({ ...prev, pagingHistory: true }));
+        } catch (e) {
+          console.error("error loading page history", e);
         }
       }
     };
 
-
-   await loadAssets();
-
-   
+    loadAssets();
 
     return async () => {
       console.log("closing db connection");
@@ -656,11 +653,7 @@ export const DataProvidersProvider = ({ children }) => {
     modifyState(setUser, user);
   }
 
-  useEffect(async () => {
-    if (!AllDependenciesLoaded) {
-      return;
-    }
-    console.log("all dependencies loaded");
+  useEffect(() => {
     const fetchDataSession = async () => {
       try {
         setSubscriptionRetrievalLoading(true);
@@ -755,17 +748,23 @@ export const DataProvidersProvider = ({ children }) => {
     //     await fetchDataSession();
     //   }
     // } else {
-    try {
-      if (await productViewCache.has("installed")) {
-        await fetchDataSession();
-      } else {
-        setTimeout(async () => {
-          await fetchDataSession();
-        }, 3000);
+    const checkInstallation = async () => {
+      if (AllDependenciesLoaded) {
+        console.log("all dependencies loaded");
+        try {
+          if (await productViewCache.has("installed")) {
+            await fetchDataSession();
+          } else {
+            setTimeout(async () => {
+              await fetchDataSession();
+            }, 3000);
+          }
+        } catch (error) {
+          console.log("token Error: ", error);
+        }
       }
-    } catch (error) {
-      console.log("token Error: ", error);
-    }
+    };
+    checkInstallation();
     // fetchDataSession();
   }, [AllDependenciesLoaded, retrySession]);
 
@@ -947,7 +946,7 @@ export const DataProvidersProvider = ({ children }) => {
   }
   const location = useLocation();
 
-  useEffect(async () => {
+  useEffect(() => {
     console.log("location", location);
 
     if (
@@ -1068,20 +1067,31 @@ export const DataProvidersProvider = ({ children }) => {
       endingViewAnimation: "fadeInRight",
     }
   ) {
-    await AnimatedContent(
-      refDictionary[location.pathname],
-      pa.initialViewAnimation,
-      {
-        //timingFunction:"ease",
-        onComplete: () => {
-          navigate(route, options);
-          AnimatedContent(refDictionary[route], pa.endingViewAnimation, {
-            //  timingFunction
-            duration: 0.09,
-          });
+    const currentLocationRef = refDictionary[location.pathname];
+    const targetRef = NavigationRefs[route];
+    const createWatchable = (target, onChange) => {
+      return new Proxy(target, {
+        set: (obj, prop, value) => {
+          obj[prop] = value;
+          onChange(prop, value);
+          return true;
         },
-      }
-    );
+      });
+    };
+    await AnimatedContent(currentLocationRef, pa.initialViewAnimation, {
+      //timingFunction:"ease",
+
+      duration: 0.59,
+      onComplete: () => {
+        navigate(route, options);
+     
+          AnimatedContent(targetRef, pa.endingViewAnimation, {
+            //  timingFunction
+            duration: 0.59,
+          });
+      
+      },
+    });
   }
 
   function assignServerSentEventLoading(updateOption) {

@@ -240,11 +240,14 @@ export function DocumentImagery({ text }) {
   const [minWidth, setMinWidth] = useState("300px");
   const [images, setImages] = useState([]);
 
-  useEffect(async () => {
+  useEffect(() => {
+    const imageCloudSet =  async () =>{
     const displayImages = await imageCloud(text);
     console.log("displayImages", displayImages);
 
     setImages(displayImages);
+    }
+    imageCloudSet()
   }, [text]);
 
   const maxWidth = "100px";

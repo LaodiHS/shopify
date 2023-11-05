@@ -15,17 +15,16 @@
   "stylelint": {
     "extends": "@shopify/stylelint-polaris"
   },
-  "dependencies": {
-    "@formatjs/intl-locale": "^3.1.1",
-    "@formatjs/intl-localematcher": "^0.4.2",
-    "@formatjs/intl-pluralrules": "^5.2.2",
+  "dependencies": { 
     "@ionic/react": "^7.5.3",
     "@ionic/react-router": "^7.5.3",
-    "@lexical/react": "^0.12.0",
-    "@shopify/app-bridge": "^3.7.7",
-    "@shopify/app-bridge-react": "^3.7.7",
-    "@shopify/i18next-shopify": "0.2.0",
+    "@formatjs/intl-locale": "^3.3.2",
+    "@formatjs/intl-localematcher": "^0.4.0",
+    "@formatjs/intl-pluralrules": "^5.2.4",
+
     "@shopify/polaris": "^10.49.1",
+    "@lexical/react": "^0.12.0",
+
     "@vitejs/plugin-react": "4.1.1",
     "animate.css": "^4.1.1",
     "axios": "^1.4.0",
@@ -47,10 +46,9 @@
     "markdown-it-react": "^0.0.2",
     "markdown-it-sanitizer": "^0.4.3",
     "react": "^18.2.0",
-    "react_router_dom": "npm:react-router-dom@^6.18.0",
+    "react_router_dom": "npm:react-router-dom@^6.3.0",
     "react-dom": "^18.2.0",
     "react-i18next": "^13.3.0",
-    "react-image": "^4.1.0",
     "react-markdown": "^8.0.7",
     "react-query": "^3.39.3",
     "react-virtualized": "^9.22.5",
@@ -64,6 +62,9 @@
     "remark-emoji": "^4.0.1",
     "remark-gfm": "^4.0.0",
     "remark-math": "^6.0.0",
+    "@shopify/app-bridge": "^3.7.7",
+    "@shopify/app-bridge-react": "^3.7.7",
+    "@shopify/i18next-shopify": "0.2.0",
     "stylefire": "^7.0.3",
     "tinycolor2": "^1.6.0",
     "typeface-baloo": "^1.1.13",

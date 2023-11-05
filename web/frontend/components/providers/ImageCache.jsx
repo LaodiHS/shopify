@@ -1,14 +1,16 @@
 import MyWorker from "../../utilities/imageWorker?worker";
 import React, { useEffect, useState, useContext, createContext } from "react";
 import { IonImg, IonSkeletonText } from "@ionic/react";
-import {useDataProvidersContext} from "../../components";
+import { useDataProvidersContext } from "../../components";
 //navigator.hardwareConcurrency || 4; // Number of worker instances in the pool
 
-
 function getOptimalNumThreads(defaultNumThreads = 10) {
-  let optimalThreads = typeof defaultNumThreads !== "number" ||
-  defaultNumThreads <= 2 ||
-  !Number.isInteger(defaultNumThreads) ? 3 : defaultNumThreads;
+  let optimalThreads =
+    typeof defaultNumThreads !== "number" ||
+    defaultNumThreads <= 2 ||
+    !Number.isInteger(defaultNumThreads)
+      ? 3
+      : defaultNumThreads;
 
   if (
     navigator &&
@@ -173,7 +175,7 @@ export function ImageCache({ src, style, alt, sliderImg, ...props }) {
     };
   }, []);
 
-  useEffect(async () => {
+  useEffect( () => {
     setImageLoading(true);
     const preloadImages = async (src) => {
       if (await productViewCache.has(src)) {
@@ -182,7 +184,6 @@ export function ImageCache({ src, style, alt, sliderImg, ...props }) {
         setCachedSrc(cachedBlobUrl);
         setImageLoading(false);
         return;
-     
       }
       return await new Promise((resolve) => {
         taskQueue.push({
@@ -199,33 +200,38 @@ export function ImageCache({ src, style, alt, sliderImg, ...props }) {
         setImageLoading(false);
       });
     };
-    if (src === allAssets.imagePlaceHolder) {
-      (setCachedSrc(allAssets.imagePlaceHolder), setImageLoading(false));
-    } else {
-      await preloadImages(src);
-    }
-
+    const checkAsset = async () => {
+      if (src === allAssets.imagePlaceHolder) {
+        setCachedSrc(allAssets.imagePlaceHolder), setImageLoading(false);
+      } else {
+        await preloadImages(src);
+      }
+    };
+    checkAsset();
   }, [src]);
 
   return (
     <>
-     {imageLoading ? <IonSkeletonText
-        key={`${src}animatedPlace=holder`}
-        animated
-        style={{ ...style, display: "block" }}
-      /> :
-      <IonImg
-       // onIonImgDidLoad={imageDidLoad()}
-        style={{
-          ...style,
-          display:  "block",
-        }}
-        key={src}
-        src={cachedSrc}
-        as="image"
-        alt={alt}
-        {...props}
-      />}
+      {imageLoading ? (
+        <IonSkeletonText
+          key={`${src}animatedPlace=holder`}
+          animated
+          style={{ ...style, display: "block" }}
+        />
+      ) : (
+        <IonImg
+          // onIonImgDidLoad={imageDidLoad()}
+          style={{
+            ...style,
+            display: "block",
+          }}
+          key={src}
+          src={cachedSrc}
+          as="image"
+          alt={alt}
+          {...props}
+        />
+      )}
     </>
   );
 }

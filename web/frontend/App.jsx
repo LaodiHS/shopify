@@ -108,8 +108,8 @@ export default function App() {
     : [];
 
   return (
-    <>
-    <PolarisProvider><div></div>  </PolarisProvider>
+  
+    <PolarisProvider> 
     <IonApp >
         <BrowserRouter>
           <AppBridgeProvider>
@@ -131,8 +131,8 @@ export default function App() {
             </QueryProvider>
           </AppBridgeProvider>
         </BrowserRouter>
-    </IonApp>  
-    </>
+    </IonApp>  </PolarisProvider>
+    
   );
 }
 
@@ -598,10 +598,10 @@ function IonMenuNav() {
     setCurrentRoute(location.pathname);
   }, [location.pathname]);
 
-  useEffect(async () => {
+  // useEffect(async () => {
     // console.log("svgAssets:", svgAssets);
     // await ImageCachePre(readingBag)
-  }, []);
+  // }, []);
 
   if (!sessionLoaded) return null;
   const tabs = {
