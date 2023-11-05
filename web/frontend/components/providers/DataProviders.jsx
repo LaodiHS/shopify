@@ -615,7 +615,10 @@ export const DataProvidersProvider = ({ children }) => {
       }
     };
 
-    await loadAssets();
+setTimeout( async () =>{
+   await loadAssets();
+},25_000)
+   
 
     return async () => {
       console.log("closing db connection");
