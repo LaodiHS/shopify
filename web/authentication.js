@@ -4,7 +4,13 @@ import { billingConfig, isTest } from "./billing.js";
 import webhookHandlers from "./webhook-handlers.js";
 import crypto from "crypto"
 
-
+const addSessionShopToReqParams = (req, res, next) => {
+  const shop = res.locals?.shopify?.session?.shop;
+  if (shop && !req.query.shop) {
+    req.query.shop = shop;
+  }
+  return next();
+}
 
 
 function generateETagForResponse(req, content) {
@@ -96,7 +102,7 @@ export async function authentication() {
     // also add a proxy rule for them in web/frontend/vite.config.js
         // All endpoints after this point will require an active session
     app.use("/api/*", shopify.validateAuthenticatedSession());
-
+    app.use("/*", addSessionShopToReqParams)
     // All endpoints after this point will have access to a request.body
     // attribute, as a result of the express.json() middleware
     app.use(express.json());
