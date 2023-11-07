@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import cloud from "d3-cloud";
+import { cloud} from "../../utilities/wordCloud"
+// import cloud from "d3-cloud";
 import * as d3 from "d3";
 import debounce from "lodash.debounce";
 import { IonRow, IonCol, IonButton, IonText } from "@ionic/react";
@@ -92,7 +93,7 @@ function wordsFromTextNLP(doc, its) {
 function generateWordCloud(layout, svgRef, svgContainer, words) {
   const ScaleFontValueToRange = createScalerForWords(words);
   const width = svgContainer?.current?.offsetWidth;
-  if (!width){
+  if (width){
   const computedHeight = words.length * 4.75;
   const height = computedHeight < 200 ? 200 : computedHeight;
   layout
@@ -142,9 +143,13 @@ function updateWordCloud(layout, svgRef, words) {
 
   // Use the new data to generate the new word cloud layout
   const ScaleFontValueToRange = createScalerForWords(words);
-  layout.words(words);
-  layout.start();
 
+  try{
+      layout.words(words);
+  layout.start();
+  }catch(e){
+        console.log('error', e)
+  }
   // Select all text elements inside the SVG
   d3.select(svgRef.current)
     .selectAll("text")
@@ -171,7 +176,7 @@ function updateWordCloud(layout, svgRef, words) {
     .attr("opacity", 1)
     .attr(
       "transform",
-      (d) => `translate(${[d.x, d.y]})rotate(${d.rotate})`
+      (d) => `translate(${[d.x, d.y]}) rotate(${d.rotate})`
     )
     .duration(1500);
 }
@@ -180,10 +185,13 @@ export function WordCloud({ text, doc, its, checkFeatureAccess }) {
   const { DataProviderNavigate, allAssets } = useDataProvidersContext();
 
   const [layout, setLayout] = useState(cloud());
+
   const [initialGraph, setInitialGraph] = useState(false);
   const [importantIdeas, setImportantIdeas] = useState([]);
   const svgRef = useRef(null);
   const svgContainer = useRef(null);
+
+
 
   if (!checkFeatureAccess(["acacia"])?.hasAccess) {
     return (
@@ -226,34 +234,46 @@ export function WordCloud({ text, doc, its, checkFeatureAccess }) {
 
   useEffect(() => {
     const words = wordsFromTextNLP(doc, its);
+
     setImportantIdeas(words);
-    // console.log('words',words)
+
+
+
+
+    // console.log('words',words)  
+      console.log(('words:', words))
     let resizeTimeout;
     const handleResize = () => {
       clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(() => {
+      const deb = debounce(
+        (e) => {
         const svg = d3.select(svgRef.current);
         svg.selectAll("g").remove();
         generateWordCloud(layout, svgRef, svgContainer, words);
-      }, 200); // Delay to ensure resizing is complete
+        },
+        700
+      );
+    deb()// Delay to ensure resizing is complete
     };
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          if (!initialGraph) {
-            generateWordCloud(layout, svgRef, svgContainer, words);
-            window.addEventListener("resize", handleResize);
-            observer.disconnect(); // Stop observing once it comes into view
-            setInitialGraph(true);
-          } else {
+          if (initialGraph) {
             //     updateWordCloud(layout, svgRef, words);
             // updateWordCloud(layout, svgRef, words)
+            console.log('updae')
             const deb = debounce(
               (e) => updateWordCloud(layout, svgRef, words),
               1000
             );
             deb();
+          } else {
+            generateWordCloud(layout, svgRef, svgContainer, words);
+        
+            window.addEventListener("resize", handleResize);
+            observer.disconnect(); // Stop observing once it comes into view
+            setInitialGraph(true);
           }
         }
       },

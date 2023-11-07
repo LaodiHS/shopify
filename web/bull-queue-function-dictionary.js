@@ -78,7 +78,7 @@ export const processFunctions = {
   }) {
     try {
       testNonNetWorkErrorOnChatGptTurboFailure();
-console.log('arguments[0]', arguments);
+// console.log('arguments[0]', arguments);
       const mockData = await mockGptTurboResponse({ ...arguments[0] });
 
       if (mockData) {

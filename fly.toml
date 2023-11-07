@@ -25,3 +25,9 @@ primary_region = "lax"
 
 [http_service]
   internal_port = 8081
+
+
+# stop accepting new connections while existing connections drain
+kill_signal = "SIGUSR1"
+# allow 2 minutes for all connections to finish before killing the server
+kill_timeout = 3600

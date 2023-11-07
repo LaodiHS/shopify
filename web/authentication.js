@@ -60,42 +60,74 @@ export async function authentication() {
 
 
   try {
-    app.get(shopify.config.auth.path, shopify.auth.begin());
+    app.get(shopify.config.auth.path, (req, res, next) => {
 
-    // app.get(
-    //   shopify.config.auth.callbackPath,
-    //   shopify.auth.callback(),
-    //   // Request payment if required
-    //   async (req, res, next) => {
-    //     const plans = Object.keys(billingConfig);
-    //     const session = res.locals.shopify.session;
-    //     const hasPayment = await shopify.api.billing.check({
-    //       session,
-    //       plans: plans,
-    //       isTest: isTest, // need to change to false when ready for production
-    //     });
-    //     console.log("has payment: " + hasPayment);
-    //     if (true || hasPayment) {
-    //       console.log('has payment: ' + hasPayment);
-    //       next();
-    //     } else {
-    //       const redirectUrl = await shopify.api.billing.request({
-    //         session,
-    //         plan: plans[0],
-    //         isTest: isTest,
-    //       });
-    //       res.redirect(redirectUrl)
-    //       // redirectOutOfAPP(req, res, session.shop, redirectUrl);
-    //     }
-    //   },
-    //   // Load the app otherwise
-      
-    //   shopify.redirectToShopifyOrAppRoot()
-    // );
+      const shop = res.locals?.shopify?.session?.shop;
+      if (shop && !req.query.shop) {
+        req.query.shop = shop;
+      }
+      return next();
+
+    } , shopify.auth.begin(), (req, res, next) => {
+
+      const shop = res.locals?.shopify?.session?.shop;
+      if (shop && !req.query.shop) {
+        req.query.shop = shop;
+      }
+      return next();
+
+    } );
+
+    app.get(
+      shopify.config.auth.callbackPath, (req, res, next) => {
+
+        const shop = res.locals?.shopify?.session?.shop;
+        if (shop && !req.query.shop) {
+          req.query.shop = shop;
+        }
+        return next();
+  
+      }, 
+      shopify.auth.callback(),
+      // Request payment if required
+      async (req, res, next) => {
+  const shop = res.locals?.shopify?.session?.shop;
+      if (shop && !req.query.shop) {
+        req.query.shop = shop;
+        console.log('sesion from config Auth',res.locals.shopify.session)
+        console.log('store assigned', shop)
+      }
+
+
+        const plans = Object.keys(billingConfig);
+        const session = res.locals.shopify.session;
+        const hasPayment = await shopify.api.billing.check({
+          session,
+           plans,
+           isTest, // need to change to false when ready for production
+        });
+        console.log("has payment: " + hasPayment);
+        if (true || hasPayment) {
+          console.log('has payment: ' + hasPayment);
+          next();
+        } else {
+          const redirectUrl = await shopify.api.billing.request({
+            session,
+            plan: plans[0],
+          isTest
+          });
+          res.redirect(redirectUrl)
+          // redirectOutOfAPP(req, res, session.shop, redirectUrl);
+        }
+      },
+      // Load the app otherwise
+    
+      shopify.redirectToShopifyOrAppRoot()
+    );
     app.post(
       shopify.config.webhooks.path,
       shopify.processWebhooks({
-        webhookHandlers,
+        webhookHandlers
       })
     );
     // If you are adding routes outside of the /api path, remember to

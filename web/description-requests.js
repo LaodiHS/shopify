@@ -8,7 +8,7 @@ import {
 import { enqueueApiRequest } from "./bull-queue.js";
 import { hasExceededUsageLimit } from "./subscriptionManager.js";
 import { countTokens } from "./tokenTools.js";
-import {getLegend} from "./testMethods.js"
+import { getLegend } from "./testMethods.js";
 // Common function to handle different types of endpoints
 async function handleEndpoints(app, endpointType, queue) {
   const allowedEndpoints = [
@@ -66,16 +66,18 @@ async function handleEndpoints(app, endpointType, queue) {
         const tokenCount = countTokens(prompt);
         console.log("prompt token count", tokenCount);
         const exceedsLimit = await hasExceededUsageLimit(shop, tokenCount);
+
+        if (true || process.env.NODE_ENV !== "production") {
           getLegend(legend);
+        }
+
         if (exceedsLimit) {
-          return res
-            .status(200)
-            .json({
-              exceedsLimit,
-              message:
-                "Your current selection exceeds the usage limit. Don't worry, we've saved it for you! To get even more amazing results, consider upgrading to a higher subscription to support our work. Thank you for being part of our community!",
-              legend,
-            });
+          return res.status(200).json({
+            exceedsLimit,
+            message:
+              "Your current selection exceeds the usage limit. Don't worry, we've saved it for you! To get even more amazing results, consider upgrading to a higher subscription to support our work. Thank you for being part of our community!",
+            legend,
+          });
         } else {
           enqueueApiRequest({
             legend,
@@ -87,10 +89,6 @@ async function handleEndpoints(app, endpointType, queue) {
             processFunction: "chatGptTurbo",
             promptTokenCountEstimate: tokenCount,
           });
-
-          if (process.env.NODE_ENV === "production") {
-            prompt = "Service Request Received";
-          }
 
           return res
             .status(200)

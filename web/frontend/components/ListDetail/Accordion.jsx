@@ -137,6 +137,7 @@ export function Accordion({
     formatProducts,
     lockAllTasks,
     allAssets,
+    setUser,
     DataProviderNavigate,
   } = useProductDataContext();
 
@@ -401,19 +402,21 @@ if(!mappedLegend){
           Debounce(scrollSmoothly(accordionId), 400);
           str += word;
           
-          // console.log('word: ' , word);
+   
           eventEmitter.emit("streamData", eventData);
-          //  setServerWords((prevWords) => [...prevWords, word]);
-          // eventEmitter.emit("description_assist", cleanText(word));
+     
 
           if (finish_reason) {
             console.log("finish_reason", finish_reason);
-            console.log("mappedLegend: ", mappedLegend);
+            // console.log("mappedLegend: ", mappedLegend);
+            // console.log('finish_reason_paste_token', delta)
+            if(delta.storeData){
+            setUser(delta.storeData)
+            }
             const pureText = cleanText({ str, selectedImageMap, mappedLegend: mappedLegend.mappedLegend });
             setMarkupText((pre) => pre.concat(pureText));
             str = "";
-            //  eventEmitter.emit("description_assist", pureText);
-            //setWords((prevWords) => [...prevWords, cleanText(str)]);
+       
             eventSource.close();
             setServerSentEventLoading(false);
           }
@@ -852,6 +855,7 @@ if(!mappedLegend ){
         mappedLegend,
         selectedImageMap,
         checkFeatureAccess,
+        markupText
       })
     )
     .filter((acc) => acc.accordionId === aiWorkStation);
@@ -937,13 +941,14 @@ function renderAccordionItem({
   eventEmitter,
   assignClearAssistMethod,
   mappedLegend,
+  markupText,
   // selectedImageMap,
 }) {
   const [markupViewLock, setMarkupViewLock] = useState(null);
   const { Editor } = useTinyMCEDataContext();
   const {
     checkFeatureAccess,
-    markupText,
+    // markupText,
     serverSentEventLoading,
     setMarkupText,
     // eventEmitter,

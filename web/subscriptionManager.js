@@ -69,7 +69,8 @@ export async function updateTokenUsageAfterJob(shop_name, tokensUsed) {
     user.current_usage = tokensUsed;
   }
 
-  writeJSONToFileAsync(shop_name, user);
+  await writeJSONToFileAsync(shop_name, user);
+  user.current_usage;
 }
 
 export async function updateSubscription(shop_name, subscription_name) {

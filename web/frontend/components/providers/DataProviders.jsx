@@ -571,7 +571,7 @@ export const DataProvidersProvider = ({ children }) => {
   // }, []);
 
   useEffect(() => {
-    const loadAssets = async () => {
+    (async () => {
       if (workersLoaded && !indexDb.db) {
         try {
           const db = await indexDb.startIndexDB();
@@ -589,7 +589,7 @@ export const DataProvidersProvider = ({ children }) => {
         for (const asset in svgAssets) {
           try {
             const src = svgAssets[asset];
-            console.log("src:", src);
+
             if (src && !src.includes(".svg")) continue;
 
             const blobUrl = await ImageCachePre(
@@ -613,9 +613,7 @@ export const DataProvidersProvider = ({ children }) => {
           console.error("error loading page history", e);
         }
       }
-    };
-
-    loadAssets();
+    })();
 
     return async () => {
       console.log("closing db connection");
@@ -1059,6 +1057,8 @@ export const DataProvidersProvider = ({ children }) => {
     modifyState(setMarkupText, text);
   }
 
+  useEffect(() => {}, []);
+
   async function DataProviderNavigate(
     route,
     options = { host: true, replace: true },
@@ -1069,27 +1069,26 @@ export const DataProvidersProvider = ({ children }) => {
   ) {
     const currentLocationRef = refDictionary[location.pathname];
     const targetRef = NavigationRefs[route];
-    const createWatchable = (target, onChange) => {
-      return new Proxy(target, {
-        set: (obj, prop, value) => {
-          obj[prop] = value;
-          onChange(prop, value);
-          return true;
-        },
-      });
-    };
+
     await AnimatedContent(currentLocationRef, pa.initialViewAnimation, {
       //timingFunction:"ease",
 
       duration: 0.59,
       onComplete: () => {
+        currentLocationRef.current.style.display = `none`;
         navigate(route, options);
-     
-          AnimatedContent(targetRef, pa.endingViewAnimation, {
-            //  timingFunction
-            duration: 0.59,
-          });
-      
+
+        setTimeout(() => {
+          console.log("targetRef: ", targetRef.current);
+
+          if (targetRef.current) {
+            // targetRef.current.style.display = ``;
+            AnimatedContent(targetRef, pa.endingViewAnimation, {
+              //  timingFunction
+              duration: 0.59,
+            });
+          }
+        }, 0);
       },
     });
   }
@@ -1112,7 +1111,7 @@ export const DataProvidersProvider = ({ children }) => {
     modifyState(setContentSaved, updateOptions);
     setTimeout(() => {
       setContentSaved(false);
-    }, 5000);
+    }, 500);
   }
 
   function assignLegend(rawLegend) {

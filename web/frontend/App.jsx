@@ -409,7 +409,7 @@ function Article() {
             {lockAllTasks && (
               <IonButton
                 fill="clear"
-                color={lockAllTasks && "success"}
+                color={contentSaved && "success"}
                 size="small"
                 slot="end"
                 key="contentSaved"

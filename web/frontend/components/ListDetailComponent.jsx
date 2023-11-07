@@ -137,7 +137,7 @@ export function ListDetailComponent({ animationRef }) {
   };
 
   if (!productData) {
-    return <ion-spinner color="success"></ion-spinner>; // or show an error message
+    return <IonSpinner color="success" />; // or show an error message
   }
 
   return (
@@ -165,7 +165,7 @@ export function ListDetailComponent({ animationRef }) {
           />
         </IonContent>
       </IonMenu>
-      <IonPage ref={animationRef} key={"9"} id="main-content">
+      <IonPage style={{display:'none'}} ref={animationRef} key={"9"} id="main-content">
         <IonicHeaderComponent
           centerText="Tailor Selections"
           left={

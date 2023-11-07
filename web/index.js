@@ -136,7 +136,7 @@ async function startServer() {
         const session = res.locals.shopify.session;
 
         const subscriptions = await shopify.api.billing.subscriptions({
-          session,
+          session
         });
 
         // const host = shopify.api.utils.sanitizeHost(req.query.host, true);

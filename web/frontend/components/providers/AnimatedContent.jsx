@@ -7,7 +7,7 @@ async function AnimatedContent(ref, animation, options = {}) {
     prefix = "animate__",
     iterationCount = 1,
     direction = "normal",
-    fillMode = "both",
+    fillMode = "forwards",
     timingFunction = "linear",
     onComplete = () => {
        
@@ -17,7 +17,8 @@ async function AnimatedContent(ref, animation, options = {}) {
   return await new Promise((resolve, reject) => {
     const animationName = `${prefix}${animation}`;
 
-
+   if(ref.current){ 
+    // ref.current.style.display = ``;
     ref?.current?.style?.setProperty("--animate-direction", direction);
     ref?.current?.style?.setProperty("--animate-fill-mode", fillMode);
     ref?.current?.style?.setProperty("--animate-timing-function", timingFunction);
@@ -25,12 +26,15 @@ async function AnimatedContent(ref, animation, options = {}) {
     ref?.current?.style?.setProperty("--animate-duration", `${duration}s`);
     ref?.current?.classList?.add(`${prefix}animated`, animationName);
 
-
+   }
     async function handleAnimationEnd(event) {
-      event.stopPropagation();
+    event.stopPropagation();
+
+
       ref?.current?.classList?.remove(`${prefix}animated`, animationName);
-   
+     
       onComplete();
+
       console.log('hit animation')
       resolve("Animation ended");
     }

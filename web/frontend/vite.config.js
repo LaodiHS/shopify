@@ -76,17 +76,18 @@ export default defineConfig({
   //  parallel:false,
    // minify:'terser',
    // workers:1
-   minify:false,
+  //  minify:false,
 
   },
   esbuild:{
-    // pure: process.env.NODE_ENV === 'production' ? ['console.log', 'console.warn'] : [],
+     pure: process.env.NODE_ENV === 'production' ? ['console.log', 'console.warn'] : [],
     // target: 'es2020',
-  minify:false
+  // minify:false
   },
   resolve: {
     preserveSymlinks: true,
   },
+
 
   server: {
     host: "localhost",
@@ -100,6 +101,8 @@ export default defineConfig({
     },
   },
 });
+
+
 
 
 

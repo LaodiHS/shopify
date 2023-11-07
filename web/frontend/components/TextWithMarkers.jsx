@@ -53,7 +53,7 @@ function wrapSubstringInPTags({
         continue;
       }
 
-      let keyTerm = ` ${subString.toLowerCase()} `;
+      const keyTerm = ` ${subString.toLowerCase()} `;
 
       const index = mainString.toLowerCase().indexOf(keyTerm);
 
@@ -62,7 +62,7 @@ function wrapSubstringInPTags({
         const after = mainString.slice(index + subString.length + 1);
         const wrappedString = (
           <SentenceHighlight
-            key={"wordHighlight" + id}
+            key={`wordHighlight${id}`}
             text={mainString.slice(index, index + subString.length + 1)}
             color={id}
           />
@@ -70,7 +70,7 @@ function wrapSubstringInPTags({
         colorSet[subString + id] = true;
         if (mainString.trim().length) {
           parts.push({
-            size: size,
+            size,
             type: "content-highlight",
             variant: (
               <div>
@@ -87,7 +87,7 @@ function wrapSubstringInPTags({
     }
     if (mainString.trim().length) {
       parts.push({
-        size: size,
+        size,
         type: "content",
         variant: mainString + sentenceEnd,
       });
@@ -326,10 +326,13 @@ const VirtualList = React.memo(
     useEffect(() => {
       console.log("component refreshed");
       if (variableSizeListRef.current && !userScrollDetected) {
-        variableSizeListRef.current.scrollToItem(
-          streamData.length - 3,
-          "start"
-        );
+
+        const scrollContainer = variableSizeListRef.current;
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+        // variableSizeListRef.current.scrollToItem(
+        //   streamData.length - 3,
+        //   "start"
+        // );
 
         // 'start' is the alignment option
       }
@@ -380,11 +383,12 @@ const VirtualList = React.memo(
       //   )}
       // </InfiniteLoader>
     );
-  },
-  (prevProps, nextProps) => {
-    // console.log('rendering', nextProps.sentences[nextProps.sentences.length -1])
-    // return   Boolean(nextProps.sentences[nextProps.sentences.length -1]?.variant.includes("_.jpg") )
   }
+  // ,
+  // (prevProps, nextProps) => {
+  //   // console.log('rendering', nextProps.sentences[nextProps.sentences.length -1])
+  //   // return   Boolean(nextProps.sentences[nextProps.sentences.length -1]?.variant.includes("_.jpg") )
+  // }
 );
 
 let dataStreamArray = [];
@@ -548,6 +552,7 @@ function TextWithMarkers({
       return completeSections;
     }
 
+
     let loadingStr = false;
     const streamDataHandler = (eventData) => {
       if (!loadingStr) {
@@ -565,7 +570,8 @@ function TextWithMarkers({
 
       const finish_reason = delta.finish_reason;
       if (finish_reason) {
-        console.log("finish_reason", finish_reason);
+      
+      
         processedSentences = {};
         processedImages = {};
         completeSections = [];

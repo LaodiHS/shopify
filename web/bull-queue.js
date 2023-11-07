@@ -66,12 +66,12 @@ const customSerializer = (data) => {
   // Exclude the 'socket' property from serialization
   const dataToSerialize = { ...data };
   delete dataToSerialize.socket;
-  try {
-    const d = JSON.stringify(dataToSerialize);
-    console.log("d", d);
-  } catch (e) {
-    console.log("error", error);
-  }
+  // try {
+  //   const d = JSON.stringify(dataToSerialize);
+  //   console.log("d", d);
+  // } catch (e) {
+  //   console.log("error", error);
+  // }
   // Serialize the modified data using JSON.stringify
 };
 
@@ -216,12 +216,21 @@ export function serverSideEvent(app, redisClient, queue) {
           promptTokenCountEstimate,
         } = data;
         let finish_reason = false;
+
         if (gptStream && gptStream.data) {
           const dataGenerator = generateOpenAIMessages(data);
           for await (const delta of dataGenerator) {
             // Process each delta of data as it arrives
-            finish_reason = delta.finish_reason ? true : false;
-            sendSSEMessage({ message: "Job stream", delta });
+
+            console.log('delta', delta.data.content)
+            finish_reason = delta.data.finish_reason ? true : false;
+           
+            sendSSEMessage({ 
+            message: "Job stream",
+            delta:delta.data,
+            totalTokenUsage: delta.totalTokenUsage, 
+            tokensUsed:delta.tokensUsed, 
+            storeData: delta.storeData });
         
           }
         }
@@ -229,7 +238,7 @@ export function serverSideEvent(app, redisClient, queue) {
         if (!finish_reason) {
           sendSSEMessage({
             message: "Job stream",
-            delta: { finish_reason: true, delta: "", content: "" },
+            delta: { finish_reason: true, delta: "", content: "", tokenUsage:"" },
           });
         }
         queueEvents.close();
@@ -313,7 +322,10 @@ async function* generateOpenAIMessages({
   api,
   promptTokenCountEstimate,
 }) {
-  let responseContentCompleteText = "";
+  let storeData;
+  let tokensUsed;
+  let totalTokenUsage;
+  const responseContentCompleteText=[];
   try {
     // console.log('res inspect===>', inspect(res, {depth:null, colors:true, compact:false}))
     // Access the stream data directly from the response object
@@ -335,20 +347,25 @@ async function* generateOpenAIMessages({
 
           const estimateOverheadForStream = 43;
           //console.log('token count nlp', countTokens(responseContentCompleteText))
-          const totalResponseEstimate =
-            countTokens(responseContentCompleteText) +
+       const  tokenUsage =
+            countTokens(responseContentCompleteText.join("")) +
             promptTokenCountEstimate +
             estimateOverheadForStream;
-          console.log("total tokens used", totalResponseEstimate);
-          await updateTokenUsageAfterJob(shop, totalResponseEstimate);
-          const storeData = await userStore.readJSONFromFileAsync(shop);
+            tokensUsed = tokenUsage;
+          // console.log("total tokens used", tokenUsage);
+         await updateTokenUsageAfterJob(shop, tokenUsage);
+          storeData = await userStore.readJSONFromFileAsync(shop);
+      
           storeData.documentType = documentType;
           storeData.shop = shop;
-           storeData.gptText = responseContentCompleteText;
-          storeData.documentType = documentType;
+           storeData.gptText = responseContentCompleteText.join("");
+          //  console.log('storeData', storeData);
+
+          storeData.documentType = documentType;  
+          totalTokenUsage =  storeData.current_usage;
           await userStore.writeJSONToFileAsync(shop, storeData);
           // console.log('wrote user data-===>', storeData);
-          return; // Stream finished
+           // Stream finished
         }
         try {
           const parsed = JSON.parse(message);
@@ -358,14 +375,14 @@ async function* generateOpenAIMessages({
           // console.log('parsed content===>', parsed.choices[0]);
           // Access the usage tokens from the response data
           if (parsed.choices[0].delta?.content) {
-            responseContentCompleteText += parsed.choices[0].delta?.content;
+            responseContentCompleteText[ responseContentCompleteText.length] = parsed.choices[0].delta?.content;
           }
 
           //countTokens(parsed.choices[0].delta.content);
 
           // Process the rest of the data as needed
           parsed.choices[0].index;
-          yield parsed.choices[0].delta;
+          yield {data: parsed.choices[0].delta, totalTokenUsage, tokensUsed, storeData};
         } catch (error) {
           console.error("Could not JSON parse stream message", message, error);
         }

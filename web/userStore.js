@@ -69,7 +69,7 @@ async function createUsersFolderAsync() {
 }
 
 async function readJSONFromFileAsync(storeName) {
-  try {
+  
     let exists;
     try {
       exists = await redis.exists(storeName);
@@ -104,54 +104,51 @@ async function readJSONFromFileAsync(storeName) {
         jsonData[key] = 0;
       }
     }
-
     return jsonData;
-  } catch (err) {
-    console.log("error getting Redis user schema", err);
-  }
+  
 
-  const filePath = path.join(USERS_FOLDER_PATH, `${storeName}.json`);
-  try {
-    const data = await fs.readFile(filePath, "utf8");
-    let jsonData;
+  // const filePath = path.join(USERS_FOLDER_PATH, `${storeName}.json`);
+  // try {
+  //   const data = await fs.readFile(filePath, "utf8");
+  //   let jsonData;
 
-    try {
-      jsonData = JSON.parse(data);
-    } catch (err) {
-      console.error("parse error: ", err);
-      throw err;
-    }
+  //   try {
+  //     jsonData = JSON.parse(data);
+  //   } catch (err) {
+  //     console.error("parse error: ", err);
+  //     throw err;
+  //   }
 
-    // Convert the last_payment_date string to a Date object
-    const jsonMap = Object.entries(jsonData);
+  //   // Convert the last_payment_date string to a Date object
+  //   const jsonMap = Object.entries(jsonData);
 
-    for (const [key, isValid] of jsonMap) {
-      const valid = checkDateString(isValid) === "valid date";
-      if (valid === "valid date") {
-        jsonData[key] = new Date(isValid);
-      }
-      if (valid === "bad date") {
-        jsonData = {};
-        return;
-      }
+  //   for (const [key, isValid] of jsonMap) {
+  //     const valid = checkDateString(isValid) === "valid date";
+  //     if (valid === "valid date") {
+  //       jsonData[key] = new Date(isValid);
+  //     }
+  //     if (valid === "bad date") {
+  //       jsonData = {};
+  //       return;
+  //     }
 
-      if (isValid === null) {
-        jsonData[key] = 0;
-      }
-    }
+  //     if (isValid === null) {
+  //       jsonData[key] = 0;
+  //     }
+  //   }
 
-    return jsonData;
-  } catch (err) {
-    if (err.code === "ENOENT") {
-      const defaultData = {};
-      Object.entries(userSchema.properties).forEach(([key, value]) => {
-        defaultData[key] = getDefaultValueByType(value.type);
-      });
-      return defaultData;
-    } else {
-      throw err;
-    }
-  }
+  //   return jsonData;
+  // } catch (err) {
+  //   if (err.code === "ENOENT") {
+  //     const defaultData = {};
+  //     Object.entries(userSchema.properties).forEach(([key, value]) => {
+  //       defaultData[key] = getDefaultValueByType(value.type);
+  //     });
+  //     return defaultData;
+  //   } else {
+  //     throw err;
+  //   }
+  // }
 }
 
 async function writeJSONToFileAsync(storeName, jsonObject) {
@@ -159,7 +156,7 @@ async function writeJSONToFileAsync(storeName, jsonObject) {
   if (jsonObject.last_payment_date instanceof Date) {
     jsonObject.last_payment_date = jsonObject.last_payment_date.toISOString();
   }
-  // console.log("jsob-->", jsonObject);
+
   const ajv = new Ajv();
   const valid = ajv.validate(userSchema, jsonObject);
 
@@ -181,18 +178,22 @@ async function writeJSONToFileAsync(storeName, jsonObject) {
   } catch (error) {
     console.error("json stringify failed: ", err);
   }
-  try {
-    await fs.writeFile(filePath, jsonLocalData);
-    // console.log("Data written to the file successfully.");
-  } catch (err) {
-    throw err;
-  }
+
   try {
     await setUserSchema(storeName, sanitizeObjectForRedis(jsRedisData));
     // console.log("user saved to Redis");
   } catch (err) {
     throw err;
   }
+
+  // try {
+  //   await fs.writeFile(filePath, jsonLocalData);
+  //   // console.log("Data written to the file successfully.");
+  // } catch (err) {
+  //   throw err;
+  // }
+
+
 }
 
 // Graceful shutdown function
@@ -231,7 +232,15 @@ function checkDateString(input) {
 
 async function setUserSchema(shop, userData) {
   try {
-    await redis.hmset(shop, userData);
+    // console.log('set userData: ', userData);
+    await redis.hmset(shop, userData, (err, res) =>{
+      if (err) {
+        console.log('error', err)
+        console.error(err);
+      } else {
+        console.log('Fields set successfully!');
+      }
+    });
     console.log(`User schema set for shop: ${shop}`);
   } catch (error) {
     console.error(`Error setting user schema for shop ${shop}:`, error);
@@ -244,11 +253,11 @@ async function getRedisUserSchema(shop) {
     const userSchema = await redis.hgetall(shop);
     const isValid = validate(userSchema);
 
-    if (!isValid) {
-      console.error("Validation errors:", validate.errors);
-    } else {
+    if (isValid) {
       console.log("Data is valid");
       // console.log("Processed data:", userSchema); // This is the coerced object
+    } else {
+      console.error("Validation errors:", validate.errors);
     }
     const user = sanitizeObjectForJS(userSchema);
 
@@ -287,8 +296,10 @@ function sanitizeObjectForRedis(obj) {
   const sanitizedObj = {};
 
   for (const [key, value] of Object.entries(obj)) {
+
     // Check for invalid Redis values (null, undefined, empty string)
-    if (value === null || value === undefined || value === "" || value === "") {
+    if (value === null || value === undefined || value === "" ) {
+        
       sanitizedObj[key] = "__EMPTY_FIELD__"; // Replace with null
     } else {
       sanitizedObj[key] = value; // Keep the original value
