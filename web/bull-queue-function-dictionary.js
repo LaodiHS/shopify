@@ -5,6 +5,7 @@ import {
   testNonNetWorkErrorOnChatGptTurboFailure,
   max_tokens,
   MockGptTurboPrompt,
+  MockGptResponse
 } from "./testMethods.js";
 
 // import { updateTokenUsageAfterJob } from "./subscriptionManager.js";
@@ -78,14 +79,22 @@ export const processFunctions = {
   }) {
     try {
       testNonNetWorkErrorOnChatGptTurboFailure();
-// console.log('arguments[0]', arguments);
-      const mockData = await mockGptTurboResponse({ ...arguments[0] });
+      
+      console.log('arguments[0]', arguments);
+      
+      if(MockGptResponse){
+     const mockData = await mockGptTurboResponse({ ...arguments[0] });
 
       if (mockData) {
         return mockData;
       }
+    throw new Error('Error mockData not correct', mockData)
+    }
+    
       console.log("prompt", prompt);
       const res = await generatorCall(prompt);
+
+
       return { res, ...arguments[0] };
     } catch (error) {
       if (isNetworkError(error)) {

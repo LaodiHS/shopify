@@ -1098,6 +1098,14 @@ function generatePrompt(productData, details, requirements) {
   // Main Execution Flow
   addProductDescription(exampleDetails, exampleStyles);
   const prompt = lines.join("\n");
+  if(!legend){
+    throw Error('legend is requird', legend);
+  }
+
+  if(legend && !legend.length){
+  throw Error('legend should always contain values', legend)
+}
+
   return { prompt, legend, documentType: "text" };
 }
 
