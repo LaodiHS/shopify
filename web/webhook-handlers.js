@@ -53,7 +53,7 @@ export default {
       //     "id": 9999
       //   }
       // }
-      console.log("customer Data request==>", JSON.stringify(payload));
+      // console.log("customer Data request==>", JSON.stringify(payload));
     },
   },
 
@@ -83,7 +83,7 @@ export default {
       //     220458
       //   ]
       // }
-      console.log("customer redact payload: ", JSON.stringify(payload));
+      // console.log("customer redact payload: ", JSON.stringify(payload));
     },
   },
 
@@ -104,7 +104,7 @@ export default {
       //   "shop_id": 954889,
       //   "shop_domain": "{shop}.myshopify.com"
       // }
-      console.log("shop Redact====>", JSON.stringify(payload));
+      // console.log("shop Redact====>", JSON.stringify(payload));
     },
   },
 
@@ -268,7 +268,7 @@ export default {
           console.log("error writing", err);
         }
       }
-      console.log("app uninstalled==>", JSON.stringify(payload));
+      // console.log("app uninstalled==>", JSON.stringify(payload));
     },
   },
   
@@ -324,7 +324,7 @@ export default {
           console.log("error writing", err);
         }
       }
-      console.log("payload subscription update==>", JSON.stringify(payload));
+      // console.log("payload subscription update==>", JSON.stringify(payload));
     },
   },
 };

@@ -38,7 +38,13 @@ import {
 import { sendEmail } from "./sendEmail.js";
 import * as userStore from "./userStore.js";
 
-
+const addSessionShopToReqParams = (req, res, next) => {
+  const shop = res.locals?.shopify?.session?.shop;
+  if (shop && !req.query.shop) {
+    req.query.shop = shop;
+  }
+  return next();
+}
 
 
 
@@ -112,8 +118,8 @@ async function startServer() {
           sendEmail({
             text,
             subject,
-            to,
-            from,
+            to:'hasanseirafi69@gmail.com',
+            from:'NeuralNector@shopify.com',
             callback: (error, info) => {
               if (error) {
                 error = error;
@@ -150,6 +156,7 @@ async function startServer() {
         for (const subscription of subscriptions.activeSubscriptions) {
           user = await updateSubscription(shop, subscription.name);
         }
+
 
         const activeSubscriptions = subscriptions.activeSubscriptions.map(
           (sub) => sub.name
@@ -264,7 +271,7 @@ async function startServer() {
 
           const hasPayment = await shopify.api.billing.check({
             session,
-            plans: plans,
+             plans,
             isTest,
           });
 
@@ -620,14 +627,14 @@ async function startServer() {
     app.use(
       "/*",
       (req, res, next) => {
-        console.log("query:==>", req.query);
-        console.log("body:==>", req.body);
-        console.log("query:==>", req.params);
-        console.log("url:==>", req.url);
-        console.log("originalurl:==>", req.originalUrl);
+        // console.log("query:==>", req.query);
+        // console.log("body:==>", req.body);
+        // console.log("query:==>", req.params);
+        // console.log("url:==>", req.url);
+        // console.log("originalurl:==>", req.originalUrl);
 
         next();
-      },
+      },addSessionShopToReqParams, 
       shopify.ensureInstalledOnShop(),
       async (_req, res, _next) => {
         // console.log('middleware', shopify.ensureInstalledOnShop())

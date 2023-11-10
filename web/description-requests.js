@@ -63,6 +63,7 @@ async function handleEndpoints(app, endpointType, queue) {
           );
         }
         const { prompt, documentType, legend } = selectedOptions;
+
         const tokenCount = countTokens(prompt);
         console.log("prompt token count", tokenCount);
         const exceedsLimit = await hasExceededUsageLimit(shop, tokenCount);
@@ -71,8 +72,15 @@ if(!legend){
   throw new Error( 'no legend', legend)
 }
 
+
         if (true || process.env.NODE_ENV !== "production") {
+
+          try{
+            console.log('legend', legend)
           getLegend(legend);
+          }catch(e){
+            console.log('error getting', e)
+          }
         }
 
         if (exceedsLimit) {

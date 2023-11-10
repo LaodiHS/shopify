@@ -33,3 +33,5 @@ export { default as imagePlaceHolder } from "./image-placeholder.svg";
 export { default as readingBag } from "./reading-bag.svg";
 
 export { default as honeyDrop } from "./honey-drop.svg";
+
+export { default as downHoneyShop } from "./downHoneyShop.png";

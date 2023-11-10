@@ -94,8 +94,8 @@ export async function authentication() {
   const shop = res.locals?.shopify?.session?.shop;
       if (shop && !req.query.shop) {
         req.query.shop = shop;
-        console.log('sesion from config Auth',res.locals.shopify.session)
-        console.log('store assigned', shop)
+        // console.log('sesion from config Auth',res.locals.shopify.session)
+        // console.log('store assigned', shop)
       }
 
 
@@ -106,9 +106,9 @@ export async function authentication() {
            plans,
            isTest, // need to change to false when ready for production
         });
-        console.log("has payment: " + hasPayment);
+        // console.log("has payment: " + hasPayment);
         if (true || hasPayment) {
-          console.log('has payment: ' + hasPayment);
+          // console.log('has payment: ' + hasPayment);
           next();
         } else {
           const redirectUrl = await shopify.api.billing.request({
@@ -150,19 +150,19 @@ export async function authentication() {
 
 
 
-export async function redirectOutOfAPP(req, res, shop, redirectUri) {
-  if (redirectUri.length) {
-    console.log("redirect uri", redirectUri);
-    try {
-      const r = shopify.redirectOutOfApp({
-        req,
-        res,
-        redirectUri: redirectUri,
-        shop: shopify.api.utils.sanitizeShop(shop),
-      });
-    } catch (error) {
-      console.log("errror---->", error);
-      //throw error;
-    }
-  }
-}
+// export async function redirectOutOfAPP(req, res, shop, redirectUri) {
+//   if (redirectUri.length) {
+//     console.log("redirect uri", redirectUri);
+//     try {
+//       const r = shopify.redirectOutOfApp({
+//         req,
+//         res,
+//         redirectUri: redirectUri,
+//         shop: shopify.api.utils.sanitizeShop(shop),
+//       });
+//     } catch (error) {
+//       console.log("errror---->", error);
+//       //throw error;
+//     }
+//   }
+// }

@@ -3,17 +3,17 @@ import { readJSONFromFileAsync } from "./userStore.js";
 import { Readable, pipeline } from "stream";
 
 const MockGptResponse = true;
-export const max_tokens = 1000;
+export const max_tokens = 100;
 let MockGptTurboPrompt = false;
 
 const TestBullMqJobProcessFailure = false;
 const TestNonNetWorkErrorOnChatGptTurboFailure = false;
 
-const CheckRequiredProps = true;
+
 
 // ChatGpt Function Inline Error Triggers
 if (MockGptTurboPrompt) {
-  MockGptTurboPrompt = "Use only 20 word for the text of the story.";
+  MockGptTurboPrompt = "Tell me facts about ghosts using only 40 words";
 }
 
 export { MockGptTurboPrompt, MockGptResponse };
@@ -24,7 +24,7 @@ export function getLegend(genLegend) {
     throw new Error("No legend", genLegend);
   }
   legend = JSON.parse(JSON.stringify(genLegend));
-  console.log("getLegend: ", legend);
+  // console.log("getLegend: ", legend);
 }
 
 export function testBullMqJobProcessFailure() {
@@ -70,7 +70,7 @@ export async function mockGptTurboResponse({
     const responseStream = createChatGptTurboResponse(sampleTexts);
 
     return {
-      res: { data: responseStream },
+      stream:  responseStream ,
       documentType,
       [documentType]: storeData.gptText,
       ...arguments[0],
@@ -80,10 +80,12 @@ export async function mockGptTurboResponse({
   }
 }
 
+
 function createChatGptTurboResponse(texts) {
   let currentIndex = 0;
 
   return new Readable({
+    objectMode:true,
     async read() {
       if (currentIndex >= texts.length) {
         // When there's no more data, push null to signal the end of the stream
@@ -95,13 +97,13 @@ function createChatGptTurboResponse(texts) {
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       // Create a message similar to what you'd get from chatgptturbo
-      const message = JSON.stringify({
+      const message = {
         choices: [
           {
             index: currentIndex,
             delta: {
               content: texts[currentIndex++],
-              finish_reason: currentIndex < texts.length ? null : "end",
+              finish_reason: currentIndex < texts.length ? null : "stop",
             },
 
             usage: {
@@ -109,10 +111,10 @@ function createChatGptTurboResponse(texts) {
             },
           },
         ],
-      });
+      };
 
       // Push the message to the stream
-      this.push(`data: ${message}\n\n`);
+      this.push(message);
     },
   });
 }
@@ -137,7 +139,7 @@ function replaceBracketContents(sampleText, legend) {
       }
     }
     // Use match if replacements array is exhausted
-    console.log("replacement: ", replacement);
+    // console.log("replacement: ", replacement);
     index++;
 
     return `(${replacement})`;

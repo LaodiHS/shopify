@@ -360,6 +360,10 @@ export const billingConfig = {
         description: "Be the pioneer of possibility! Unlock the future before anyone else with cutting-edge capabilities."
       },
       {
+        name: "Generate Video Advert (Beta under development)",
+        description: "Be the pioneer of possibility! Unlock the future before anyone else with cutting-edge capabilities."
+      },
+      {
         name: "Unprecedented Word Limit",
         description: "Write the epic saga! Harness a monumental " + numberToWords(Allotment.acacia.wordCount) + "-word monthly allowance — an odyssey of expression!",
         details: {
@@ -533,8 +537,8 @@ async function getAppSubscription(session) {
       (subscription) => {
         if (subscription.name === planName) {
           subscription.lineItems.forEach((lineItem) => {
-            console.log('planName--->'  , planName)
-            console.log('pricingDetails', lineItem.plan.pricingDetails.terms)
+            // console.log('planName--->'  , planName)
+            // console.log('pricingDetails', lineItem.plan.pricingDetails.terms)
             if (lineItem.plan.pricingDetails.terms === planDescription) {
               subscriptionLineItem = {
                 id: lineItem.id,

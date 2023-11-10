@@ -4,6 +4,8 @@ import {
   IonTitle,
   IonToolbar,
   IonProgressBar,
+  IonButton,
+  IonButtons
 } from "@ionic/react";
 import { useDataProvidersContext } from ".";
 export function IonicHeaderComponent({ centerText, left, right, progress = 100 , buffer=100, type="determinate"}) {
@@ -50,10 +52,13 @@ setTimeout(() => {
         </IonTitle>
 
         {right}
+  
         <IonProgressBar 
         //color="neural" 
         type={type} buffer={buffer} color="dark" value={progress} />
-      </IonToolbar>
+  
+      </IonToolbar> 
+     
     </IonHeader>
   );
 }

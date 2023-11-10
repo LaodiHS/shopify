@@ -858,10 +858,10 @@ const filterKey = (label) => {
 
 const filterElement = (label) => {
   if (!label) {
-    "report this error filterElement:" + Math.random().toString();
+    `report this error filterElement:${Math.random().toString()}`;
   }
   label = label.replace(/([a-z])([A-Z])/g, "$1 $2").trim();
-  label = label
+  label
     .replace(/inventory/g, "")
     .replace(/:/g, "")
     .trim();
@@ -870,7 +870,7 @@ const filterElement = (label) => {
 };
 
 const adjustedLabels = (label, key, numb) => {
-  label = label === "none" ? `stand ${key} ${numb}` : filterElement(label);
+  label = label === "none" ? `basic ${key} ${numb}` : filterElement(label);
   return label;
 };
 
@@ -1048,7 +1048,8 @@ function generatePrompt(productData, details, requirements) {
 
       narrativeStyles.forEach((narrativeStyle, i, arrayStyles) => {
         const { color, id } = getColor();
-        legend.push([narrativeStyle.value, color]);
+       
+        legend.push([narrativeStyle.value === 'none' ? `basic ${key}`: narrativeStyle.value, color]);
         exampleStyles.push([
           adjustedLabels(narrativeStyle.value, key, i + 1),
           color,

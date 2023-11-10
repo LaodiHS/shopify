@@ -100,7 +100,7 @@ function parseText({
   mappedLegend,
   variableListItemHeight,
   variableListItemImageHeight,
-imagePlaceHolder,
+  imagePlaceHolder,
   selectedImageMapPureKeys,
 
   processedSentences,
@@ -323,19 +323,27 @@ const VirtualList = React.memo(
     //   };
     // }, [listRef]);
 
+    const throttledScroll = useCallback(
+      throttle((variableSizeListRef, streamData) => {
+        // Expensive operation (e.g., API call)
+
+        if (variableSizeListRef.current && !userScrollDetected) {
+          const scrollContainer = variableSizeListRef.current;
+          scrollContainer.scrollToItem(streamData.length - 3, "start");
+        }
+
+
+      }, 400, {leading:true, trailing:true}),
+      []
+    );
     useEffect(() => {
-      console.log("component refreshed");
-      if (variableSizeListRef.current && !userScrollDetected) {
 
-        const scrollContainer = variableSizeListRef.current;
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
-        // variableSizeListRef.current.scrollToItem(
-        //   streamData.length - 3,
-        //   "start"
-        // );
 
-        // 'start' is the alignment option
-      }
+      
+      // scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      throttledScroll(variableSizeListRef, streamData);
+
+      // 'start' is the alignment option
     }, [streamData]);
 
     const RowRenderer = ({ index, style, data }) => {
@@ -552,7 +560,6 @@ function TextWithMarkers({
       return completeSections;
     }
 
-
     let loadingStr = false;
     const streamDataHandler = (eventData) => {
       if (!loadingStr) {
@@ -570,8 +577,6 @@ function TextWithMarkers({
 
       const finish_reason = delta.finish_reason;
       if (finish_reason) {
-      
-      
         processedSentences = {};
         processedImages = {};
         completeSections = [];
@@ -680,7 +685,11 @@ const cleanText = ({ str, selectedImageMap, mappedLegend }) => {
             return false;
           });
           console.log("imageSrc: ", ImageSrc);
-          parts.push(`<img src=${ImageSrc || "https://placehold.co/600x400?text=No+Image+Available"}  />`);
+          parts.push(
+            `<img src=${
+              ImageSrc || "https://placehold.co/600x400?text=No+Image+Available"
+            }  />`
+          );
         }
 
         lastIndex = idWithBracketsRegex.lastIndex;

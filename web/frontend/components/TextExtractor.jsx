@@ -6,6 +6,8 @@ import {
   IonLabel,
   IonText,
   IonChip,
+  IonButton,
+  
 } from "@ionic/react";
 import {
   LineChart,
@@ -743,7 +745,7 @@ export function ChartComponent({ text }) {
   );
 }
 
-export function ReadabilityStats({ checkFeatureAccess, text }) {
+export function ReadabilityStats({ checkFeatureAccess, text, allAssets }) {
   const [readabilityStats, setReadabilityStats] = useState(null);
   const [readabilityScore, setReadabilityScore] = useState(null);
   const [cleanText, setCleanText] = useState("");
@@ -792,6 +794,12 @@ export function ReadabilityStats({ checkFeatureAccess, text }) {
         </IonCol>
       </IonRow>
 
+
+
+
+  { checkFeatureAccess(["acacia"])?.hasAccess ?
+    (
+      <>
       <InformationIcon
         label="SEO Reachability Score"
         id="seo-score-tools"
@@ -859,7 +867,44 @@ export function ReadabilityStats({ checkFeatureAccess, text }) {
             </IonChip>
           ))}
         </IonCol>
+      </IonRow> </>
+      ): (<IonRow className="" style={{marginTop:"100px"}}>
+        <IonCol size="12" className="ion-text-center">
+          <IonText color="neural" className="ion-text-capitalize">
+            <IonButton
+              fill="clear"
+              color="shoe"
+              onClick={(e) => DataProviderNavigate("/subscriptions")}
+            >
+             Get A Detailed BreakDown Of Your Document 
+            </IonButton>
+          </IonText>
+        </IonCol>
+        <IonCol
+          onClick={(e) => DataProviderNavigate("/subscriptions")}
+          style={{
+            backgroundImage: `url(${allAssets.beehive})`,
+            height: "100px",
+            backgroundPosition: "center",
+            backgroundSize: "contain",
+            backgroundRepeat: "no-repeat",
+          }}
+          className="ion-align-items-center ion-text-center ion-text-capitalize"
+          size="12"
+        />
+        <IonCol className="ion-text-center ion-text-capitalize">
+          <IonButton
+            fill="clear"
+            color="shoe"
+            onClick={(e) => DataProviderNavigate("/subscriptions")}
+          >
+            Available with acacia honey membership
+          </IonButton>
+        </IonCol>
       </IonRow>
+    )}
+
+    {/* <IonRow><IonCol>Align Your Product Tags with </IonCol></IonRow> */}
     </IonGrid>
   );
 }

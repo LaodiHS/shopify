@@ -689,7 +689,7 @@ if(!mappedLegend ){
     if (!productDetailOptions?.length) {
       return await showAlert(
         "No Product Highlights Selected",
-        "A general product focus will be applied",
+        "A Basic Product Focus Will Be Applied",
         "language-options"
       );
     }
@@ -697,7 +697,7 @@ if(!mappedLegend ){
     if (!languageOptions.length) {
       return await showAlert(
         "No Audience Selected",
-        "A general audience will be applied",
+        "A Basic Audience Will Be Applied",
         "focus-options"
       );
     }
@@ -1173,6 +1173,7 @@ function renderAccordionItem({
                           key={index + 21}
                           checkFeatureAccess={checkFeatureAccess}
                           text={markupText}
+                          allAssets={allAssets}
                         />
                       </IonCol>
                     </IonCol>

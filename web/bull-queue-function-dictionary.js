@@ -1,23 +1,21 @@
-import { Configuration, OpenAIApi } from "openai";
+import { OpenAI } from "openai";
 import "dotenv/config";
 import {
   mockGptTurboResponse,
   testNonNetWorkErrorOnChatGptTurboFailure,
   max_tokens,
   MockGptTurboPrompt,
-  MockGptResponse
+  MockGptResponse,
 } from "./testMethods.js";
 
 // import { updateTokenUsageAfterJob } from "./subscriptionManager.js";
 // import * as userStore from "./userStore.js";
 const { OPEN_AI_SECRET_KEY } = process.env;
 
-const configuration = new Configuration({
+const apiKey = OPEN_AI_SECRET_KEY;
+const openai = new OpenAI({
   apiKey: OPEN_AI_SECRET_KEY,
 });
-
-const apiKey = OPEN_AI_SECRET_KEY;
-const openai = new OpenAIApi(configuration);
 // class NetworkError extends Error {
 //   constructor(message) {
 //     super(message);
@@ -79,49 +77,30 @@ export const processFunctions = {
   }) {
     try {
       testNonNetWorkErrorOnChatGptTurboFailure();
-      
-      console.log('arguments[0]', arguments);
-      
-      if(MockGptResponse){
-     const mockData = await mockGptTurboResponse({ ...arguments[0] });
 
-      if (mockData) {
-        return mockData;
-      }
-    throw new Error('Error mockData not correct', mockData)
-    }
-    
-      console.log("prompt", prompt);
-      const res = await generatorCall(prompt);
+      // console.log("arguments[0]", JSON.stringify(arguments) );
 
+      if (MockGptResponse) {
+        const mockData = await mockGptTurboResponse({ ...arguments[0] });
 
-      return { res, ...arguments[0] };
-    } catch (error) {
-      if (isNetworkError(error)) {
-        console.error("Network error occurred in chatGptTurbo:", error);
-        throw error; // Rethrow the network error to let BullMQ retry the job
+        if (mockData) {
+          return mockData;
+        }
+
+        throw new Error("Error mockData not correct", mockData);
       } else {
-        // Log the error for debugging and tracing purposes
-        error.processFunction = processFunction;
-        console.error("An error occurred in chatGptTurbo:", error);
+        // console.log("prompt", prompt);
+        try {
+          const stream = await chatGPTurboStream(prompt);
 
-        // Handle explicitly thrown errors
-        if (error instanceof Error && error.message === "request error") {
-          // Custom error handling for the explicitly thrown error
-          return { error: "Custom error: " + error.message };
-        } else {
-          // Handle other errors (e.g., errors from third-party API)
-
-          // Log the generic error for debugging purposes
-          console.error("An unexpected error occurred in chatGptTurbo:", error);
-
-          // You can add more detailed error messages based on the type of error
-          let errorMessage = "An unexpected error occurred";
-
-          // Return the formatted error message
-          return { error: errorMessage };
+          return { stream, ...arguments[0] };
+        } catch (error) {
+          throw Error(error);
         }
       }
+    } catch (error) {
+      // Return the formatted error message
+      return { error };
     }
   },
   async processTypeB(data) {
@@ -136,44 +115,35 @@ export const processFunctions = {
   // Add more processing functions as needed
 };
 
-async function generatorCall(prompt) {
+async function chatGPTurboStream(prompt) {
   if (prompt.length <= 0) {
     throw new Error("no prompt present in generatorCall");
   }
   // console.log('prompt: ' + prompt);
   try {
-    const res = await openai.createChatCompletion(
-      {
-        model: "gpt-3.5-turbo",
-        messages: [
-          {
-            role: "user",
+    return openai.beta.chat.completions.stream({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "user",
 
-            content: MockGptTurboPrompt || prompt,
-          },
-        ],
-        max_tokens,
-        temperature: 0,
-        stream: true,
-      },
-      { responseType: "stream" }
-    );
-
-    return res;
+          content: MockGptTurboPrompt || prompt,
+        },
+      ],
+      max_tokens,
+      temperature: 0,
+      stream: true,
+    });
   } catch (error) {
-    if (error.response?.status) {
-      console.error(error.response.status, error.message);
-      for await (const data of error.response.data) {
-        const message = data.toString();
-        try {
-          const parsed = JSON.parse(message);
-          console.error("An error occurred during OpenAI request: ", parsed);
-        } catch (error) {
-          console.error("An error occurred during OpenAI request: ", message);
-        }
-      }
+    if (error instanceof OpenAI.APIError) {
+      console.error(error.status); // e.g. 401
+      console.error(error.message); // e.g. The authentication token you passed was invalid...
+      console.error(error.code); // e.g. 'invalid_api_key'
+      console.error(error.type); // e.g. 'invalid_request_error'
     } else {
-      console.error("An error occurred during OpenAI request", error);
+      // Non-API error
+      console.log(error);
     }
+    throw Error(error);
   }
 }

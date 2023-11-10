@@ -74,6 +74,7 @@ import {
   WinkDataProvider,
   TinyMCEDataProvider,
   AnimatedContent,
+  ShopifyOutage,
 } from "./components";
 
 import ExitFrame from "./pages/ExitIframe";
@@ -101,11 +102,18 @@ export default function App() {
           destination: "/search",
         },
         {
-          label: "support-ticket",
-          destination: "/support-ticket",
+          label: "report-bug",
+          destination: "/report-bug",
+        },
+        {
+          label: "shopify-outage",
+          destination: "/shopify-outage",
         },
       ]
-    : [];
+    : [     {
+      label: "report-bug",
+      destination: "/report-bug",
+    }];
 
   return (
   
@@ -453,7 +461,7 @@ const BugReportPage = (React.FC = () => {
   });
 
   const [showAlert, setShowAlert] = useState(false);
-
+const {uncachedFetchData} = useDataProvidersContext()
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -475,13 +483,11 @@ const BugReportPage = (React.FC = () => {
 
     // Sending email using SMTP.js
     const emailToSend = {
-      SecureToken: "376ee0cd-ab84-414e-a207-3ec8ca2d89bd", //2A4E18C4EE14D83137B68735833A9ED3B1D21FB887E521E76D9FCBC83FDDEE99802E471273AB80D3DC7C79AA9FB518DB
-      //smtp password support@techsolutionsforge.com    8B5199E49BC1B7CFCCD4560DF930D755BDFE  2525
-      // 2bef0aef-b2cc-4074-8cff-f291ce935b1b
-      To: "hasanseirafi69@gmail.com",
-      From: "admin.shopify.com",
-      Subject: `Bug Report `,
-      Body: `
+      SecureToken: "376ee0cd-ab84-414e-a207-3ec8ca2d89bd", //
+      to: "neuralnectarsupport@neuralnectarsolutions.com",
+      from: "shopify@nerualnector.com",
+      subject: `Bug Report `,
+      text: `
         Name: ${formData.name}
         Email: ${formData.email}
         Bug Type: ${formData.bugType}
@@ -489,15 +495,22 @@ const BugReportPage = (React.FC = () => {
       `,
     };
 
-    // await Email.send(emailToSend);
+
+    const { data, error } = await uncachedFetchData({
+      url: "/api/bug/report",
+      method: "POST",
+      body: {  text, subject, to, from},
+    });
+
+  
 
     // Reset form data after submission
-    // setFormData({
-    //   name: "",
-    //   email: "",
-    //   bugType: "",
-    //   bugDescription: "",
-    // });
+    setFormData({
+      name: "",
+      email: "",
+      bugType: "",
+      bugDescription: "",
+    });
 
     // Show success message or redirect to a thank you page
     // (you can implement this as per your application flow)
@@ -508,9 +521,12 @@ const BugReportPage = (React.FC = () => {
       <IonContent className="ion-padding">
         <form onSubmit={handleSubmit}>
           <IonItem>
-            <IonLabel position="floating">Name</IonLabel>
+   
             <IonInput
               type="text"
+              label="Name"
+            labelPlacement="floating"
+    
               name="name"
               value={formData.name}
               onIonChange={handleInputChange}
@@ -519,10 +535,12 @@ const BugReportPage = (React.FC = () => {
           </IonItem>
 
           <IonItem>
-            <IonLabel position="floating">Email</IonLabel>
+
             <IonInput
               type="email"
               name="email"
+              label="Email"
+              labelPlacement="floating"
               value={formData.email}
               onIonChange={handleInputChange}
               required
@@ -530,8 +548,9 @@ const BugReportPage = (React.FC = () => {
           </IonItem>
 
           <IonItem>
-            <IonLabel>Bug Type</IonLabel>
+            
             <IonSelect
+            label="Bug Type"
               name="bugType"
               value={formData.bugType}
               onIonChange={handleInputChange}
@@ -547,9 +566,11 @@ const BugReportPage = (React.FC = () => {
           </IonItem>
 
           <IonItem>
-            <IonLabel position="floating">Bug Description</IonLabel>
+           
             <IonTextarea
               rows={6}
+              label="Bug Or Desired Feature Description"
+              labelPlacement="floating"
               name="bugDescription"
               value={formData.bugDescription}
               onIonChange={handleInputChange}
@@ -789,11 +810,12 @@ function IonMenuNav() {
             <Route key="/article" path="/article" element={<Article />} />
             <Route key="exitframe" path="/exitiframe" element={<ExitFrame />} />
             <Route
-              key="/support-ticket"
-              path="/support-ticket"
+              key="/report-bug"
+              path="/report-bug"
               element={<BugReportPage />}
             />
             <Route key="noMatch" path="/*" element={<div>No page found</div>} />
+            <Route key="shopify-outage" path="/shopify-outage" element={<ShopifyOutage />} />
           </Routes>
         </IonRouterOutlet>
         <IonTabBar
@@ -823,7 +845,7 @@ function IonMenuNav() {
               >
                 <IonIcon
                   color={contentSaved && tab.saveSignal ? "success" : "neural"}
-                  key={"icon" + index}
+                  key={`icon${index}`}
                   src={tab.access.hasAccess && tab.src}
                   icon={
                     !tab.src && tab.access.hasAccess

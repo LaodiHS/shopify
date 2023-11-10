@@ -236,14 +236,12 @@ const {Editor} = useTinyMCEDataContext()
                           </IonRadio>
                         </IonRadioGroup>
                       </IonItem>
-                      <IonIcon
-                        size="small"
-                        color="secondary"
-                        slot="end"
-                        aria-label="Tap on include add the existing description in the composition assist"
-                        id="include-description-hover-trigger"
-                        icon={informationCircleOutline}
-                      ></IonIcon>
+                      <IonIcon size="small"
+                      color="secondary"
+                      slot="end"
+                      aria-label="Tap on include add the existing description in the composition assist"
+                      id="include-description-hover-trigger"
+                      icon={informationCircleOutline} />
                     </IonItem>
                   </IonCol>{" "}
                   <IonPopover
@@ -261,7 +259,7 @@ const {Editor} = useTinyMCEDataContext()
                         {" "}
                         <sub>
                           {" "}
-                          <IonIcon icon={exitOutline}></IonIcon> click outside
+                          <IonIcon icon={exitOutline} /> click outside
                           box to close
                         </sub>
                       </IonText>
@@ -402,7 +400,7 @@ const {Editor} = useTinyMCEDataContext()
             </IonButton>
 
             <IonButton onClick={e => DataProviderNavigate("/subscriptions") } slot="icon-only" >
-              <IonIcon size="large" icon={allAssets.beehive}></IonIcon>
+              <IonIcon size="large" icon={allAssets.beehive} />
             </IonButton>
           </>}
           
@@ -430,18 +428,16 @@ const {Editor} = useTinyMCEDataContext()
                 assignImageSelectionModalIsOpen((prevIsOpen) => !prevIsOpen);
               }}
             >
-              <IonIcon slot="icon-only" icon={allAssets.pictures}></IonIcon>
+              <IonIcon slot="icon-only" icon={allAssets.pictures} />
             </IonButton>
 
 
-            <IonIcon
-              size="small"
-              color="secondary"
-              slot="end"
-              aria-label="Information about Images"
-              id="Image-options-hover-trigger"
-              icon={informationCircleOutline}
-            ></IonIcon>
+            <IonIcon size="small"
+            color="secondary"
+            slot="end"
+            aria-label="Information about Images"
+            id="Image-options-hover-trigger"
+            icon={informationCircleOutline} />
 
           </IonButtons>
         </IonItem>
@@ -463,7 +459,7 @@ const {Editor} = useTinyMCEDataContext()
               {" "}
               <sub>
                 {" "}
-                <IonIcon icon={exitOutline}></IonIcon> click outside box to
+                <IonIcon icon={exitOutline} /> click outside box to
                 close
               </sub>
             </IonText>
@@ -505,15 +501,15 @@ function SelectOptions({ optionName, options, selectedProperty, sizes }) {
 
   const truncateText = (text, maxLength) => {
     if (text.length > maxLength) {
-      return text.slice(0, maxLength - 3) + "...";
+      return `${text.slice(0, maxLength - 3)}...`;
     }
     return text;
   };
 
   function getName() {
-    let name = optionName.split("_").join(" ");
+    const name = optionName.split("_").join(" ");
     if (name[name.length - 1] !== "s") {
-      name = name + "s";
+      return `${name}s`;
     }
     return name;
   }
@@ -536,14 +532,12 @@ function SelectOptions({ optionName, options, selectedProperty, sizes }) {
             {chestnut_sourwood_acacia.message(displayName)}{" "}
           </IonText>
         </IonLabel>{" "}
-        <IonIcon
-          size="small"
-          color="secondary"
-          slot="end"
-          aria-label="Include existing description in composition"
-          id={displayName + "-select-options-hover-trigger"}
-          icon={informationCircleOutline}
-        ></IonIcon>
+        <IonIcon size="small"
+        color="secondary"
+        slot="end"
+        aria-label="Include existing description in composition"
+        id={`${displayName}-select-options-hover-trigger`}
+        icon={informationCircleOutline} />
       </IonItem>
       {/* {JSON.stringify(selectedOption)} */}
       <IonItem key={displayName}>
@@ -553,10 +547,10 @@ function SelectOptions({ optionName, options, selectedProperty, sizes }) {
           label={"Select ".concat(
             /variant/i.test(displayName) ? "your variant options" : displayName
           )}
-          aria-label={"Select " + displayName}
+          aria-label={`Select ${displayName}`}
           style={{ fontSize: "12px" }}
           labelPlacement="stacked"
-          placeholder={"Include " + displayName}
+          placeholder={`Include ${displayName}`}
           multiple="true"
           value={selectedOption}
           selectedText={
@@ -578,10 +572,10 @@ function SelectOptions({ optionName, options, selectedProperty, sizes }) {
         </IonSelect>
       </IonItem>
       <IonPopover
-        key={displayName + "-select-options-hover-trigger"}
+        key={`${displayName}-select-options-hover-trigger`}
         translucent={true}
         animated="true"
-        trigger={displayName + "-select-options-hover-trigger"}
+        trigger={`${displayName}-select-options-hover-trigger`}
         triggerAction="hover"
       >
         <IonContent className="ion-padding ion-text-capitalize">
@@ -592,7 +586,7 @@ function SelectOptions({ optionName, options, selectedProperty, sizes }) {
             {" "}
             <sub>
               {" "}
-              <IonIcon icon={exitOutline}></IonIcon> click outside box to close
+              <IonIcon icon={exitOutline} /> click outside box to close
             </sub>
           </IonText>
         </IonContent>
