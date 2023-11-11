@@ -51,6 +51,7 @@ import {
   IonSelectOption,
   IonItem,
   IonAlert,
+  useIonAlert
 } from "@ionic/react";
 import {
   ListDetailComponent,
@@ -82,9 +83,34 @@ import ExitFrame from "./pages/ExitIframe";
 tinymceCustomPlugins(tinymce);
 setupIonicReact({ mode: "ios" });
 export default function App() {
+  
+  const [isOpen, setShowPopover] = useState(false);
   // const pages = import.meta.globEager("./pages/**/!(*.test.[jt]sx)*.([jt]sx)");
-  const navigationPanel = !DEPLOYMENT_ENV
+const popoverRef = useRef(null);
+const contextMenuEventRef = useRef(null)
+  const handleContextMenu = (e) => {
+    e.preventDefault(); // Prevent the default context menu
+    contextMenuEventRef.current = e; 
+    console.log('event', e.nativeEvent)
+    console.log("Context Menu Click");
+    // Use the popover controller to create and present the popover
+    if (popoverRef.current) {
+      popoverRef.current.present({
+        event: e.nativeEvent, // Pass the native event for positioning
+      });
+    }
+  };
+  const onDidDismiss = () => {
+    setShowPopover(false);
+  };
+  const navigationPanel = DEPLOYMENT_ENV
     ? [
+        {
+          label: "report-bug",
+          destination: "/report-bug",
+        },
+      ]
+    : [
         {
           label: "Products Page",
           destination: "/",
@@ -109,16 +135,11 @@ export default function App() {
           label: "shopify-outage",
           destination: "/shopify-outage",
         },
-      ]
-    : [     {
-      label: "report-bug",
-      destination: "/report-bug",
-    }];
+      ];
 
   return (
-  
-    <PolarisProvider> 
-    <IonApp >
+    <PolarisProvider>
+      <IonApp>
         <BrowserRouter>
           <AppBridgeProvider>
             <QueryProvider>
@@ -129,8 +150,15 @@ export default function App() {
                     <WinkDataProvider>
                       <DataProvidersProvider>
                         <ProductDataProvider>
-                          <IonMenuNav />
-                        </ProductDataProvider>
+                          
+                          <IonMenuNav handleContextMenu={e => {
+                            handleContextMenu(e)
+                          }
+                          }/>
+                         
+              
+                        </ProductDataProvider> 
+                     
                       </DataProvidersProvider>
                     </WinkDataProvider>
                   </TinyMCEDataProvider>
@@ -139,8 +167,8 @@ export default function App() {
             </QueryProvider>
           </AppBridgeProvider>
         </BrowserRouter>
-    </IonApp>  </PolarisProvider>
-    
+      </IonApp>{" "}
+    </PolarisProvider>
   );
 }
 
@@ -461,7 +489,7 @@ const BugReportPage = (React.FC = () => {
   });
 
   const [showAlert, setShowAlert] = useState(false);
-const {uncachedFetchData} = useDataProvidersContext()
+  const { uncachedFetchData } = useDataProvidersContext();
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -495,14 +523,11 @@ const {uncachedFetchData} = useDataProvidersContext()
       `,
     };
 
-
     const { data, error } = await uncachedFetchData({
       url: "/api/bug/report",
       method: "POST",
-      body: {  text, subject, to, from},
+      body: { text, subject, to, from },
     });
-
-  
 
     // Reset form data after submission
     setFormData({
@@ -521,12 +546,10 @@ const {uncachedFetchData} = useDataProvidersContext()
       <IonContent className="ion-padding">
         <form onSubmit={handleSubmit}>
           <IonItem>
-   
             <IonInput
               type="text"
               label="Name"
-            labelPlacement="floating"
-    
+              labelPlacement="floating"
               name="name"
               value={formData.name}
               onIonChange={handleInputChange}
@@ -535,7 +558,6 @@ const {uncachedFetchData} = useDataProvidersContext()
           </IonItem>
 
           <IonItem>
-
             <IonInput
               type="email"
               name="email"
@@ -548,9 +570,8 @@ const {uncachedFetchData} = useDataProvidersContext()
           </IonItem>
 
           <IonItem>
-            
             <IonSelect
-            label="Bug Type"
+              label="Bug Type"
               name="bugType"
               value={formData.bugType}
               onIonChange={handleInputChange}
@@ -566,7 +587,6 @@ const {uncachedFetchData} = useDataProvidersContext()
           </IonItem>
 
           <IonItem>
-           
             <IonTextarea
               rows={6}
               label="Bug Or Desired Feature Description"
@@ -595,10 +615,11 @@ const {uncachedFetchData} = useDataProvidersContext()
   );
 });
 
-function IonMenuNav() {
+function IonMenuNav({ handleContextMenu }) {
   const [currentRoute, setCurrentRoute] = useState("/");
   const location = useLocation();
   const router = useIonRouter();
+  const [presentAlert] = useIonAlert();
   const {
     checkFeatureAccess,
     assistRequest,
@@ -620,8 +641,8 @@ function IonMenuNav() {
   }, [location.pathname]);
 
   // useEffect(async () => {
-    // console.log("svgAssets:", svgAssets);
-    // await ImageCachePre(readingBag)
+  // console.log("svgAssets:", svgAssets);
+  // await ImageCachePre(readingBag)
   // }, []);
 
   if (!sessionLoaded) return null;
@@ -663,8 +684,45 @@ function IonMenuNav() {
         disabled: false,
         label: "Clear Description",
         icon: allAssets.clear,
+        onContextMenu: async (event) => {
+          event.preventDefault();
+          presentAlert({
+            header: 'Clear',
+            subHeader: 'Clear A Section',
+            message: 'Clear Requirements, Article or Both',
+            buttons: [
+              {
+                text: 'Clear Description',
+                role: 'cancel',
+                handler: async () => {
+                  console.log('cancel clicked')
+                       await clearAssistResult({id:aiWorkStation, option: 'requirements'});
+              
+                },
+              },
+              {
+                text: 'Clear Requirements',
+                role: 'confirm',
+                handler: async () => {
+            
+                  await clearAssistResult({id:aiWorkStation,option: 'description'});
+                },
+              },
+              {
+                text: 'Clear Both',
+                role: 'confirm',
+                handler: async () => {
+                  await clearAssistResult({id:aiWorkStation,option: 'both'});
+                
+                },
+              },
+            ],
+          })
+        
+
+        },
         clickHandler: async (event) => {
-          await clearAssistResult(aiWorkStation);
+          await clearAssistResult({id:aiWorkStation, option: 'both'});
         },
       },
       {
@@ -702,8 +760,45 @@ function IonMenuNav() {
         disabled: false,
         label: "Clear Description",
         icon: allAssets.clear,
+        onContextMenu: async (event) => {
+          event.preventDefault();
+          presentAlert({
+            header: 'Clear',
+            subHeader: 'Clear A Section',
+            message: 'Clear Requirements, Article or Both',
+            buttons: [
+              {
+                text: 'Clear Description',
+                role: 'cancel',
+                handler: async () => {
+                  console.log('cancel clicked')
+                       await clearAssistResult({id:aiWorkStation, option:'requirements'});
+              
+                },
+              },
+              {
+                text: 'Clear Requirements',
+                role: 'confirm',
+                handler: async () => {
+            
+            await clearAssistResult({id:aiWorkStation,option: 'description'});
+                },
+              },
+              {
+                text: 'Clear Both',
+                role: 'confirm',
+                handler: async () => {
+                  await clearAssistResult({id:aiWorkStation,option: 'both'});
+                
+                },
+              },
+            ],
+          })
+        
+
+        },
         clickHandler: async (event) => {
-          await clearAssistResult(aiWorkStation);
+          await clearAssistResult({id:aiWorkStation,option: 'both'});
         },
       },
       {
@@ -747,17 +842,27 @@ function IonMenuNav() {
         label: "Article Workstation",
         icon: allAssets.newsPaperWorStation,
         clickHandler: async (event, hasAccess) => {
-          if (!hasAccess) {
-            await DataProviderNavigate("/subscriptions");
-          } else {
+          if (hasAccess) {
             aiWorkStationSetter("article");
             await DataProviderNavigate("/article");
+          } else {
+            await DataProviderNavigate("/subscriptions");
           }
         },
       },
     ],
   };
+  const handleContextMenuClick = (e) => {
+    e.preventDefault(); // Prevent the default context menu
 
+    console.log("Context Menu Click");
+    // Use the popover controller to create and present the popover
+    if (popoverRef.current) {
+      popoverRef.current.present({
+        event: e.nativeEvent, // Pass the native event for positioning
+      });
+    }
+  };
   return (
     <IonReactRouter key="IonReactRouter">
       <IonTabs key="IonTabs">
@@ -815,7 +920,11 @@ function IonMenuNav() {
               element={<BugReportPage />}
             />
             <Route key="noMatch" path="/*" element={<div>No page found</div>} />
-            <Route key="shopify-outage" path="/shopify-outage" element={<ShopifyOutage />} />
+            <Route
+              key="shopify-outage"
+              path="/shopify-outage"
+              element={<ShopifyOutage />}
+            />
           </Routes>
         </IonRouterOutlet>
         <IonTabBar
@@ -830,7 +939,13 @@ function IonMenuNav() {
             return (
               <IonTabButton
                 size="large"
-                id={buttonId}
+                id={tab.label.replace(/ /g, "_")}
+                onContextMenu={(e) => {
+                  if (tab.onContextMenu) {
+        
+                    tab.onContextMenu(e);
+                  }
+                }}
                 disabled={
                   contentSaved && tab.saveSignal
                     ? false
@@ -854,6 +969,7 @@ function IonMenuNav() {
                   }
                   className="custom-icon"
                 />
+            
                 <IonLabel
                   key={index}
                   color={
@@ -872,28 +988,23 @@ function IonMenuNav() {
             );
           })}
         </IonTabBar>
-        <IonButton id="context-menu-trigger">Right-Click Me</IonButton>
-        {/* <IonPopover trigger="context-menu-trigger" triggerAction="context-menu">
-        <IonContent class="ion-padding">Hello World!</IonContent>
-      </IonPopover>
-      <IonPopover trigger="context-menu-trigger" triggerAction="click">
-        <IonContent class="ion-padding">Hello World!</IonContent>
-      </IonPopover> */}
       </IonTabs>
     </IonReactRouter>
   );
 }
 
-function IonPopovers() {
+function IonContextMenu({ popoverRef,isOpen,onDidDismiss} ) {
   return (
-    <IonPopover
+    <IonAlert
+    ref={popoverRef}
+    isOpen={isOpen}
+    onDidDismiss={onDidDismiss}
+    alignment="center"
       key="Include existing description in composition"
       translucent={true}
       animated="true"
-      trigger="acacia-options-select-options-hover-trigger"
-      triggerAction="hover"
       area-label="Advanced Language and Formatting Options"
-    >
+    > 
       <IonContent key="popoverContent" className="ion-padding">
         <IonText key="popoverText">
           <p key="pPopoverText">
@@ -904,11 +1015,11 @@ function IonPopovers() {
         </IonText>
         <IonText key="popoverTextSecondary" color="secondary">
           <sub key="subText">
-            <IonIcon key="exitOutlineIcon" icon={exitOutline}></IonIcon> click
+            {/* <IonIcon key="exitOutlineIcon" icon={}></IonIcon> click */}
             outside box to close
           </sub>
         </IonText>
       </IonContent>
-    </IonPopover>
+    </IonAlert>
   );
 }

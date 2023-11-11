@@ -56,13 +56,6 @@ function isNetworkError(error) {
   return false;
 }
 
-//     max_tokens: max_tokens,
-
-//     presence_penalty: 0.7,
-
-//     temperature: 0.7,
-
-//     n: 1, // Specify the number of completions you want here (in this example, it's set to 3).
 
 export const processFunctions = {
   async chatGptTurbo({
@@ -132,6 +125,9 @@ async function chatGPTurboStream(prompt) {
       ],
       max_tokens,
       temperature: 0,
+      stop:[".", "!", "?"],
+      frequency_penalty:0.2,
+      presence_penalty:0.7,
       stream: true,
     });
   } catch (error) {
@@ -147,3 +143,20 @@ async function chatGPTurboStream(prompt) {
     throw Error(error);
   }
 }
+
+
+// model: Specifies the language model to use. For GPT-3, this would typically be "text-davinci-003" or another version depending on the updates and releases.
+
+// temperature: Controls the randomness of the model's output. Higher values like 0.8 make the output more random, while lower values like 0.2 make it more deterministic.
+
+// max_tokens: Specifies the maximum number of tokens (words or characters) in the generated output. Use this to limit the length of the response.
+
+// top_p (formerly nucleus): It is used for nucleus sampling. It sets a probability threshold for including tokens in the output. It helps in controlling the diversity of the generated text.
+
+// frequency_penalty: Controls the penalty for using frequent tokens. Higher values will make the output more focused, while lower values will allow for a more diverse output.
+
+// presence_penalty: This parameter encourages the model to avoid certain tokens. A higher presence_penalty value makes it less likely for the model to repeat certain phrases.
+
+// stop: A list of tokens where the generation should stop. This can be useful to limit the length of the generated text or to prevent the model from generating beyond a certain point.
+
+// temperature: Controls the randomness of the model's output. Higher values like 0.8 make the output more random, while lower values like 0.2 make it more deterministic.

@@ -3,8 +3,8 @@ import { readJSONFromFileAsync } from "./userStore.js";
 import { Readable, pipeline } from "stream";
 
 const MockGptResponse = true;
-export const max_tokens = 100;
-let MockGptTurboPrompt = false;
+export const max_tokens = 1000;
+let MockGptTurboPrompt = true;
 
 const TestBullMqJobProcessFailure = false;
 const TestNonNetWorkErrorOnChatGptTurboFailure = false;

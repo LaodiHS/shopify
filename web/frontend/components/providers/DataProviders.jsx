@@ -1044,9 +1044,9 @@ export const DataProvidersProvider = ({ children }) => {
     });
   }
 
-  async function clearAssistResult(id) {
-    clearAssistResultMethod.get("handleClearClick")(id);
-    clearAssistResultMethod.get("clearSentences")();
+  async function clearAssistResult(obj) {
+    clearAssistResultMethod.get("handleClearClick")(obj);
+    clearAssistResultMethod.get("clearSentences")(obj);
   }
 
   function assignUpdateArticleMethod(updateOption) {

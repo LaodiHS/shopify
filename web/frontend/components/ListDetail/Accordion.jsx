@@ -156,18 +156,15 @@ export function Accordion({
     onDismiss: (data, role) => dismiss(data, role),
   });
 
-
   useEffect(() => {
     if (productData) {
       setWords([productData.description]);
       setMarkupText(productData.description);
     } else {
-      console.log('reroute hit for root!!!!!!!!!!!!!!!!!!!!!!!!!')
-      DataProviderNavigate("/",{target:"host"})
-   
+      console.log("reroute hit for root!!!!!!!!!!!!!!!!!!!!!!!!!");
+      DataProviderNavigate("/", { target: "host" });
     }
   }, []);
-
 
   useEffect(() => {
     // console.log("aiworkstation", aiWorkStation);
@@ -178,8 +175,8 @@ export function Accordion({
   }, [aiWorkStation]);
 
   // useEffect(async () => {
-    // const blogName = await generateHash(currentSession.shop);
-    // setHashBlogName(blogName);
+  // const blogName = await generateHash(currentSession.shop);
+  // setHashBlogName(blogName);
   // }, []);
 
   useEffect(() => {
@@ -190,14 +187,14 @@ export function Accordion({
     setMarkupText(addMarkup(words.join("")));
   }, [words]);
 
-  useEffect( () => {
+  useEffect(() => {
     const getToken = async () => {
-    const token = await getSessionToken(app);
-    setSessionToken(token);
+      const token = await getSessionToken(app);
+      setSessionToken(token);
 
-    let session = await app.getState();
-    }
-    getToken()
+      let session = await app.getState();
+    };
+    getToken();
     return () => {};
   }, [app]);
   useEffect(() => {
@@ -205,14 +202,34 @@ export function Accordion({
   }, []);
 
 
+
+  const handleClearClick = ({id, option}) => {
+    console.log('clear clicked', id, option);
+
+    setDisplayDocument((previous) => ({ ...previous, [id]: "" }));
+    switch (option) {
+      case "requirements":
+        setWords([]);
+        break;
+      case "description":
+        setServerWords([]);
+        break;
+      case "both":
+        setServerWords([]);
+        setWords([]);
+        break;
+      default:
+        setWords([]);
+        setServerWords([]);
+        break;
+    }
+  }
+
+
   useEffect(() => {
     assignClearAssistMethod("handleClearClick", handleClearClick);
   }, []);
-  function handleClearClick(id) {
-    setDisplayDocument((previous) => ({ ...previous, [id]: "" }));
-    setWords([]);
-    setServerWords([]);
-  }
+
 
   function addToAccordionRefs(name, el) {
     accordionRefs.current[name] = el;
@@ -286,9 +303,9 @@ export function Accordion({
     mappedLegend,
   }) {
     // Check if the EventSource is already initialized and return the existing Promise if available
-if(!mappedLegend){
-  throw new Error('no mappedLegend', mappedLegend);
-}
+    if (!mappedLegend) {
+      throw new Error("no mappedLegend", mappedLegend);
+    }
     setServerWords([]);
     const local = { ...currentSession };
     const locals = JSON.stringify(local);
@@ -401,22 +418,24 @@ if(!mappedLegend){
           const finish_reason = delta.finish_reason;
           Debounce(scrollSmoothly(accordionId), 400);
           str += word;
-          
-   
+
           eventEmitter.emit("streamData", eventData);
-     
 
           if (finish_reason) {
             console.log("finish_reason", finish_reason);
             // console.log("mappedLegend: ", mappedLegend);
             // console.log('finish_reason_paste_token', delta)
-            if(delta.storeData){
-            setUser(delta.storeData)
+            if (delta.storeData) {
+              setUser(delta.storeData);
             }
-            const pureText = cleanText({ str, selectedImageMap, mappedLegend: mappedLegend.mappedLegend });
+            const pureText = cleanText({
+              str,
+              selectedImageMap,
+              mappedLegend: mappedLegend.mappedLegend,
+            });
             setMarkupText((pre) => pre.concat(pureText));
             str = "";
-       
+
             eventSource.close();
             setServerSentEventLoading(false);
           }
@@ -547,8 +566,8 @@ if(!mappedLegend){
     selectedImageMap,
     mappedLegend,
   }) {
-const Legend = {}
-    if(!mappedLegend){
+    const Legend = {};
+    if (!mappedLegend) {
       throw new Error("no mapped legend", mappedLegend);
     }
     const listenerSet = await eventSource({
@@ -612,9 +631,9 @@ const Legend = {}
           cssClass: "custom-toast",
         });
       } else {
-               Legend["mappedLegend"] = promptTextAndLegend.legend;
+        Legend["mappedLegend"] = promptTextAndLegend.legend;
         setLegend(promptTextAndLegend.legend);
- 
+
         console.log("legend", promptTextAndLegend.legend);
       }
     } else {
@@ -663,9 +682,9 @@ const Legend = {}
   async function handleNonSelectedItems(accordionId) {
     const showAlert = async (title, message, template) => {
       const confirm = await showConfirmAlert(title, message);
-if(!mappedLegend ){
-  throw new Error('no mapped legend found')
-}
+      if (!mappedLegend) {
+        throw new Error("no mapped legend found");
+      }
       if (confirm) {
         await setDataListener({
           accordionId,
@@ -738,7 +757,7 @@ if(!mappedLegend ){
         await updateProductProperty("description", descriptionHtml);
         setMarkupText(descriptionHtml);
         console.log("current Cursor", productData.currentCursor);
-   
+
         console.log("product updated");
       }
       return;
@@ -855,7 +874,7 @@ if(!mappedLegend ){
         mappedLegend,
         selectedImageMap,
         checkFeatureAccess,
-        markupText
+        markupText,
       })
     )
     .filter((acc) => acc.accordionId === aiWorkStation);
@@ -996,7 +1015,6 @@ function renderAccordionItem({
         <IonRow key={index + 6}>
           <IonCol key={index + 7} size="12">
             <IonAccordionGroup
- 
               expand="inset"
               ref={(el) => {
                 addToAccordionRefs(accordionId, el);
@@ -1005,7 +1023,7 @@ function renderAccordionItem({
             >
               <IonAccordion key={index + 8} value="requirements">
                 <AccordionInformationHeader
-                beehive={allAssets.beehive}
+                  beehive={allAssets.beehive}
                   accordionName={`Requirements`} //HighlightHub
                   boxName={aiWorkStation}
                   lock={true}
@@ -1014,7 +1032,7 @@ function renderAccordionItem({
 
                 <div className="ion-padding" slot="content">
                   <TextWithMarkers
-                  imagePlaceHolder={allAssets.imagePlaceHolder}
+                    imagePlaceHolder={allAssets.imagePlaceHolder}
                     eventEmitter={eventEmitter}
                     assignClearAssistMethod={assignClearAssistMethod}
                     mappedLegend={mappedLegend}
@@ -1078,7 +1096,7 @@ function renderAccordionItem({
                 }}
               >
                 <AccordionInformationHeader
-                beehive={allAssets.beehive}
+                  beehive={allAssets.beehive}
                   accordionName={
                     markupViewLock.hasAccess
                       ? `Presentation`
@@ -1135,15 +1153,13 @@ function renderAccordionItem({
                 }}
               >
                 <AccordionInformationHeader
-                beehive={allAssets.beehive}
+                  beehive={allAssets.beehive}
                   accordionName={
-                    
                     markupViewLock.hasAccess
                       ? `SEO Analytics`
                       : markupViewLock.message(`SEO Analytics`)
                   }
                   boxName={aiWorkStation}
-                
                   lock={markupViewLock.hasAccess}
                   note={`RealTime Document Analytics.`}
                 />
