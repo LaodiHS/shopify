@@ -3,7 +3,7 @@ import { shopify } from "./shopify.js";
 import { billingConfig, isTest } from "./billing.js";
 import webhookHandlers from "./webhook-handlers.js";
 import crypto from "crypto"
-
+import helmet from 'helmet'
 const addSessionShopToReqParams = (req, res, next) => {
   const shop = res.locals?.shopify?.session?.shop;
   if (shop && !req.query.shop) {
@@ -56,7 +56,10 @@ export async function authentication() {
 //   next();
 // });
 
- 
+ app.use(helmet({
+  contentSecurityPolicy: false,
+  xDownloadOptions: false,
+}))
 
 
   try {

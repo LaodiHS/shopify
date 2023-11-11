@@ -62,49 +62,48 @@ async function handleEndpoints(app, endpointType, queue) {
             focus
           );
         }
-        const { prompt, documentType, legend } = selectedOptions;
 
-        const tokenCount = countTokens(prompt);
-        console.log("prompt token count", tokenCount);
-        const exceedsLimit = await hasExceededUsageLimit(shop, tokenCount);
+        try {
+          const { prompt, documentType, legend } = selectedOptions;
 
-if(!legend){
-  throw new Error( 'no legend', legend)
-}
+          const tokenCount = countTokens(prompt);
+          console.log("prompt token count", tokenCount);
+          const exceedsLimit = await hasExceededUsageLimit(shop, tokenCount);
 
-
-        if (true || process.env.NODE_ENV !== "production") {
-
-          try{
-            console.log('legend', legend)
-          getLegend(legend);
-          }catch(e){
-            console.log('error getting', e)
+          if (!legend) {
+            throw new Error("no legend", legend);
           }
-        }
 
-        if (exceedsLimit) {
-          return res.status(200).json({
-            exceedsLimit,
-            message:
-              "Your current selection exceeds the usage limit. Don't worry, we've saved it for you! To get even more amazing results, consider upgrading to a higher subscription to support our work. Thank you for being part of our community!",
-            legend,
-          });
-        } else {
-          enqueueApiRequest({
-            legend,
-            prompt,
-            shop,
-            documentType,
-            queue,
-            api: "gpt-3.5-turbo",
-            processFunction: "chatGptTurbo",
-            promptTokenCountEstimate: tokenCount,
-          });
+          // if (true || process.env.NODE_ENV !== "production") {
+            console.log("legend", legend);
+            getLegend(legend);
+          // }
 
-          return res
-            .status(200)
-            .json({ exceedsLimit, message: prompt, legend });
+          if (exceedsLimit) {
+            return res.status(200).json({
+              exceedsLimit,
+              message:
+                "Your current selection exceeds the usage limit. Don't worry, we've saved it for you! To get even more amazing results, consider upgrading to a higher subscription to support our work. Thank you for being part of our community!",
+              legend,
+            });
+          } else {
+            enqueueApiRequest({
+              legend,
+              prompt,
+              shop,
+              documentType,
+              queue,
+              api: "gpt-3.5-turbo",
+              processFunction: "chatGptTurbo",
+              promptTokenCountEstimate: tokenCount,
+            });
+
+            return res
+              .status(200)
+              .json({ exceedsLimit, message: prompt, legend });
+          }
+        } catch (e) {
+          console.log("error getting", e);
         }
       } catch (error) {
         console.error("Error:", error);

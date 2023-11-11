@@ -2,7 +2,7 @@
 
 name = "test-neuralnectar"
 client_id = "b2919712bc4555c05f978c56eb4f5750"
-application_url = "https://membrane-helped-law-supplement.trycloudflare.com"
+application_url = "https://ecological-enrollment-stable-file.trycloudflare.com"
 embedded = true
 
 [access_scopes]
@@ -11,10 +11,10 @@ scopes = "write_products,read_content,write_content"
 
 [auth]
 redirect_urls = [
-  "https://membrane-helped-law-supplement.trycloudflare.com/auth/callback",
-  "https://membrane-helped-law-supplement.trycloudflare.com/auth/shopify/callback",
-  "https://membrane-helped-law-supplement.trycloudflare.com/api/auth/callback",
-  "https://membrane-helped-law-supplement.trycloudflare.com/.shopify/graphiql/auth/callback"
+  "https://ecological-enrollment-stable-file.trycloudflare.com/auth/callback",
+  "https://ecological-enrollment-stable-file.trycloudflare.com/auth/shopify/callback",
+  "https://ecological-enrollment-stable-file.trycloudflare.com/api/auth/callback",
+  "https://ecological-enrollment-stable-file.trycloudflare.com/.shopify/graphiql/auth/callback"
 ]
 
 [webhooks]
