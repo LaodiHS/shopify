@@ -1,3 +1,5 @@
+import * as Comlink from "comlink";
+import MyWorker from "../../utilities/SSE?worker";
 import React, { useRef, useState, useEffect } from "react";
 import {
   IonItem,
@@ -31,6 +33,8 @@ import {
   IonCardTitle,
   IonCardSubtitle,
   IonCardContent,
+  IonToggle,
+  IonRange,
 } from "@ionic/react";
 import {
   informationCircleOutline,
@@ -71,6 +75,9 @@ import {
   useTinyMCEDataContext,
 } from "../../components";
 import { select } from "d3";
+import { map } from "lodash";
+
+
 
 export function Accordion({
   setAccordionModalPopUp,
@@ -79,7 +86,7 @@ export function Accordion({
   //currentSession,
 }) {
   const [legend, setLegend] = useState([]);
-
+  const [maxTokens, setMaxTokens] = useState(1700);
   const [alertHeader, setAlertHeader] = useState();
   const [alertMessage, setAlertMessage] = useState();
   const [accordionOptions, setAccordionOptions] = useState({});
@@ -90,7 +97,7 @@ export function Accordion({
   const [showConfirmModal, setShowConfirmModal] = useState(false); // Confirm state
   const [hashedBlogName, setHashBlogName] = useState("");
   const { aiWorkStation, aiWorkStationSetter } = useNavigationDataContext();
-
+  const [activityTimer, setActivityTimer] = useState();
   const [words, setWords] = useState([]);
   const [serverWords, setServerWords] = useState([]);
   const [progress, setProgress] = useState(0);
@@ -137,6 +144,8 @@ export function Accordion({
     formatProducts,
     lockAllTasks,
     allAssets,
+    sSEWorker,
+
     setUser,
     DataProviderNavigate,
   } = useProductDataContext();
@@ -167,6 +176,46 @@ export function Accordion({
   }, []);
 
   useEffect(() => {
+    
+
+    
+if(!mappedLegend[0].length)return; 
+
+    const selectedImageMapPureKeys = Object.entries(selectedImageMap).reduce(
+      (acc, [key, value]) => {
+        
+        acc[key] = value;
+      
+        return acc;
+      },
+      {}
+    );
+    console.log('selectedImageMap', selectedImageMap)
+console.log('mappedLegend purekeys:' , selectedImageMapPureKeys)
+console.log('mappedLegend:' , mappedLegend)
+const mappedObject = {};
+
+mappedLegend.forEach(([label, id]) => {
+  if(selectedImageMap[label]){
+    selectedImageMap[label].height= 160;
+    selectedImageMap[label].type= 'img'
+mappedObject[id] = selectedImageMap[label]
+  }else{
+mappedObject[id]= {label, height:40, type:'label', name:label}
+  }
+});
+console.log('mappedObject:    ',mappedObject)
+    sSEWorker.current.postMessage({
+      action: "update",
+      mappedLegend,
+      mappedObject,
+      imagePlaceHolder:allAssets.imagePlaceHolder,
+      selectedImageMapPureKeys,
+    });
+
+  }, [mappedLegend]);
+
+  useEffect(() => {
     // console.log("aiworkstation", aiWorkStation);
     if (aiWorkStation !== null) {
       setAccordionOptions({ [aiWorkStation]: true });
@@ -189,7 +238,9 @@ export function Accordion({
 
   useEffect(() => {
     const getToken = async () => {
+     
       const token = await getSessionToken(app);
+     
       setSessionToken(token);
 
       let session = await app.getState();
@@ -198,13 +249,11 @@ export function Accordion({
     return () => {};
   }, [app]);
   useEffect(() => {
-    assignAssistRequest(() => handleNonSelectedItems);
+
   }, []);
 
-
-
-  const handleClearClick = ({id, option}) => {
-    console.log('clear clicked', id, option);
+  const handleClearClick = ({ id, option }) => {
+    console.log("clear clicked", id, option);
 
     setDisplayDocument((previous) => ({ ...previous, [id]: "" }));
     switch (option) {
@@ -223,17 +272,16 @@ export function Accordion({
         setServerWords([]);
         break;
     }
-  }
-
+  };
 
   useEffect(() => {
     assignClearAssistMethod("handleClearClick", handleClearClick);
   }, []);
 
-
   function addToAccordionRefs(name, el) {
     accordionRefs.current[name] = el;
   }
+
   function assignMarkupText(text) {
     setMarkupText(text);
   }
@@ -248,13 +296,16 @@ export function Accordion({
   }
 
   async function addPostClick(id) {
+   
     const { data, error } = await uncachedFetchData({
       url: "/api/blog/id",
       method: "POST",
       body: { id },
     });
+    
     console.log("error", error);
     console.log("data", data);
+
   }
 
   function defineDisplayDocument(accordionId, documentType, document) {
@@ -295,57 +346,47 @@ export function Accordion({
       }));
     },
   };
+useEffect(()=>{
 
-  async function eventSource({
+
+
+
+ async function eventSource({
     accordionId,
-    eventEmitter,
+
     selectedImageMap,
-    mappedLegend,
+
   }) {
     // Check if the EventSource is already initialized and return the existing Promise if available
-    if (!mappedLegend) {
-      throw new Error("no mappedLegend", mappedLegend);
-    }
-    setServerWords([]);
-    const local = { ...currentSession };
-    const locals = JSON.stringify(local);
-    console.log("locals----", locals);
+
+
+
     // Create a new Promise for the EventSource connection
+
     const eventSourcePromise = await new Promise((resolve, reject) => {
-      const eventSource = new EventSource(
-        `/sse/stream?shop=${currentSession.shop}&locals=${encodeURIComponent(
-          locals
-        )}`,
-        {
-          headers: {
-            Authorization: `Bearer ${sessionToken}`,
-          },
-        }
-      );
+      const local = { ...currentSession };
+      const locals = JSON.stringify(local);
+
+      console.log("locals----", locals);
+      setServerWords([]);
 
       let isResolved = false; // To avoid resolving or rejecting multiple times
 
       const timeoutId = setTimeout(() => {
         if (!isResolved) {
+          
           isResolved = true;
-          reject(new Error("EventSource connection timeout"));
+          
+          reject(false);
+
+          new Error("EventSource connection timeout");
+
           setServerSentEventLoading(false);
-          eventSource.close();
+
+          sSEWorker.current.postMessage({ action: "close" });
+
         }
-      }, 10000); // Set the timeout to 10 seconds (adjust as needed)
-
-      eventSource.onopen = () => {
-        console.log("accordion opening");
-        toggleOpenAccordion("requirements");
-
-        setServerSentEventLoading(true);
-
-        if (!isResolved) {
-          isResolved = true;
-          clearTimeout(timeoutId); // Clear the timeout since the connection is successful
-          resolve({ active: true, event: eventSource }); // Resolve the promise with 'true' on successful connection
-        }
-      };
+      }, 20000); // Set the timeout to 10 seconds (adjust as needed)
 
       const Debounce = (callback, delay) => {
         let timerId;
@@ -365,200 +406,140 @@ export function Accordion({
         //    blockOffset: 70,
         // });
       };
-      let activityTimer = false;
-      const activityTimeoutId = setTimeout(() => {
-        if (!activityTimer) {
-          eventSource.close();
-          setServerSentEventLoading(false);
-          presentToast({
-            message: "There was a network error, Please try again later.",
-            duration: 9000,
-            position: "middle", // top, bottom, middle
-            color: "warning",
-            onDidDismiss: (e) => {
-              //setRoleMessage(`Dismissed with role: ${e.detail.role}`);
-            },
-          });
-          activityTimer = false;
-          console.log("activity timer end");
-        }
-      }, 20000);
 
-      eventEmitter.on("error", (error) => {
-        clearTimeout(activityTimeoutId);
-        eventSource.close();
-        setServerSentEventLoading(false);
-        presentToast({
-          message: "There was a network error, Please try again later.",
-          duration: 9000,
-          position: "middle", // top, bottom, middle
-          color: "warning",
-          onDidDismiss: (e) => {
-            setServerSentEventLoading(false);
 
-            //setRoleMessage(`Dismissed with role: ${e.detail.role}`);
-          },
-        });
+      // const timeoutHandle = () => {
+      //   console.log("timeoutHandle hit timeout");
+  
+      //   presentToast({
+      //     message: "There was a network error, Please try again later.",
+      //     duration: 9000,
+      //     position: "middle",
+      //     color: "warning",
+      //   });
+      //   console.log("No activity detected after timeout");
+      //   // sSEWorker.current.postMessage({ action: "close" });
+
+          
+      //   activityTimer.disableActivityTimer();
+
+      //       setServerSentEventLoading(false);
+
+      // };
+
+      // Usage:
+
+      // activityTimer.handleTimeout(timeoutHandle);
+
+      // Example: Disable the activity timer after 1 minute
+      // activityTimer.disableAfterDelay(9000);
+
+      console.log("eventSource initialized");
+
+
+      sSEWorker.current.postMessage({
+        action: "start",
+        shop: currentSession.shop,
+        locals: JSON.stringify(currentSession),
+        sessionToken,
+        imagePlaceHolder: allAssets.imagePlaceHolder,
       });
 
-      let str = "";
-      console.log("mappedLegend-: ", mappedLegend.mappedLegend);
-      eventSource.addEventListener("message", (event) => {
-        // Handle the received SSE message
+      sSEWorker.current.addEventListener("message", (event) => {
+        switch (event.data.type) {
+          case "open":
+            console.log("SSE connection established");
 
-        const eventData = JSON.parse(event.data);
+            console.log("accordion opening");
+            toggleOpenAccordion("requirements");
+            console.log("server loading set to true");
+            setServerSentEventLoading(true);
 
-        // Handle the received SSE message
-
-        if (eventData.message === "Job stream") {
-          activityTimer = true;
-
-          const delta = eventData.delta;
-          const word = delta.content;
-          const finish_reason = delta.finish_reason;
-          Debounce(scrollSmoothly(accordionId), 400);
-          str += word;
-
-          eventEmitter.emit("streamData", eventData);
-
-          if (finish_reason) {
-            console.log("finish_reason", finish_reason);
-            // console.log("mappedLegend: ", mappedLegend);
-            // console.log('finish_reason_paste_token', delta)
-            if (delta.storeData) {
-              setUser(delta.storeData);
+            if (!isResolved) {
+              isResolved = true;
+              clearTimeout(timeoutId); // Clear the timeout since the connection is successful
+              resolve({
+                active: true,
+                event: {
+                  active: true,
+                  event: {
+                    close: () => {
+                      sSEWorker.current.postMessage({ action: "close" });
+                    },
+                  },
+                },
+              }); // Resolve the promise with 'true' on successful connection
             }
+
+            break;
+
+          case "stream":
+            Debounce(scrollSmoothly(accordionId), 400);
+            // Check if the job is completed or perform other actions based on the event data
+            break;
+          case "close":
+          
+            console.log("session closed------>", event.data.finish_reason);
+          
+            console.log('store data', event.data.storeData)
+            if(event.data.storeData){
+            setUser(event.data.storeData);
+            }
+
+            const completeText = event.data.completeText;
+            
             const pureText = cleanText({
-              str,
+              completeText,
               selectedImageMap,
-              mappedLegend: mappedLegend.mappedLegend,
+              mappedObject:event.data.mappedObject,
             });
+            
             setMarkupText((pre) => pre.concat(pureText));
-            str = "";
 
-            eventSource.close();
+            // sSEWorker.current.postMessage({ action: "close" });
+            
+      
+
             setServerSentEventLoading(false);
-          }
-        }
+            sSEWorker.current.postMessage({ action: "close", done:event.data.finish_reason });
+            break;
 
-        // Check if the job is completed or perform other actions based on the event data
-        if (eventData.message === "Job completed") {
-          const data = eventData.result;
+          case "error":
+            
+          console.log("SSE:: error", event.data.error);
+          
+          setServerSentEventLoading(false);
 
-          if (data.error) {
-            console.log("error", data.error);
-            console.log("error message received: " + data.error);
             presentToast({
-              message: "There was a network error! We are working on it.",
+              message: `${event.data.error}, Please try again later.`,
               duration: 9000,
-              position: "top", // top, bottom, middle
+              position: "middle", // top, bottom, middle
+              color: "warning",
               onDidDismiss: (e) => {
                 setServerSentEventLoading(false);
-
                 //setRoleMessage(`Dismissed with role: ${e.detail.role}`);
               },
             });
-          } else {
-            const { documentType } = data;
-            const document = data[documentType];
-            defineDisplayDocument(accordionId, documentType, document);
-          }
+            if (!isResolved) {
+            
+              isResolved = true;
+            
+              clearTimeout(timeoutId); // Clear the timeout on error
+            
+            }
 
-          setServerSentEventLoading(false);
-          eventSource.close();
-          //setAccordionLoadingState(false);
-        }
 
-        if (eventData.message.includes("Error: Job")) {
-          //const result = eventData.result;
-          presentToast({
-            message: "There was a error! We are working on it.",
-            duration: 9000,
-            position: "top", // top, bottom, middle
-            onDidDismiss: (e) => {
-              setServerSentEventLoading(false);
+            reject(event.data.error);
 
-              //setRoleMessage(`Dismissed with role: ${e.detail.role}`);
-            },
-          });
-          setServerSentEventLoading(false);
-          eventSource.close();
+            sSEWorker.current.postMessage({ action: "close" });
+            
+            break;
         }
       });
-
-      eventSource.addEventListener("open", () => {
-        console.log("SSE connection established");
-      });
-
-      eventSource.addEventListener("error", (error) => {
-        console.error("SSE error:", error);
-        if (!isResolved) {
-          isResolved = true;
-          setServerSentEventLoading(false);
-          clearTimeout(timeoutId); // Clear the timeout on error
-          reject(error); // Reject the promise with the specific error
-        }
-        setServerSentEventLoading(false);
-        eventSource.close();
-      });
-
-      eventSource.onclose = () => {
-        // Cleanup on successful connection (optional)
-        console.log("Connection closed");
-        if (!isResolved) {
-          isResolved = true;
-          clearTimeout(timeoutId); // Clear the timeout on successful connection
-          console.log("Connection closed");
-          resolve({ active: true, event: eventSource });
-          // Resolve the promise with 'true' on successful connection
-        }
-
-        setServerSentEventLoading(false);
-      };
     });
 
     return eventSourcePromise;
   }
-
-  async function aiRequest(
-    { productData, focus, language, accordionId },
-    route,
-    endpoint
-  ) {
-    try {
-      console.log("route", route, language);
-      const response = await fetch(`/api/ai/${route}/${endpoint}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          productData,
-          focus,
-          language,
-          subscriptions,
-          accordionId,
-        }),
-      });
-
-      if (response.ok) {
-        const generatedPrompt = await response.json();
-        assignLegend(generatedPrompt.legend);
-        console.log(generatedPrompt.message);
-        return generatedPrompt;
-      } else {
-        eventEmitter.emit("error", response.statusText);
-        const generatedPrompt = await response.json();
-        console.log(generatedPrompt.message);
-        return generatedPrompt;
-      }
-    } catch (error) {
-      console.log("error emitted");
-      eventEmitter.emit("error", error);
-      throw new Error(error.message);
-    }
-  }
-
   async function setDataListener({
     accordionId,
     template,
@@ -566,15 +547,14 @@ export function Accordion({
     selectedImageMap,
     mappedLegend,
   }) {
-    const Legend = {};
+   
     if (!mappedLegend) {
       throw new Error("no mapped legend", mappedLegend);
     }
     const listenerSet = await eventSource({
       accordionId,
-      eventEmitter,
+
       selectedImageMap,
-      mappedLegend: Legend,
     });
     console.log("listenerSet: ", listenerSet);
 
@@ -585,6 +565,7 @@ export function Accordion({
           focus: productDetailOptions,
           language: languageOptions,
           accordionId,
+          maxTokens,
         },
         accordionId,
         template
@@ -600,9 +581,9 @@ export function Accordion({
 
       if (promptTextAndLegend.exceedsLimit) {
         listenerSet.event.close();
-        console.log("we closed the connection---->", listenerSet.event.CLOSED);
-        console.log("we open theXXXX connection---->", listenerSet.event.OPEN);
-        console.log("event source ready state", listenerSet.event.readyState);
+        // console.log("we closed the connection---->", listenerSet.event.CLOSED);
+        // console.log("we open theXXXX connection---->", listenerSet.event.OPEN);
+        // console.log("event source ready state", listenerSet.event.readyState);
         presentToast({
           message: promptTextAndLegend.message,
           duration: 20000,
@@ -631,10 +612,10 @@ export function Accordion({
           cssClass: "custom-toast",
         });
       } else {
-        Legend["mappedLegend"] = promptTextAndLegend.legend;
+    
         setLegend(promptTextAndLegend.legend);
 
-        console.log("legend", promptTextAndLegend.legend);
+        console.log("legend:: ", promptTextAndLegend.legend);
       }
     } else {
       presentToast({
@@ -662,21 +643,6 @@ export function Accordion({
         ],
       });
     }
-  }
-  let initialOpenTab = false;
-  function onInputTextAreaChange(event, accordionId) {
-    if (!initialOpenTab) {
-      toggleOpenAccordion("presentation");
-      initialOpenTab = true;
-    }
-
-    setWords([event.target.value]);
-  }
-  function handleTextBoxChange(event, accordionId) {
-    setDisplayDocument((previous) => ({
-      ...previous,
-      [accordionId]: event.detail.value,
-    }));
   }
 
   async function handleNonSelectedItems(accordionId) {
@@ -729,6 +695,68 @@ export function Accordion({
       mappedLegend,
     });
   }
+  assignAssistRequest(() => handleNonSelectedItems);
+},[])
+ 
+
+  async function aiRequest(
+    { productData, focus, language, accordionId, maxTokens },
+    route,
+    endpoint
+  ) {
+    try {
+      console.log("route", route, language);
+      const response = await fetch(`/api/ai/${route}/${endpoint}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          productData,
+          focus,
+          language,
+          maxTokens,
+          subscriptions,
+          accordionId,
+        }),
+      });
+
+      if (response.ok) {
+        const generatedPrompt = await response.json();
+        assignLegend(generatedPrompt.legend);
+        console.log(generatedPrompt.message);
+        return generatedPrompt;
+      } else {
+        eventEmitter.emit("error", response.statusText);
+        const generatedPrompt = await response.json();
+        console.log(generatedPrompt.message);
+        return generatedPrompt;
+      }
+    } catch (error) {
+      console.log("error emitted");
+      eventEmitter.emit("error", error);
+      throw new Error(error.message);
+    }
+  }
+
+
+  let initialOpenTab = false;
+  function onInputTextAreaChange(event, accordionId) {
+    if (!initialOpenTab) {
+      toggleOpenAccordion("presentation");
+      initialOpenTab = true;
+    }
+
+    setWords([event.target.value]);
+  }
+  function handleTextBoxChange(event, accordionId) {
+    setDisplayDocument((previous) => ({
+      ...previous,
+      [accordionId]: event.detail.value,
+    }));
+  }
+
+
 
   async function handleUpdateClick(type, markupText) {
     console.log("type", type);
@@ -974,6 +1002,7 @@ function renderAccordionItem({
     DataProviderNavigate,
     // assignClearAssistMethod,
     // mappedLegend,
+    sSEWorker,
     selectedImageMap,
     lockAllTasks,
     allAssets,
@@ -1021,6 +1050,10 @@ function renderAccordionItem({
               }}
               multiple={true}
             >
+              {/* <IonAccordionAdjust
+                allAssets={allAssets}
+                aiWorkStation={aiWorkStation}
+              /> */}
               <IonAccordion key={index + 8} value="requirements">
                 <AccordionInformationHeader
                   beehive={allAssets.beehive}
@@ -1033,6 +1066,7 @@ function renderAccordionItem({
                 <div className="ion-padding" slot="content">
                   <TextWithMarkers
                     imagePlaceHolder={allAssets.imagePlaceHolder}
+                    sSEWorker={sSEWorker}
                     eventEmitter={eventEmitter}
                     assignClearAssistMethod={assignClearAssistMethod}
                     mappedLegend={mappedLegend}
@@ -1527,5 +1561,75 @@ function renderAccordionItem({
         </IonRow> */}
       </IonGrid>
     </div>
+  );
+}
+
+function IonAccordionAdjust({ allAssets, aiWorkStation }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [wordCount, setWordCount] = useState(200);
+  const [creativity, setCreativity] = useState(50); // Initial value set to 50
+
+  const handleToggleChange = () => {
+    setIsOpen(!isOpen);
+  };
+
+  const handleWordCountChange = (e) => {
+    setWordCount(e.detail.value);
+  };
+
+  const handleCreativityChange = (e) => {
+    setCreativity(e.detail.value);
+  };
+
+  return (
+    <IonItem>
+      <IonToggle slot="end" checked={isOpen} />
+      <IonAccordion
+        onIonChange={handleToggleChange}
+        disabled={!isOpen} // Disable the accordion when it is closed
+        open={isOpen}
+      >
+        <AccordionInformationHeader
+          beehive={allAssets.beehive}
+          accordionName={`Requirements`} //HighlightHub
+          boxName={aiWorkStation}
+          lock={true}
+          note={`Your requirements and selections are visually highlighted within the document.`}
+        />
+        <IonItem>
+          <IonLabel>Accordion Header</IonLabel>
+        </IonItem>
+
+        <IonList>
+          <IonItemDivider>
+            <IonLabel>Settings</IonLabel>
+          </IonItemDivider>
+
+          <IonItem>
+            <IonLabel>Word Count</IonLabel>
+            <IonRange
+              min={200}
+              max={3000}
+              step={1}
+              snaps={true}
+              value={wordCount}
+              onIonChange={handleWordCountChange}
+            />
+          </IonItem>
+
+          <IonItem>
+            <IonLabel>Creativity</IonLabel>
+            <IonRange
+              min={0}
+              max={100}
+              step={1}
+              snaps={true}
+              value={creativity}
+              onIonChange={handleCreativityChange}
+            />
+          </IonItem>
+        </IonList>
+      </IonAccordion>
+    </IonItem>
   );
 }

@@ -9,21 +9,23 @@ import {
   IonCardTitle,
   IonCardHeader,
 } from "@ionic/react";
+import { useProductDataContext } from "../components";
 // import { useDataProvidersContext, NoImagePlaceHolder } from "../components";
 // import { darkenHexColor } from "../utilities/darkenHexColor";
 
-
-const Marker = ({ markerType, label, color, size, loadingStream, imageSrc }) => {
+const Marker = ({ markerType, label, color, size, imageSrc }) => {
   if (
     (label && typeof label !== "string") ||
     (color && typeof color !== "string")
   ) {
     throw Error("Invalid argument types");
   }
-  return markerType ==="img" ? <PlaceImage color={color} imageSrc = {imageSrc} size={size} loadingStream ={loadingStream} /> : <PlaceIonChip label={label} color={color} /> ;
+  return markerType ==="img" ? <PlaceImage color={color} imageSrc={imageSrc} size={size} /> : <PlaceIonChip key={color} label={label} color={color} /> ;
 };
 
-function PlaceImage({ color, imageSrc, size, loadingStream }) {
+function PlaceImage({ color, imageSrc, size }) {
+const {loadingStream} = useProductDataContext();
+console.log('loading',loadingStream);
   return (
     <IonRow key={`${color}Row`}>
       <IonCol key={`${color}col`} size="12" className="ion-align-self-center">

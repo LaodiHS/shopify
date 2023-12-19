@@ -18,6 +18,8 @@ async function handleEndpoints(app, endpointType, queue) {
     "focus-language-options",
   ];
 
+
+  
   app.post(
     `/api/ai/${endpointType}/:endpoints`,
     [
@@ -41,27 +43,29 @@ async function handleEndpoints(app, endpointType, queue) {
         }
         const { shop } = res.locals.shopify.session;
         const { endpoints } = req.params;
-        const { productData, language, focus } = req.body;
+        const { productData, language, focus , maxTokens} = req.body;
 
         let selectedOptions;
         if (!language?.length && !focus?.length) {
           // Handle request with no options
-          selectedOptions = withoutOptions(productData);
+          selectedOptions = withoutOptions(productData, maxTokens);
         } else if (language?.length && !focus?.length) {
           // Handle request with language option
           console.log("with language option", focus);
-          selectedOptions = withLanguageOption(productData, language);
+          selectedOptions = withLanguageOption(productData, language, maxTokens);
         } else if (!language?.length && focus?.length) {
           // Handle request with product option
-          selectedOptions = withProductDetails(productData, focus);
+          selectedOptions = withProductDetails(productData, focus, maxTokens);
         } else if (language?.length && focus?.length) {
           // Handle request with both language and product options
           selectedOptions = withLanguageAndProductOption(
             productData,
             language,
-            focus
+            focus,
+            maxTokens
           );
         }
+
 
         try {
           const { prompt, documentType, legend } = selectedOptions;
@@ -88,6 +92,7 @@ async function handleEndpoints(app, endpointType, queue) {
             });
           } else {
             enqueueApiRequest({
+              max_tokens: maxTokens,
               legend,
               prompt,
               shop,

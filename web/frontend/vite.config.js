@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
-
 import react from "@vitejs/plugin-react";
 import https from "https";
 // import Checker from 'vite-plugin-checker';
@@ -23,12 +22,26 @@ if (
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 const proxyOptions = {
   target: `http://127.0.0.1:${process.env.BACKEND_PORT}`,
   changeOrigin: false,
   secure: true,
   ws: false,
 };
+
+
+
 
 
 
@@ -56,6 +69,7 @@ if (host === "localhost") {
  
     // Checker({ typescript: false, flow: true })
   
+    
 //{ devTarget: "es2022" }
 export default defineConfig({
   root: dirname(fileURLToPath(import.meta.url)),

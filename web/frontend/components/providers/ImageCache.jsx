@@ -16,12 +16,12 @@ function getOptimalNumThreads(defaultNumThreads = 10) {
     navigator &&
     navigator.hardwareConcurrency &&
     typeof navigator.hardwareConcurrency === "number" &&
-    navigator.hardwareConcurrency > 2
+    navigator.hardwareConcurrency > 5
   ) {
     // If hardwareConcurrency is available and reasonable, use it as the number of threads.
     optimalThreads = Math.min(
       optimalThreads,
-      navigator.hardwareConcurrency - 2
+      navigator.hardwareConcurrency - 3
     );
   }
 

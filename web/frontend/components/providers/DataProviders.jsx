@@ -5,6 +5,7 @@
 // import { loadGraphModel } from "@tensorflow/tfjs-converter";
 // import { request } from "@shopify/app-bridge/actions/AuthCode";
 // import { SessionToken, TitleBar } from "@shopify/app-bridge/actions";
+import MyWorker from "../../utilities/SSE?worker";
 import React, {
   createContext,
   useContext,
@@ -405,14 +406,14 @@ export const DataProvidersProvider = ({ children }) => {
     "Stylish",
     "Durable",
     "Efficient",
-    "High-quality",
+    "High_quality",
     "Versatile",
-    "User-friendly",
+    "User_friendly",
     "Affordable",
     "Sleek",
     "Cutting-edge",
     "Compact",
-    "Eco-friendly",
+    "Eco_friendly",
     "Elegant",
     "Powerful",
     "Convenient",
@@ -426,11 +427,81 @@ export const DataProvidersProvider = ({ children }) => {
     "Functional",
     "Sophisticated",
     "Trustworthy",
-    "Eco-conscious",
+    "Eco_conscious",
     "Luxurious",
     "Ergonomic",
     "Sleek",
+    "Dependable",
+    "Pioneering",
+    "Chic",
+    "Robust",
+    "Resourceful",
+    "Top_notch",
+    "Adaptable",
+    "Intuitive",
+    "Cost_effective",
+    "Polished",
+    "Innovative",
+    "Streamlined",
+    "Environmentally_friendly",
+    "Refined",
+    "Potent",
+    "Convenient",
+    "Contemporary",
+    "Secure",
+    "Adaptable",
+    "Deluxe",
+    "Featherweight",
+    "Fashionable",
+    "Efficient",
+    "Pragmatic",
+    "Utilitarian",
+    "Elegant",
+    "Credible",
+    "Environmentally conscious",
+    "Opulent",
+    "Well_designed",
+    "Sleek",
+    "Sustainable",
+    "Green",
+    "Renewable",
+    "Earth_friendly",
+    "Biodegradable",
+    "Energy_efficient",
+    "Carbon_neutral",
+    "Low_impact",
+    "Eco_conscious",
+    "Recyclable",
+    "Zero_waste",
+    "Climate-friendly",
+    "Organic",
+    "Biodiverse",
+    "Water_efficient",
+    "Clean",
+    "Green_tech",
+    "Ecological",
+    "Carbon_offset",
+    "Environmentally sound",
+    "Pollution_free",
+    "Low_carbon",
+    "Conservation-minded",
+    "Symbiotic",
+    "Wildlife_friendly",
+    "Regenerative",
+    "Ethical",
+    "Low_emission",
+    "Nature_preserving",
   ]);
+  const sSEWorker = useRef(null);
+
+  useEffect(() => {
+    sSEWorker.current = new MyWorker();
+
+    return () => {
+      sSEWorker.current.terminate();
+    };
+  }, []);
+
   const { workersLoaded } = useWorkersContext();
   const [presentToast] = useIonToast();
   const app = useAppBridge();
@@ -981,7 +1052,7 @@ export const DataProvidersProvider = ({ children }) => {
   }
 
   function compressString(input, all_product_images) {
-    const word = wordList[getRandomInt(0, wordList.length)].toLowerCase();
+    const word = wordList[getRandomInt(0, wordList.length-1)]?.toLowerCase();
     return (
       word +
       "_" +
@@ -995,7 +1066,7 @@ export const DataProvidersProvider = ({ children }) => {
       const selImages = { ...prev };
       sel_images.length = 0;
       selected_images.forEach((image) => {
-        const symbol_name = `image: ${compressString(
+        const symbol_name = `${compressString(
           image,
           all_product_images
         )}_.jpg`;
@@ -1098,6 +1169,7 @@ export const DataProvidersProvider = ({ children }) => {
   }
 
   useEffect(() => {
+    console.log("serverSentEventLoading", serverSentEventLoading);
     const lockEvents = [serverSentEventLoading, contentSaved];
     if (lockEvents.some((event) => event === true)) {
       setLockAllTasks(true);
@@ -1156,6 +1228,7 @@ export const DataProvidersProvider = ({ children }) => {
 
   const value = {
     shopifyDown,
+    sSEWorker,
     defineShopifyDown,
     allAssets,
     assetsLoaded,

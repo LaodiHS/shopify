@@ -6,7 +6,9 @@ import { processFunctions } from "./bull-queue-function-dictionary.js";
 import { testBullMqJobProcessFailure } from "./testMethods.js";
 import { countTokens } from "./tokenTools.js";
 import { updateTokenUsageAfterJob } from "./subscriptionManager.js";
-
+import fs from "fs";
+// import { QueryClient } from '@tanstack/react-query';
+const clients = new Map();
 function createEventEmitter() {
   const listeners = {};
 
@@ -39,7 +41,7 @@ function createEventEmitter() {
 
 const emitter = createEventEmitter();
 
-const queueName = "api-request-queue";
+const streamingQueueEventName = "api-request-queue";
 
 const queueConfig = {
   limiter: {
@@ -48,22 +50,22 @@ const queueConfig = {
   },
   defaultJobOptions: {
     priority: 1, // Set default priority to medium
-    attempts: 2, // Max retries
+    attempts: 1, // Max retries
     backoff: {
       type: "exponential", // Exponential backoff
       delay: 1000, // 1 second initial delay
     },
     timeout: 30000, // 30 seconds timeout for each job
     removeOnComplete: true, // Remove completed jobs
-    removeOnFail: 3, // Move jobs to DLQ after 5 retries
+    removeOnFail: true, // Move jobs to DLQ after 5 retries
   },
   settings: {
-    lockDuration: 300000, // Lock duration in milliseconds
-    maxStalledCount: 5, // Max stalled count before re-queueing
+    lockDuration: 30000, // Lock duration in milliseconds
+    maxStalledCount: 3, // Max stalled count before re-queueing default 5
     stalledInterval: 30000, // Check for stalled jobs every 30 seconds
     defaultJobPriority: 1, // Set default job priority to medium
-    drainDelay: 5000, // Delay in milliseconds before closing workers during shutdown
-    maxCompletedJobs: 1000, // Maximum completed jobs to keep in the queue
+    drainDelay: 5000, // Delay in milliseconds before closing workers during shutdown default is 5000
+    maxCompletedJobs: 10, // Maximum completed jobs to keep in the queue default is 1000
   },
 };
 
@@ -83,30 +85,31 @@ const customSerializer = (data) => {
 export async function setupBullMQServer(redisClient) {
   try {
     await userStore.createUsersFolderAsync();
-    const queue = new Queue(queueName, {
+
+    const streamingQueue = new Queue(streamingQueueEventName, {
       connection: redisClient,
       ...queueConfig,
     });
 
-    const worker = new Worker(queueName, processJob, {
+    const streamingWorker = new Worker(streamingQueueEventName, processJob, {
       connection: redisClient,
       concurrency: 2, // Set the desired concurrency level
       serializer: customSerializer,
     });
 
-    worker.on("completed", (job) => {
+    streamingWorker.on("completed", (job) => {
       console.log(`${job.id} has completed!`);
     });
 
-    worker.on("failed", (job, err) => {
+    streamingWorker.on("failed", (job, err) => {
       console.log(`${job.id} has failed with ${err.message}`);
     });
 
-    worker.on("stalled", (job, err) => {
+    streamingWorker.on("stalled", (job, err) => {
       console.log(`${job.id} has stalled with ${err.message}`);
     });
 
-    return { queue, worker };
+    return { queue: streamingQueue, worker: streamingWorker };
   } catch (e) {
     console.error("Bullmq setup error: ", e);
     throw new Error("Bull MQ setup error: " + e.message);
@@ -133,6 +136,7 @@ async function processJob(job) {
   }
 
   const processingFunction = processFunctions[processFunction];
+
   try {
     const processingResult = await processingFunction(job.data);
     // console.log("processing result: ", processingResult);
@@ -151,28 +155,41 @@ async function processJob(job) {
       // );
     }
 
-    emitter.emit(shop, processingResult);
+
+    const { sendSSEMessage, closeSSE } = clients.get(job.data.shop);
+    if (!sendSSEMessage || !closeSSE) {
+      throw new Error("missing sendSSEMessage and closeSSE");
+    }
+
+    
+    sendSSEMessage( { type: "connect", message: "open" })
+    console.log('connect::::::::::::::')
+    await generateOpenAIMessages(processingResult, sendSSEMessage);
+
+
+    clients.delete(job.data.shop);
   } catch (error) {
     console.error(`Error processing job of type '${processFunction}':`, error);
     throw error;
   }
 }
+
 let eq_count = 0;
 export async function enqueueApiRequest(promptObject) {
-  const { shop, queue } = promptObject;
-
-  const data = { ...promptObject, queue: null };
-  eq_count++;
-
-  console.log("eq_count", eq_count);
-
   try {
+    const { shop, queue } = promptObject;
+
+    const data = { ...promptObject, queue: null };
+    eq_count++;
+
     await queue.add(shop, data, {
       attempts: 3, // Max retries for this specific job (overrides default)
       timeout: 120000, // 1 minute timeout for this specific job (overrides default)
       priority: 3, // High priority for this specific job
     });
+    console.log("eq_count", eq_count);
   } catch (e) {
+    console.error("error: ", e);
     throw e;
   }
 }
@@ -187,153 +204,132 @@ export function serverSideEvent(app, redisClient, queue) {
       res.setHeader("Connection", "keep-alive");
       res.setHeader("Access-Control-Allow-Origin", "*");
       res.flushHeaders();
+      function closeSSE({ closeType, message }) {
+        if (typeof message !== "string") {
+          throw new Error("message must be a string");
+        }
+        if (!res.writable) {
+          console.log("Response stream is closed. Unable to send SSE message.");
+          return;
+        }
+
+        const closeObject = JSON.stringify({
+          type: "close",
+          closeType,
+          message,
+        });
+
+        res.write(`data: ${closeObject}\n\n`);
+        //res.end(`event: close\ndata: ${closeObject}\n\n`);
+        res.end();
+
+        queueEvents.close();
+      }
       const { shop } = req.query;
       if (!shop) {
-        res.end();
-
-        //  throw new Error('no shop specified in sse')
+        console.log("no shop name error");
+        closeSSE({ closeType: "no_shop_name", message: "no shop name" });
+        return;
       }
-
-      const queueEvents = new QueueEvents(queueName, {
-        connection: redisClient,
-      });
-
-      // Send initial SSE message
-
-      const initialMessage = JSON.stringify({ message: "Connected" });
-      res.write(`data: ${initialMessage}\n\n`);
 
       // Function to send SSE messages to the client
-      const sendSSEMessage = (messageData) => {
+      function sendSSEMessage(messageData) {
         try {
-          const eventData = JSON.stringify(messageData);
-          res.write(`data: ${eventData}\n\n`);
-        } catch (error) {
-          console.log("sending error", error);
-        }
-      };
-
-      if (!shop) {
-        console.log("no shop name");
-        res.write("event: close\n");
-        res.write("data: Connection closed by the server\n\n");
-        res.end();
-      }
-
-      try {
-        const sendData = async (data) => {
-          const {
-            stream,
-            // shop,
-            // openai,
-            // api,
-            // promptTokenCountEstimate,
-          } = data;
-          let finish_reason = false;
-          let i = 0;
-
-          if (stream) {
-            const dataGenerator = generateOpenAIMessages(data);
-
-            for await (const delta of dataGenerator) {
-              // Process each delta of data as it arrives
-
-              // console.log('delta', delta.data.content)
-              try {
-                sendSSEMessage({
-                  message: "Job stream",
-                  delta: delta.data,
-                  totalTokenUsage: delta.totalTokenUsage,
-                  tokensUsed: delta.tokensUsed,
-                  storeData: delta.storeData,
-                });
-                // finish_reason = delta.data.finish_reason ? true : false;
-                i++;
-              } catch (e) {
-                console.log("stream send error", e);
-              }
-            }
-            emitter.removeListener(shop, sendData);
+          // Check if the response stream is still open
+          if (!res.writable) {
+            console.log(
+              "Response stream is closed. Unable to send SSE message."
+            );
+            return;
           }
-          console.log("i:::", i);
-          // if (!finish_reason) {
-          //   sendSSEMessage({
-          //     message: "Job stream",
-          //     delta: {
-          //       finish_reason: true,
-          //       delta: "",
-          //       content: "",
-          //       tokenUsage: "",
-          //     },
-          //   });
-          // }
-
-          queueEvents.close();
-
-          res.write("event: close\n");
-          res.write("data: Connection closed by the server\n\n");
-          res.end();
-        };
-
-        emitter.on(shop, sendData);
-
-        // emitter.removeListener(shop, sendData)
-      } catch (e) {
-        console.log("listen for data error: ", e);
-      }
-      // Set up event listeners to send SSE messages to the client
-      queueEvents.on("completed", async (job) => {
-        // console.log('completed', job);
-        // const result = job.returnvalue;
-        // if (result.shop === shop) {
-        // console.log('result--->', job)
-        // if (result.res && result.res.data) {
-        //   const dataGenerator = generateOpenAIMessages(result.res);
-        //   for await (const delta of dataGenerator) {
-        //     // Process each delta of data as it arrives
-        //     console.log('delta: ', delta);
-        //    // sendSSEMessage({ message: "Job stream", delta:delta.content });
-        //   }
-        //   } else {
-        //     //sendSSEMessage({ message: "Job completed", result });
-        //   }
-        // }
-      });
-
-      queueEvents.on("stalled", async (job) => {
-        console.log("stalled: ", job);
-        const jobData = await queue.getJob(job.jobId);
-        const jobShop = jobData.data.shop;
-        const jobProcessFunction = jobData.data.processFunction;
-        if (jobShop === shop && jobProcessFunction === "chatGptTurbo") {
-          sendSSEMessage({
-            message: `Error: Job stalled`,
-            result: `${job.id} stalled`,
-          });
+          const eventData = JSON.stringify(messageData);
+          // Check for errors during serialization
+          if (eventData === undefined) {
+            console.error("Failed to serialize message data:", messageData);
+            return;
+          }
+          const sendString = `data: ${eventData}\n\n`;
+          // Write the SSE message to the response stream
+          // console.log("sendString: ", sendString);
+          if(messageData.type ==='connect'){
+            console.log('message::::', messageData)
+          }
+          res.write(sendString);
+        } catch (error) {
+          // Log any unexpected errors
+          console.error("Error while sending SSE message:", error);
         }
-      });
-
-      queueEvents.on("failed", async (job, err) => {
-        console.log("failed: ", job);
+      }
+      const failed = async (job) => {
+        console.log(
+          "job failed: ",
+          job,
+          "jobId: ",
+          jobId,
+          "failedReason: ",
+          job.failedReason
+        );
         const jobData = await queue.getJob(job.jobId);
         const jobShop = jobData.data.shop;
         const jobProcessFunction = jobData.data.processFunction;
         if (jobShop === shop && jobProcessFunction === "chatGptTurbo") {
           sendSSEMessage({
             message: `Error: Job failed`,
-            result: `${job.jobId} failed: ${err.message}`,
+            result: `${job.jobId} failed: ${job.failedReason}`,
           });
+        }
+
+        closeSSE({
+          closeType: "failed",
+          message: `failed: ${job.failedReason}`,
+        });
+      };
+
+      const stalled = async (job) => {
+        console.log("stalled---->: ", job);
+        const jobData = await queue.getJob(job.jobId);
+        const jobShop = jobData.data.shop;
+        const jobProcessFunction = jobData.data.processFunction;
+        await job.retry();
+        if (jobShop === shop && jobProcessFunction === "chatGptTurbo") {
+          closeSSE({ closeType: "stalled", message: `stalled: ${job.jobId}` });
+        }
+      };
+
+      const completed = async (job) => {
+        console.log("SSE completed", job);
+
+        closeSSE({
+          closeType: "completed",
+          message: `job: ${job.jobId} completed`,
+        });
+      };
+
+      req.on("close", () => {
+        try {
+          console.log("Closed connection socket");
+          queueEvents.off("completed", completed);
+          queueEvents.off("stalled", stalled);
+          queueEvents.off("failed", failed);
+        } catch (e) {
+          console.log("listen for data error: ", e);
         }
       });
 
-      // If the client disconnects, stop sending SSE messages
-      req.on("close", () => {
-        console.log("Closed connection socket");
-
-        // queueEvents.off("completed");
-        // queueEvents.off("stalled");
-        // queueEvents.off("failed");
+      const queueEvents = new QueueEvents(streamingQueueEventName, {
+        connection: redisClient,
       });
+
+      const initialMessage = JSON.stringify({ type: "open", message: "open" });
+      res.write(` data: ${{ ...initialMessage }}\n\n`);
+
+      console.log("added shop and function::", shop);
+      clients.set(shop, { sendSSEMessage, closeSSE });
+
+      queueEvents.on("stalled", stalled);
+      queueEvents.on("failed", failed);
+      queueEvents.on("completed", completed);
+      // If the client disconnects, stop sending SSE messages
     } catch (err) {
       next(err); // Pass any uncaught errors to the error handling middleware
     }
@@ -341,42 +337,30 @@ export function serverSideEvent(app, redisClient, queue) {
 
   const sseErrorHandler = (err, req, res, next) => {
     // Your custom error handling logic for the SSE route
-    console.error("Error occurred in SSE:", err);
+    console.error("Error occurred in SSE---->:", err);
     res.status(500).json({ error: "Internal Server Error in SSE" });
   };
   app.use("/sse/stream", sseErrorHandler);
 }
 
 // Modified generateOpenAIMessages function to accept the res object as a parameter
-async function* generateOpenAIMessages({
-  stream,
-  shop,
-  documentType,
-  openai,
-  api,
-  promptTokenCountEstimate,
-}) {
+async function generateOpenAIMessages(
+  { stream, shop, documentType, openai, api, promptTokenCountEstimate },
+  sendSSEMessage
+) {
   let storeData;
   let tokensUsed;
   let totalTokenUsage;
   const responseContentCompleteText = [];
   try {
+    // let i = 0;
     // console.log('res inspect===>', inspect(res, {depth:null, colors:true, compact:false}))
     // Access the stream data directly from the response object
-
     // console.log('stream: ' , JSON.stringify(stream) );
-    // Use the 'for await' loop to process the data stream
-    for await (const parsed of stream) {
-      // const lines = data
-      //   .toString()
-      //   .split("\n")
-      //   .filter((line) => line.trim() !== "");
-      // for (const line of lines) {
-      // const message = line.replace(/^data: /, "");
-      // console.log('parsed: ', JSON.stringify(parsed));
-      if (parsed.choices[0].delta.finish_reason) {
-        // console.log('res inspect===>', inspect(res.headers, {depth:null, colors:true, compact:false}))
 
+    for await (const parsed of stream) {
+      if (parsed.choices[0].finish_reason) {
+        // console.log('res inspect===>', inspect(res.headers, {depth:null, colors:true, compact:false}))
         //https://community.openai.com/t/how-to-get-total-tokens-from-a-stream-of-completioncreaterequests/110700
 
         const estimateOverheadForStream = 43;
@@ -386,48 +370,65 @@ async function* generateOpenAIMessages({
           promptTokenCountEstimate +
           estimateOverheadForStream;
         tokensUsed = tokenUsage;
-        // console.log("total tokens used", tokenUsage);
+        console.log("total tokens used", tokenUsage);
         await updateTokenUsageAfterJob(shop, tokenUsage);
         storeData = await userStore.readJSONFromFileAsync(shop);
 
         storeData.documentType = documentType;
         storeData.shop = shop;
         storeData.gptText = responseContentCompleteText.join("");
-        //  console.log('storeData', storeData);
-
+        // console.log('storeData', storeData);
+        const text = storeData.gptText;
+    
         storeData.documentType = documentType;
-        totalTokenUsage = storeData.current_usage;
+        totalTokenUsage = storeData.current_usage; 
+           writeJsonToFile("legendAndModifiedText.json", {...storeData,text });
         await userStore.writeJSONToFileAsync(shop, storeData);
       }
       try {
-        // const parsed = JSON.parse(message);
-
         // console.log('parsed message1===>', JSON.stringify(parsed));
         // console.log('parsed choices===>', parsed.choices);
         // console.log('parsed content===>', parsed.choices[0]);
         // Access the usage tokens from the response data
-        if (parsed.choices[0].delta?.content) {
-          responseContentCompleteText[responseContentCompleteText.length] =
-            parsed.choices[0].delta?.content;
-        }
 
-        //countTokens(parsed.choices[0].delta.content);
+        const delta = parsed.choices[0].delta;
 
-        // Process the rest of the data as needed
-        parsed.choices[0].index;
-        yield await Promise.resolve({
-          data: parsed.choices[0].delta,
+        responseContentCompleteText[responseContentCompleteText.length] =
+          parsed.choices[0].delta?.content || "";
+
+        delta.finish_reason = parsed.choices[0].finish_reason;
+
+        // console.log("delta:   ", JSON.stringify(delta));
+       // delta.content = delta.finish_reason ? " done" : parsed.choices[0].delta?.content;
+        sendSSEMessage({
+          type: "stream",
+          message: "Job stream",
+          delta,
           totalTokenUsage,
           tokensUsed,
           storeData,
         });
       } catch (error) {
-        console.error("Could not JSON parse stream message", message, error);
+        console.error("Could not JSON parse stream message", parsed, error);
       }
-      // }
     }
   } catch (error) {
     // Handle errors
     console.error("An error occurred during OpenAI request", error);
+    return false;
+  }
+  return true;
+}
+function writeJsonToFile(filePath, data) {
+  try {
+    // Convert the JavaScript object to a JSON string
+    const jsonString = JSON.stringify(data, null, 2); // The third parameter (2) specifies the number of spaces for indentation
+
+    // Write the JSON string to the file
+    fs.writeFileSync(filePath, jsonString);
+
+    console.log(`JSON data has been written to ${filePath}`);
+  } catch (error) {
+    console.error(`Error writing JSON to ${filePath}: ${error.message}`);
   }
 }

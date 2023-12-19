@@ -238,6 +238,8 @@ export default {
       if (payload.app_subscription) {
         let {
           name,
+          email,
+          country,
           status,
           admin_graphql_api_shop_id,
           created_at,
@@ -271,7 +273,7 @@ export default {
       // console.log("app uninstalled==>", JSON.stringify(payload));
     },
   },
-  
+
   
   //   {"app_subscription":{
   //     "admin_graphql_api_id":"gid://shopify/AppSubscription/30376821056",
@@ -285,12 +287,18 @@ export default {
   //   }
   // }
 
+
+
+
+
+  
   APP_SUBSCRIPTIONS_UPDATE: {
     deliveryMethod: DeliveryMethod.Http,
     callbackUrl: "/api/webhooks",
     callback: async (topic, shop, body, webhookId) => {
       const payload = JSON.parse(body);
       console.log(shop, "shop");
+      console.log('payload', payload);
       if (payload.app_subscription) {
         let {
           name,
@@ -305,6 +313,8 @@ export default {
           capped_amount = 0;
         }
         const userData = {
+          
+          
           shop,
           gptText: "",
           capped_usage: billingConfig[name.trim()].tokens,

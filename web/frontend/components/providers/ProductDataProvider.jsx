@@ -32,6 +32,7 @@ export function ProductDataProvider({ children }) {
     assignAssistRequest,
     assignUpdateArticleMethod,
     allAssets,
+    sSEWorker,
     markupText,
     setMarkupText,
     setServerSentEventLoading,
@@ -45,6 +46,7 @@ export function ProductDataProvider({ children }) {
     formatProducts,
     AllDependenciesLoaded,
     modifyState,
+    setUser,
   } = useDataProvidersContext();
 
   const location = useLocation();
@@ -57,6 +59,7 @@ export function ProductDataProvider({ children }) {
   const productsPerPage = 10;
   const [productsData, setProductsData] = useState({});
   const [productData, setProductData] = useState(null);
+  const [loadingStream, setLoadingStream] = useState(false);
 
   async function defineProductData(currentIndex) {
     const index = parseInt(currentIndex, 10);
@@ -87,14 +90,16 @@ export function ProductDataProvider({ children }) {
   function setProductsLoading(loading) {
     modifyState(setIsProductsLoading, loading);
   }
-
-  useEffect( () => {
-    const setIndex = async() =>{
-    if (pagingHistory && sessionLoaded) {
-      setCurrentIndexPage(await pagingHistory.getCurrentIndex());
-    }
+  function defineLoadingStream(value) {
+  setLoadingStream( value);
   }
-  setIndex()
+  useEffect(() => {
+    const setIndex = async () => {
+      if (pagingHistory && sessionLoaded) {
+        setCurrentIndexPage(await pagingHistory.getCurrentIndex());
+      }
+    };
+    setIndex();
   }, [pagingHistory, sessionLoaded]);
 
   async function setPaging(formattedData) {
@@ -184,21 +189,21 @@ export function ProductDataProvider({ children }) {
   //         const index = parseInt(cashedProductIndex, 10);
   //         await defineProductData(index);
   //       }
-      
+
   //   }
   // }, [location.pathname, navigate, pagingHistory, sessionLoaded]);
 
-
-useEffect( () =>{
-  const runSyncDataFetcher = async () => {
-if(sessionLoaded){
-await pagingHistory.runSyncDataFetcher(uncachedFetchData, productsPerPage);
-}
-  }
-  // runSyncDataFetcher()
-},[ sessionLoaded]);
-
-
+  useEffect(() => {
+    const runSyncDataFetcher = async () => {
+      if (sessionLoaded) {
+        await pagingHistory.runSyncDataFetcher(
+          uncachedFetchData,
+          productsPerPage
+        );
+      }
+    };
+    // runSyncDataFetcher()
+  }, [sessionLoaded]);
 
   async function updateProductProperty(prop, value) {
     const updatedProduct = { ...productData, [prop]: value };
@@ -214,7 +219,10 @@ await pagingHistory.runSyncDataFetcher(uncachedFetchData, productsPerPage);
   }
 
   const value = {
+    loadingStream,
+    setLoadingStream: defineLoadingStream,
     lockAllTasks,
+    sSEWorker,
     selectedImageMap,
     pagingHistory,
     productViewCache,
@@ -256,32 +264,39 @@ await pagingHistory.runSyncDataFetcher(uncachedFetchData, productsPerPage);
     setPaging,
     fetchData,
     AllDependenciesLoaded,
-    allAssets
+    allAssets,
+    setUser,
   };
 
-  useEffect( () => {
+  useEffect(() => {
     const LoadSession = async () => {
-    let id;
-    if (sessionLoaded) {
-      console.log("sessionLoaded: ", sessionLoaded);
-      await fetchData();
-      console.log("fetched product data");
-      id = setTimeout(() => {
-        setDisplayContents(true);
-      }, 10000);
+      let id;
+      if (sessionLoaded) {
+        console.log("sessionLoaded: ", sessionLoaded);
+        await fetchData();
+        console.log("fetched product data");
+        id = setTimeout(() => {
+          setDisplayContents(true);
+        }, 10000);
 
-      return () => {
-        clearTimeout(id);
-        // setFetchedData(false);
-      };
-    }
-  }
-  LoadSession()
+        return () => {
+          clearTimeout(id);
+          // setFetchedData(false);
+        };
+      }
+    };
+    LoadSession();
   }, [sessionLoaded]);
 
   return (
     <ProductDataContext.Provider value={value}>
-      {shopifyDown ? <ShopifyOutage retrySession={defineShopifyDown} /> : displayContents ? children : <LoadingPageComponent />}
+      {shopifyDown ? (
+        <ShopifyOutage retrySession={defineShopifyDown} />
+      ) : displayContents ? (
+        children
+      ) : (
+        <LoadingPageComponent />
+      )}
     </ProductDataContext.Provider>
   );
 }

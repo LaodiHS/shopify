@@ -334,10 +334,12 @@ async function startServer() {
       console.log("shop: ", shop);
       try {
         const user = await getUserByShopName(shop);
+        if(user){
         user.seen = true;
         await writeJSONToFileAsync(shop, user);
 
         data = user;
+        }
       } catch (err) {
         status = 500;
         error = err;
@@ -646,7 +648,20 @@ async function startServer() {
       }
     );
 
-    app.listen(PORT);
+   const server = app.listen(PORT);
+
+
+
+    const cleanupServer = () => {
+      server.close(() => {
+        console.log('Server closed');
+        process.exit(0);
+      });
+    };
+    
+    process.on('SIGINT', cleanupServer); // Ctrl+C in the terminal
+    process.on('SIGTERM', cleanupServer);
+
   } catch (error) {
     console.error("Error starting the server:", error);
   }

@@ -11,50 +11,9 @@ import {
 // import { updateTokenUsageAfterJob } from "./subscriptionManager.js";
 // import * as userStore from "./userStore.js";
 const { OPEN_AI_SECRET_KEY } = process.env;
-
-const apiKey = OPEN_AI_SECRET_KEY;
 const openai = new OpenAI({
   apiKey: OPEN_AI_SECRET_KEY,
 });
-// class NetworkError extends Error {
-//   constructor(message) {
-//     super(message);
-//     this.name = 'NetworkError';
-//   }
-// }
-function isNetworkError(error) {
-  if (typeof error === "string") {
-    return error.toLowerCase().includes("network error");
-  }
-
-  if (error instanceof Error) {
-    if (
-      error.code === "ECONNREFUSED" ||
-      error.code === "ETIMEDOUT" ||
-      error.code === "ECONNABORTED" ||
-      error.message.toLowerCase().includes("network error") ||
-      error.message.includes("timeout")
-    ) {
-      return true;
-    }
-
-    if (error.code === "NETWORK_ERROR") {
-      return true;
-    }
-
-    // Check if the error object has an HTTP response
-    if (
-      error.response &&
-      error.response.status >= 500 &&
-      error.response.status < 600
-    ) {
-      return true;
-    }
-  }
-
-  // Not a network error
-  return false;
-}
 
 
 export const processFunctions = {
@@ -67,6 +26,7 @@ export const processFunctions = {
     api,
     promptTokenCountEstimate,
     processFunction,
+    max_tokens,
   }) {
     try {
       testNonNetWorkErrorOnChatGptTurboFailure();
@@ -84,7 +44,7 @@ export const processFunctions = {
       } else {
         // console.log("prompt", prompt);
         try {
-          const stream = await chatGPTurboStream(prompt);
+          const stream = await chatGPTurboStream(prompt, max_tokens);
 
           return { stream, ...arguments[0] };
         } catch (error) {
@@ -108,9 +68,15 @@ export const processFunctions = {
   // Add more processing functions as needed
 };
 
-async function chatGPTurboStream(prompt) {
+async function chatGPTurboStream(prompt, max_tokens) {
+
+
+if(!max_tokens){
+  throw new Error("max_tokens must be a number:::", max_tokens);
+}
+
   if (prompt.length <= 0) {
-    throw new Error("no prompt present in generatorCall");
+    throw new Error("no prompt present in generatorCall:::", prompt);
   }
   // console.log('prompt: ' + prompt);
   try {
@@ -124,10 +90,9 @@ async function chatGPTurboStream(prompt) {
         },
       ],
       max_tokens,
-      temperature: 0,
-      stop:[".", "!", "?"],
+      temperature: 0.0,
       frequency_penalty:0.2,
-      presence_penalty:0.7,
+       presence_penalty:0.8,
       stream: true,
     });
   } catch (error) {
@@ -153,7 +118,7 @@ async function chatGPTurboStream(prompt) {
 
 // top_p (formerly nucleus): It is used for nucleus sampling. It sets a probability threshold for including tokens in the output. It helps in controlling the diversity of the generated text.
 
-// frequency_penalty: Controls the penalty for using frequent tokens. Higher values will make the output more focused, while lower values will allow for a more diverse output.
+// frequency_penalty: Controls the penalty for using frequent tokens. Higher values will make the output more focused, while lower values will allow for a more diverse output. (important to keep this value low for referencing)
 
 // presence_penalty: This parameter encourages the model to avoid certain tokens. A higher presence_penalty value makes it less likely for the model to repeat certain phrases.
 

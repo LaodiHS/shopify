@@ -481,6 +481,8 @@ function Article() {
 // Import SMTP.js library
 
 const BugReportPage = (React.FC = () => {
+
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -494,6 +496,8 @@ const BugReportPage = (React.FC = () => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
+
+    const {user} = useDataProvidersContext();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -511,12 +515,12 @@ const BugReportPage = (React.FC = () => {
 
     // Sending email using SMTP.js
     const emailToSend = {
-      SecureToken: "376ee0cd-ab84-414e-a207-3ec8ca2d89bd", //
+  
       to: "neuralnectarsupport@neuralnectarsolutions.com",
       from: "shopify@nerualnector.com",
       subject: `Bug Report `,
       text: `
-        Name: ${formData.name}
+        Name: ${user.shop}
         Email: ${formData.email}
         Bug Type: ${formData.bugType}
         Bug Description: ${formData.bugDescription}
@@ -531,7 +535,7 @@ const BugReportPage = (React.FC = () => {
 
     // Reset form data after submission
     setFormData({
-      name: "",
+      name: user.shop,
       email: "",
       bugType: "",
       bugDescription: "",
@@ -676,7 +680,11 @@ function IonMenuNav({ handleContextMenu }) {
         label: "Description Assist",
         icon: allAssets.aiIcon,
         clickHandler: async (event) => {
+          try{
           await assistRequest(aiWorkStation);
+          }catch(e){
+            console.log("An error occurred", e);
+          }
         },
       },
       {

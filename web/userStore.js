@@ -32,6 +32,7 @@ const userSchema = {
   properties: {
     // Define your JSON schema here
     // Example:
+
     capped_usage: { type: "number" },
     shop: { type: "string" },
     gptText: { type: "string" },

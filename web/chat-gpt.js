@@ -2,8 +2,9 @@
 // import { interpolateHsl } from "d3-interpolate";
 // import chroma from "chroma-js";
 // import * as D3Node from "d3-node";
-// const d3 = D3Node.d3;
+
 import pluralize from "pluralize";
+
 // function generatePastelColors(numColors) {
 //   if (numColors < 1) {
 //     throw new Error("Invalid input parameter.");
@@ -1165,7 +1166,7 @@ const colorPalette = [
 // Hyperbole - 3 tokens
 // Metaphor - 3 tokens
 // Simile - 3 tokens
-// Product Details (including labels and IDs) - 124 tokens
+// Product-Details (including labels and IDs) - 124 tokens
 // Images (including labels and IDs) - 30 tokens
 
 // Total minimum tokens for all requirements = 21 + 6 + 7 + 3 + 3 + 3 + 124 + 30 = 197 tokens
@@ -1199,7 +1200,7 @@ function generateLanguageRequirementsList(language) {
     formats: {},
     introduction: {
       none: {
-        prompt: "Introduce the product.",
+        prompt: "Introduce the product using a standard introduction.",
         tokens: 5,
       },
       overview: {
@@ -1549,9 +1550,11 @@ function generateLanguageRequirementsList(language) {
       },
     },
     rhetorical: {
+      heading:
+        "Utilize these Rhetorical Techniques as potent Narrative-Styles to add a strong and distinguishable effect to the Stylistic-Paragraphs so it stands out among the other Stylistic-Paragraphs. ",
       anaphora: {
         prompt:
-          "Use the repetition of the same word or phrase at the beginning of successive clauses or sentences to emphasize key points or concepts, creating a powerful and memorable impact.",
+          "Use the repetition of the same word or phrase at the beginning of successive clauses or sentences to emphasize key points of the product or concepts, creating a powerful and memorable impact.",
         tokens: 23,
       },
       chiasmus: {
@@ -1561,7 +1564,7 @@ function generateLanguageRequirementsList(language) {
       },
       hyperbole: {
         prompt:
-          "Convey emphasis and dramatic effect through the use of exaggerated statements, showcasing its unique features and benefits in an attention-grabbing and memorable way.",
+          "Convey emphasis and dramatic effect through the use of exaggerated statements, showcasing the product's unique features and benefits in an attention-grabbing and memorable way.",
         tokens: 3,
       },
       metaphor: {
@@ -1849,12 +1852,46 @@ function generateLanguageRequirementsList(language) {
   };
 
   const requirements = [];
+  const requirementsMap = new Map();
+  const languageLegend = [];
+  let colorIndex = 0;
+  const legend = [];
+  const LanguageObject = {
+    heading: `
+    The Narrative-Styles come with impletion instructions.
+    The Narrative-Styles Requirements are listed below:
+    `,
+    requirements: requirementsMap,
+  };
+
+  let str = [LanguageObject.heading];
 
   if (language) {
     for (const [key, value] of language) {
       // console.log('key: ' + key + ' value: ' + value)
       const keyLabelRequirements = [key, []];
+      if (!requirementsMap.has(key)) {
+        const heading = requirementsDict[key].heading || "";
+        requirementsMap.set(key, { elements: [], keyHeading: heading });
+        heading && str.push(heading);
+      }
+      let num = 1;
       for (const valueOption of value) {
+        const keyValueElements = requirementsMap.get(key).elements;
+
+        legend.push([valueOption, colorPalette[colorIndex]]);
+
+        const prompt = requirementsDict[key][valueOption]?.prompt;
+        const color = colorPalette[colorIndex];
+        keyValueElements.push({
+          value: valueOption,
+          prompt,
+          color,
+        });
+        str.push(`${prompt}
+     ${num}. (${toSingular(key.replace(/([a-z])([A-Z])/g, `$1 $2`).toLowerCase())}: ${valueOption.replace(/([a-z])([A-Z])/g, `$1 $2`).toLowerCase()} - ${color})`);
+        colorIndex++;
+        num++;
         const prompts = keyLabelRequirements[1];
         prompts.push({
           value: valueOption,
@@ -1864,9 +1901,26 @@ function generateLanguageRequirementsList(language) {
       requirements.push(keyLabelRequirements);
     }
   }
+
   // console.log("requirements: ", requirements);
-  return requirements;
+  // console.log(
+  //   "LanguageObject: ",
+  //   "requirmentsMap:::",
+  //   JSON.stringify([...requirementsMap]),
+  //   str.join("\n\n")
+  // );
+
+  console.log("legend: ", legend);
+
+  return {
+    requirements,
+    legend,
+    LanguageObject,
+    colorIndex,
+    completeText: str.join("\n\n"),
+  };
 }
+
 
 export async function generateReport({
   productData,
@@ -1893,7 +1947,7 @@ const colors = colorPalette; //|| generateColorPalette(23);
 
 function toSingular(word) {
   if (!word) {
-    "report this error singular:" + Math.random().toString();
+    `report this error singular:${Math.random().toString()}`;
   }
 
   return pluralize.singular(word);
@@ -1925,46 +1979,90 @@ const adjustedLabels = (label, key, numb) => {
   return label;
 };
 
-function generatePrompt(productData, details, requirements) {
-  let colorIndex = 0;
+function generatePrompt(productData, details, requirements, maxTokens) {
+  console.log("details:---->", productData);
+  // let colorIndex = 0;
+  const title = productData.title;
 
   const getColor = () => {
-    const color = colors[colorIndex++];
+    const color = colors[requirements.colorIndex++];
     return { color, id: color };
   };
 
   const exampleDetails = [];
   const exampleStyles = [];
-  const legend = [];
+  const legend = requirements.legend;
   const lines = [];
 
   const addLine = (text) => lines.push(text);
   const addLineFront = (text) => lines.unshift(text);
   const addHeading = (heading) => addLine(`\n${heading}`);
   const addQuotes = (text) => (text.length ? `"${text}"` : "");
+  // Examples: ${addQuotes(
+  //   `(${  exampleStylesStr.match(/#([0-9A-Fa-f]{6})/g)[0]})`
+  // )},  ${ exampleDetailsStr &&    addQuotes(`(${exampleDetailsStr.match(/#([0-9A-Fa-f]{6})/g)[0]})` ) }
 
   const addProductDescription = (exampleDetails, exampleStyles) => {
-    const exampleDetailsStr = exampleDetails
-      .slice(-1) // rewrite split slice join logic;
-      .map(
-        ([key, value]) =>
-          `(${key.trim().split(" ").slice(1).join(" ")} - ${value})`
-      )
-      .join(", ");
+    const exampleDetailsStr = (index) => {
+      const [key, product_detail_information, color_code_id] = exampleDetails[index];
+      if (key === "description") {
+        return {
+          key: "description",
+          product_detail_information:
+            "combines fashion-forward design, eco-friendly materials, innovative technology, and unbeatable reliability",
+          color_code_id: "#db3947",
+        };
+      }
 
-    const exampleStylesStr = exampleStyles
-      .slice(-1)
-      .map(([key, value]) => `(${key.trim()} - ${value})`)
-      .join(",  ");
-    const title = productData.title.replace(/\n/g, "");
-    addLineFront(
-      `Compose a narrative that introduces the ${title} and creatively incorporates the following product details using the narrative stylistic requirements below. In this document are unique identifiers; they look like this ${addQuotes(
-        exampleDetailsStr
-      )}. These are all requirements. Reference them in the composition as label notes below the passage; where you fulfill the requirement. Examples: ${addQuotes(
-        exampleStylesStr
-      )}  ${addQuotes(exampleDetailsStr)}`
-    );
-    addLineFront(`Product Name: ${title}`);
+      return { key, product_detail_information, color_code_id };
+    };
+
+    const exampleStylesStr = (index) => {
+      const [key, narrative_style_information, color_code_id] = exampleStyles[index];
+
+      return { key, narrative_style_information: narrative_style_information.replace(/([a-z])([A-Z])/g, `$1 $2`).toLowerCase() , color_code_id };
+    };
+
+    const detailExampleStyleOne = exampleStylesStr(0);
+    const detailExampleOne = exampleDetailsStr(0);
+    addLineFront(`      
+    
+      Analyze these requirements and compose a narrative using the Product-Detail-Information and Narrative-Style-Information in each Identifier to compose many Stylistic-Paragraphs that introduces the Product: ${title}. The Narrative-Styles come with instructions, Accurately demonstrate all of the Narrative-Styles listed below. Make sure the Narrative-Styles use specifics over general wording. 
+
+      Within this document, distinctive Identifiers are presented, categorized as either Product-Details or Stylistic-Narratives.
+      These Identifiers are encapsulated within single round brackets and consist of three components. The portion preceding the colon (:) denotes a type or category, the segment between the colon (:) and the dash (-) signifies a specific instance or value within that category, and following the dash (-) is the associated color code.
+      
+      The Product-Detail Identifiers look like this:
+        "(${detailExampleOne.key}: ${detailExampleOne.product_detail_information} - ${detailExampleOne.color_code_id})."
+
+      Within the round brackets the Product-Detail Identifier are broken down into these components:    
+        Key: ${detailExampleOne.key},
+        Product-Detail-Information: ${detailExampleOne.product_detail_information},
+        Color-Code-ID: ${detailExampleOne.color_code_id},
+      
+      Stylistic-Narrative Identifiers look like this:
+        "(${detailExampleStyleOne.key}: ${detailExampleStyleOne.narrative_style_information} - ${detailExampleStyleOne.color_code_id})."
+
+      Within the round brackets the Product-Detail Identifier are broken down into these components:    
+        Key: ${detailExampleStyleOne.key},
+        Narrative-Style-Information: ${detailExampleStyleOne.narrative_style_information},
+        Color-Code-ID: ${detailExampleStyleOne.color_code_id},
+        
+      Citation-Markers:
+      Citation-Markers are individual single round brackets containing a label and Color-Code-ID from both the Stylistic-Narrative and Product-Detail Identifiers. Examples include:(${detailExampleStyleOne.narrative_style_information} - ${detailExampleStyleOne.color_code_id})(${detailExampleOne.product_detail_information} - ${detailExampleOne.color_code_id}). 
+    
+      
+      Usage Guidelines:
+      Group these Identifiers and Citation-Markers at the conclusion of a Narrative-Style, to label the contributing Identifiers.
+    
+
+      Distribution Strategy:
+      Ensure an equitable distribution of Product-Details among different Narrative-Styles to maintain balance.
+
+      Product-Detail Requirements:
+      Refer to the listed requirements below for Product-Detail specifications.
+      `);
+    // addLineFront(`Product Name: ${title}`);
   };
 
   const addSectionDetails = (section, heading) => {
@@ -1984,20 +2082,22 @@ function generatePrompt(productData, details, requirements) {
 
         if (key === "collections") {
           legend.push([element.title, color]);
-          exampleDetails.push([element.title, id]);
-          line = `\n\t${index + 1}. (${element.title} - ${id}).`;
+          exampleDetails.push([toSingular(key), element.title, id]);
+          line = `\n\t${index + 1}. (collection name: ${
+            element.title
+          } - ${id})`;
         } else if (key === "images") {
           legend.push([element, color]);
-          exampleDetails.push([element, id]);
+          exampleDetails.push([toSingular(key), element, id]);
           // console.log("element---->", element);
-          line = `\n\t${index + 1}. ${element}\n\t(${element} - ${id})\n`;
+          line = `\n\t${index + 1}. ${element}\n\t(image:${element} - ${id})\n`;
         } else if (key === "description") {
-          exampleDetails.push(["description", id]);
-          line = `\n\t${index + 1}. ${element}\n\tdescription : ${id}.`;
+          exampleDetails.push([toSingular(key), element, id]);
+          line = `\n\t${index + 1}. (${element}\n\tdescription - ${id}).`;
         } else {
           legend.push([element, color]);
-          exampleDetails.push([element, id]);
-          line = `\n\t${index + 1}. ${element}: ${id}.`;
+          exampleDetails.push([toSingular(key), element, id]);
+          line = `\n\t${index + 1}. (${toSingular(key)}: ${element} - ${id}).`;
         }
 
         addLine(line);
@@ -2017,9 +2117,9 @@ function generatePrompt(productData, details, requirements) {
 
         const { color, id } = getColor();
         legend.push([focus.slice(), color]);
-        focus = `Creatively incorporate the variant: "${focus
+        focus = `Seamlessly integrate these Product-Detail variant: "${focus
           .replace(/variant:/g, "")
-          .trim()}" options in the composition using the stylistic requirements below:`;
+          .trim()}" option and accompanying details listed here into a Stylistic-Paragraphs using the Narrative-Styles listed below the Product-Details and cite them using their Citation-Marker at the end of each section:`;
 
         addLine(`${focus}\n`);
         elements.forEach((element, index) => {
@@ -2027,21 +2127,21 @@ function generatePrompt(productData, details, requirements) {
           const { color, id } = getColor();
 
           legend.push([element, color]);
-          exampleDetails.push([
-            `\t${filterKey(key)} ${filterElement(element)}`,
-            color,
-          ]);
-          addLine(`\t${index + 1}. (${filterElement(element)} - ${id}).\n`);
+          // exampleDetails.push([
+          // filterKey(key), filterElement(element), color]);
+          addLine(`\t${index + 1}. (${filterElement(element)} - ${id})\n`);
         });
         return;
       }
       if (key.includes("option")) {
         let focus = `${key.replace(/[_]/g, ": ")}`;
         const { color, id } = getColor();
-        legend.push([focus.slice(), color]);
-        focus = `Creatively incorporate these selectable ${pluralize(
+        // console.log('optionssize:::==>.>>', focus.slice())
+        // legend.push([focus.slice(), color]);
+        let label = focus.replace(/(\w+)\s*:\s*(\w+)/g, "$2");
+        focus = `Seamlessly incorporate these selectable Product-Detail ${pluralize(
           focus.replace(/(\w+)\s*:\s*(\w+)/g, "$2")
-        )} in the composition:`;
+        )} into a Stylistic-Paragraphs using the Narrative-Styles listed below the Product-Details and cite them using their Citation-Marker at the end of each section:`;
 
         addLine(`${focus}\n`);
         elements.forEach((element, index) => {
@@ -2050,15 +2150,18 @@ function generatePrompt(productData, details, requirements) {
 
           legend.push([element, color]);
           exampleDetails.push([
-            `${filterKey(key)} ${filterElement(element)}`,
+            `product ${filterKey(key)}`,
+            filterElement(element),
             color,
           ]);
-          addLine(`\t${index + 1}. (${filterElement(element)} - ${id}).\n`);
+          addLine(
+            `\t${index + 1}. (${label}: ${filterElement(element)} - ${id})\n`
+          );
         });
       } else if (key.includes("tags")) {
         let focus = `${key.replace(/[_]/g, ": ")}`;
         // console.log("tags", focus);
-        focus = `Creatively incorporate these tags in the composition using the stylistic requirements below:`;
+        focus = `Seamlessly integrate these Product-Detail word-tags into a Stylistic-Paragraphs using the Narrative-Styles listed below the Product-Details and cite them using their Citation-Marker at the end of each section:`;
 
         addLine(`${focus}\n`);
         elements.forEach((element, index) => {
@@ -2066,31 +2169,18 @@ function generatePrompt(productData, details, requirements) {
           const { color, id } = getColor();
 
           legend.push([element, color]);
-          exampleDetails.push([
-            `\t${filterKey(key)} ${filterElement(element)}`,
-            color,
-          ]);
-          addLine(`\t${index + 1}. (${filterElement(element)} - ${id}).\n`);
+          exampleDetails.push([filterKey(key), filterElement(element), color]);
+          addLine(`\t${index + 1}. (tag: ${filterElement(element)} - ${id})\n`);
         });
       }
     });
+    console.log("exampleDetails:", JSON.stringify(exampleDetails));
   };
 
   const addNarrativeRequirements = () => {
-    addHeading(
-      `Compose a narrative with these narrative stylistic requirements.\n`
-    );
-    requirements.forEach(([key, narrativeStyles], index) => {
-      if (key === "rhetorical") {
-        addLine(
-          `Requirement ${
-            index + 1
-          } Skillfully employ these ${key} techniques in the composition using the product details above.`
-        );
-      } else {
-        addLine(`Requirement ${index + 1} ${key}\n`);
-      }
-
+    const narrativeRequirements = [];
+    console.log("reqiurments:   ", requirements);
+    requirements.requirements.forEach(([key, narrativeStyles], index) => {
       narrativeStyles.forEach((narrativeStyle, i, arrayStyles) => {
         const { color, id } = getColor();
 
@@ -2101,51 +2191,100 @@ function generatePrompt(productData, details, requirements) {
           color,
         ]);
         exampleStyles.push([
-          adjustedLabels(narrativeStyle.value, key, i + 1),
+          key.replace(/([a-z])([A-Z])/g, `$1 $2`).toLowerCase(),
+          narrativeStyle.value
+            .replace(/([a-z])([A-Z])/g, `$1 $2`)
+            .toLowerCase(),
           color,
         ]);
-        addLine(
-          `\t${key === "rhetorical" ? "" : narrativeStyle.prompt}\n\t${
-            arrayStyles.length > 1 ? `${i + 1} ` : ""
-          }(${adjustedLabels(narrativeStyle.value, key, i + 1)} - ${id})\n`
+        narrativeRequirements.push(
+          `\t${narrativeStyle.prompt}
+          (${key}: ${adjustedLabels(
+            narrativeStyle.value,
+            key,
+            i + 1
+          )} - ${id})\n`
         );
       });
+      console.log(
+        "exampleStyles:",
+        JSON.stringify(exampleStyles.sort((a, b) => a[0].localeCompare(b[0])))
+      );
+    });
+
+    addHeading(requirements.completeText);
+    requirements.requirements.forEach(([key, narrativeStyles], index) => {
+      if (key === "rhetorical") {
+        // addLine(
+        //   `Requirement ${
+        //     index + 1
+        //   } Skillfully and seamlessly integrate these ${key} techniques, thematic elements, and motifs into a Stylistic-Paragraphs. Reference these requirements beneath the section where you use them.`
+        // );
+      } else {
+        // addLine(`Requirement ${index + 1} ${key}\n`);
+      }
+
+      // while (narrativeRequirements.length) {
+      // addLine(narrativeRequirements.shift());
+      // }
     });
   };
 
-  const addFinalSection = () => {
-    const exampleDetailsStr = exampleDetails
-      .slice(0, 1)
-      .map(([key, value]) => `(${key} - ${value})`)
-      .join(" or ");
+  const addFinalSection = (exampleDetails, exampleStyles) => {
+    const exampleDetailsStr = (index) => {
 
-    const exampleStylesStr = exampleStyles
-      .slice(0, 1)
-      .map(([key, value]) => `(${key} - ${value})`)
-      .join(" or ");
+      const [key, product_detail_information, color_code_id] = exampleDetails[index];
+
+      return { key, product_detail_information, color_code_id };
+    };
+
+    const exampleStylesStr = (index) => {
+
+      const [key, narrative_style_information, color_code_id] = exampleStyles[index];
+
+      return { key, narrative_style_information: narrative_style_information.replace(/([a-z])([A-Z])/g, `$1 $2`).toLowerCase() , color_code_id };
+    };
+
+    const detailExampleStyleOne = exampleStylesStr(0);
+    const detailExampleOne = exampleDetailsStr(0);
 
     addLine(
-      `\nUse a single round bracket tags for every label and id to reference the requirements in the composition. Tag examples: ${addQuotes(
-        exampleDetailsStr
-      )}  ${addQuotes(exampleStylesStr)}`
+      `\n  Ensure you use all the Product-Details and demonstrate all the Narrative-Styles listed.
+      
+      Example section structure: 
+      - Narrative-Style Selection:
+        1. Choose a Narrative-Style for robust demonstration without explicitly naming it in the Stylistic-Paragraphs.
+      - Product-Detail Incorporation:
+        1. Select multiple Product-Details to embellish the chosen Narrative-Style in these Stylistic-Paragraphs.
+      - Connection of Information:
+        1. Establish a clear connection between Narrative-Style-Information and the selected Product-Detail-Information, emphasizing the chosen Narrative-Style.
+      - Citation-Marker Format:
+        1. Explicitly cite the Narrative-Style where they are being used, using the Citation-Marker format beneath the section. 
+        Additionally, place Product-Detail Citation-Markers beneath the Narrative-Style citation. Example: (#cb3455)(#ca445b)(#cf6371)(#db3947)
+      
+    
+
+        Ensure that the response remains within the token limit of ${maxTokens}. Relax Product-Details when near the token limit. Maintain a consistent structure, and return a response that is complete.
+      `
     );
   };
 
   addSectionDetails(
     "collections",
-    "Mention these collections in the composition, using the narrative stylistic requirements listed below:"
+    "Seamlessly tie these Product-Detail collection names into the Stylistic-Narratives using the Narrative-Styles listed below the Product-Details and cite them using their Citation-Marker at the end of each section:"
   );
   addSectionDetails(
     "description",
-    "Use this description to hone your composition:"
+    "Seamlessly integrate the substantive portions within this Product-Detail description into a unique and improved narratives using the Narrative-Styles, listed below below the Product-Details:"
   );
   addSectionDetails(
     "images",
-    "Provide a visual context for the product in the composition by cleverly placing and calling attention to the image URL in the composition. Reference them with the labeled id beneath each URL in the composition:"
+    "Provide a visual context for the product in the composition by meaningfully placing and calling attention to the image Identifiers."
   );
   addOtherDetails();
   addNarrativeRequirements();
-  addFinalSection();
+  console.log("exampleDetails", exampleDetails);
+  addFinalSection(exampleDetails, exampleStyles);
   // Main Execution Flow
   addProductDescription(exampleDetails, exampleStyles);
   const prompt = lines.join("\n");
@@ -2160,27 +2299,24 @@ function generatePrompt(productData, details, requirements) {
   return { prompt, legend, documentType: "text" };
 }
 
-export function withoutOptions(productData) {
+export function withoutOptions(productData, maxTokens) {
   const language = [
     ["introduction", ["none"]],
     ["tone", ["none"]],
   ];
 
-  const focus = [];
-
+  const focus = [["description", [productData.description]]];
   const requirementsList = generateLanguageRequirementsList(language);
-
-  return generatePrompt(productData, focus, requirementsList);
+  return generatePrompt(productData, focus, requirementsList, maxTokens);
 }
 
-export function withLanguageOption(productData, language) {
-  const focus = [];
+export function withLanguageOption(productData, language, maxTokens) {
+  const focus = [["description", [productData.description]]];
   const requirementsList = generateLanguageRequirementsList(language);
-
-  return generatePrompt(productData, focus, requirementsList);
+  return generatePrompt(productData, focus, requirementsList, maxTokens);
 }
 
-export function withProductDetails(productData, focus) {
+export function withProductDetails(productData, focus, maxTokens) {
   const language = [
     ["introduction", ["none"]],
     ["tone", ["none"]],
@@ -2188,11 +2324,16 @@ export function withProductDetails(productData, focus) {
 
   const requirementsList = generateLanguageRequirementsList(language);
 
-  return generatePrompt(productData, focus, requirementsList);
+  return generatePrompt(productData, focus, requirementsList, maxTokens);
 }
 
-export function withLanguageAndProductOption(productData, language, focus) {
+export function withLanguageAndProductOption(
+  productData,
+  language,
+  focus,
+  maxTokens
+) {
   const requirementsList = generateLanguageRequirementsList(language);
 
-  return generatePrompt(productData, focus, requirementsList);
+  return generatePrompt(productData, focus, requirementsList, maxTokens);
 }

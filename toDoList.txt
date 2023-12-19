@@ -22,3 +22,44 @@ https://help.heroku.com/tickets/1314697
 flyctl deploy --build-arg  SHOPIFY_API_SECRET=a4ca9424d4961d3f0789eb75f8fd8e08  --remote-only    
 
  sudo docker build --platform linux/amd64 -t neuralnectar --build-arg SHOPIFY_API_SECRET=a4ca9424d4961d3f0789eb75f8fd8e08 .   
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+  
+
+
+
+
+
+let c = `
+(introduction: problem statement - ##cf543a) 
+Allow me to elucidate the inherent problem our product solves: the struggle to find footwear that seamlessly transitions between casual and semi-formal occasions. The ubiquity of this dilemma is evident across diverse demographics, such as men seeking a versatile wardrobe and those specifically drawn to the iconic VANS style. The problem is universal, and VANS Classic Slip-On steps in as the panacea.\n
+(#de6645)(#d89d88)\n
+
+(tone: informal - #d06e43)\n
+Picture this: strolling through the city streets, the VANS Classic Slip-On becomes your trusted companion. Its casual demeanor, embodied in the soothing beige shade, speaks volumes without the need for words. The informal tone adopted here resonates with the laid-back vibe these slip-ons exude, making them an ideal choice for those who appreciate a relaxed and conversational style.\n
+(#cc8966)(#d9783a)\n
+
+(rhetorical: anaphora - #e0da5c)\n
+In crafting the narrative around VANS Classic Slip-On, anaphora takes center stage. Just as VANS excels in consistently delivering on both style and comfort, the product lineup excels in offering various sizes, such as size 4, size 5, and size 6. This deliberate repetition emphasizes the range of choices available, reinforcing the brand's commitment to catering to diverse preferences.\n
+ (#e08138)(#d79150)(#dd9e5a)(#efb467),\n
+
+(rhetorical: hyperbole -  #f0a228)\n
+ Dive into the world of VANS Classic Slip-On, where the term "classic" takes on a new dimension. The beige variant isn't just a color; it's a canvas of expression, a hyperbolic tribute to the versatility these slip-ons bring to your wardrobe. The color transcends simplicity, becoming a bold statement that elevates your style with an exaggerated touch.\n
+ (#d8aa55)(#c6a14e)(#dcb64c)(#d6b84c)\n
+
+(engaging format: storytelling - #e6d37a)\n
+Embark on a journey with VANS Classic Slip-On through engaging storytelling. Imagine a summer day, tagged with the label "summer", where every step is a chapter in your fashion narrative. The images of (low_carbon_0_.jpg - "#c7dd36") and ( pragmatic_4_.jpg image - #bfeb66) seamlessly blend into this narrative, creating a visual context that complements the product's story.
+(#cfbd4a)(#e6d956)\n
+`
