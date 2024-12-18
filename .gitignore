@@ -8,10 +8,10 @@ node_modules/
 # Test coverage directory
 coverage
 
-# Ignore Apple macOS Desktop Services Store
+#Ignore Apple macOS Desktop Services Store
 .DS_Store
 
-# Logs
+#Logs
 logs
 *.log
 
